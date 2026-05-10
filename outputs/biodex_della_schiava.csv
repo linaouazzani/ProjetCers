@@ -1,0 +1,14 @@
+﻿vitesse,mouvement,metrique,unite,entree_sain_d,entree_lese_g,entree_deficit_pct,sortie_sain_d,sortie_lese_g,sortie_deficit_pct,progression_pct,couleur_progression,couleur_deficit_entree,couleur_deficit_sortie
+60°/s,Extension,Moment Max,N·m,316.9,313.6,1.0,328.0,333.3,-1.6,6.3,green,green,green
+60°/s,Extension,Travail Max,J,379.3,386.8,-2.0,364.2,384.9,-5.7,-0.5,red,green,green
+60°/s,Extension,Puissance Max,W,336.5,328.4,2.4,348.7,349.0,0.0,6.3,green,green,green
+60°/s,Flexion,Moment Max,N·m,173.0,153.9,11.1,195.4,162.0,17.1,5.3,green,orange,orange
+60°/s,Flexion,Travail Max,J,239.2,184.9,22.7,216.9,181.8,16.2,-1.7,red,red,orange
+60°/s,Flexion,Puissance Max,W,184.2,163.4,11.3,207.4,172.5,16.8,5.6,green,orange,orange
+60°/s,—,Ratio I/Q,%,54.6,49.1,,59.6,48.6,,-1.0,red,,
+240°/s,Extension,Moment Max,N·m,225.7,201.7,10.6,234.1,216.9,7.4,7.5,green,orange,green
+240°/s,Extension,Travail Max,J,254.9,239.7,6.0,233.6,227.6,2.6,-5.0,red,green,green
+240°/s,Extension,Puissance Max,W,949.5,848.6,10.6,984.9,912.5,7.4,7.5,green,orange,green
+240°/s,Flexion,Moment Max,N·m,123.5,114.6,7.2,139.0,117.7,15.3,2.7,green,green,orange
+240°/s,Flexion,Travail Max,J,153.3,120.3,21.5,147.1,112.9,23.3,-6.2,red,red,red
+240°/s,Flexion,Puissance Max,W,517.4,481.9,6.9,582.1,495.0,15.0,2.7,green,green,orange

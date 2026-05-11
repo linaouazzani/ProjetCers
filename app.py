@@ -326,14 +326,14 @@ with col_right:
 
             # Sauvegarder PDFs
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                f.write(pdf_entree.read()); path_e = f.name
+                f.write(pdf_entree.getvalue()); path_e = f.name
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                f.write(pdf_sortie.read()); path_s = f.name
+                f.write(pdf_sortie.getvalue()); path_s = f.name
 
             path_comp = None
             if pdf_comp:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                    f.write(pdf_comp.read()); path_comp = f.name
+                    f.write(pdf_comp.getvalue()); path_comp = f.name
 
             path_photo = None
             if photo:
@@ -351,7 +351,7 @@ with col_right:
             path_comp_sain = None
             if pdf_comp_sain:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                    f.write(pdf_comp_sain.read()); path_comp_sain = f.name
+                    f.write(pdf_comp_sain.getvalue()); path_comp_sain = f.name
 
             progress.progress(30, text="🔍 Parsing des PDFs Biodex...")
 

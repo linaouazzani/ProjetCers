@@ -133,7 +133,9 @@ def encoder_image(path: str) -> Optional[str]:
     mime = {"png": "image/png", "jpg": "image/jpeg",
             "jpeg": "image/jpeg", "svg": "image/svg+xml"}.get(ext, "image/png")
     with open(path, "rb") as f:
-        data = base64.b64encode(f.read()).decode("utf-8")
+        raw = f.read()
+    if not raw: return None
+    data = base64.b64encode(raw).decode("utf-8")
     return f"data:{mime};base64,{data}"
 
 

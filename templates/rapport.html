@@ -302,6 +302,9 @@ body {
       <div class="patient-dates">
         <strong>Entrée :</strong> {{ entree.date_test }}<br>
         <strong>Sortie :</strong> {{ sortie.date_test }}
+        {% if nom_club and nom_club != "—" %}
+        <div style="font-size:9px; font-weight:700; color:#1c3f6e; margin-top:4px;">{{ nom_club }}</div>
+        {% endif %}
       </div>
     </div>
   </div>

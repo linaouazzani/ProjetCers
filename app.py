@@ -339,16 +339,14 @@ with col_right:
             if photo:
                 ext_ph = photo.name.rsplit(".", 1)[-1]
                 with tempfile.NamedTemporaryFile(suffix=f".{ext_ph}", delete=False) as f:
-                    photo.seek(0)  # st.image() consomme le pointeur — rembobiner
-                    f.write(photo.read()); path_photo = f.name
+                    f.write(photo.getvalue()); path_photo = f.name
 
             # Logo club : priorité à l'upload manuel
             path_logo_club = None
             if logo_club_upload:
                 ext_logo = logo_club_upload.name.rsplit(".", 1)[-1]
                 with tempfile.NamedTemporaryFile(suffix=f".{ext_logo}", delete=False) as f:
-                    logo_club_upload.seek(0)  # st.image() consomme le pointeur — rembobiner
-                    f.write(logo_club_upload.read()); path_logo_club = f.name
+                    f.write(logo_club_upload.getvalue()); path_logo_club = f.name
 
             path_comp_sain = None
             if pdf_comp_sain:

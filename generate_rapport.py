@@ -111,6 +111,22 @@ def interpreter_deficit(deficit: Optional[float], mouvement: str) -> str:
     else:            return f"{mv.capitalize()} — déficit important"
 
 
+def _sanitiser_emojis(texte: str) -> str:
+    """Remplace les emojis non-BMP (invisibles sous WeasyPrint) par des spans HTML colorés."""
+    remplacements = [
+        ("🟠", '<span style="color:#e07b00;font-weight:bold;">&#9888;</span>'),
+        ("✅", '<span style="color:#2a8a36;font-weight:bold;">&#10003;</span>'),
+        ("📈", '<span style="color:#1c3f6e;font-weight:bold;">&#8593;</span>'),
+        ("🔴", '<span style="color:#c0392b;font-weight:bold;">&#9679;</span>'),
+        ("🟢", '<span style="color:#2a8a36;font-weight:bold;">&#9679;</span>'),
+        ("🟡", '<span style="color:#d97000;font-weight:bold;">&#9679;</span>'),
+        ("⚠️", '<span style="color:#e07b00;font-weight:bold;">&#9888;</span>'),
+    ]
+    for emoji, html in remplacements:
+        texte = texte.replace(emoji, html)
+    return texte
+
+
 def encoder_image(path: str) -> Optional[str]:
     if not path or not os.path.exists(path): return None
     ext  = path.rsplit(".", 1)[-1].lower()
@@ -319,7 +335,11 @@ def construire_contexte(
         elif c == "green" and d is not None: pos.append(f"{label} : {abs(d):.1f}%")
         if p is not None and p > 0:
             prog_list.append(f"{row['mouvement']} {row['metrique']} ({row['vitesse']}) : +{p:.1f}%")
-    remarques = {"points_attention": att[:5], "points_positifs": pos[:5], "progression": prog_list[:5]}
+    remarques = {
+        "points_attention": [_sanitiser_emojis(p) for p in att[:5]],
+        "points_positifs":  [_sanitiser_emojis(p) for p in pos[:5]],
+        "progression":      [_sanitiser_emojis(p) for p in prog_list[:5]],
+    }
 
     # Graphiques
     print("  🖼️  Génération des 8 graphiques...")

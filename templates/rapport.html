@@ -4,274 +4,249 @@
 <meta charset="UTF-8">
 <style>
 /* ══════════════════════════════════════════════════════
-   RESET & BASE
+   COULEURS EN DUR (pas de var() — incompatible WeasyPrint)
+   Bleu CERS   : #1c3f6e
+   Bleu clair  : #e8eef5
+   Bleu header : #c8d4e8
+   Bleu header2: #b0c2d8
+   Vert        : #2a8a36
+   Orange      : #d97000
+   Rouge       : #c41a1a
+   Bordure     : #cccccc
 ══════════════════════════════════════════════════════ */
-* { margin: 0; padding: 0; box-sizing: border-box; }
 
-:root {
-  --bleu:     #1c3f6e;
-  --bleu-cl:  #e8eef5;
-  --bleu-th:  #c8d4e8;
-  --bleu-th2: #b0c2d8;
-  --vert:     #2a8a36;
-  --orange:   #d97000;
-  --rouge:    #c41a1a;
-  --bord:     #cccccc;
-}
+/* Sans margin: 0, WeasyPrint applique ~10mm par défaut → le div 297mm déborde → 4 pages */
+@page { size: A4; margin: 0; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 9px;
   color: #1a1a1a;
-  background: #fff;
+  background: #ffffff;
+  overflow: hidden;
 }
 
-/* ══════════════════════════════════════════════════════
-   PAGES — chaque .page est une feuille A4
-══════════════════════════════════════════════════════ */
+/* ══ PAGES ══ */
 .page {
   width: 210mm;
-  min-height: 297mm;
+  height: 297mm;
   padding: 8mm 8mm 7mm 8mm;
-  background: #fff;
+  background: #ffffff;
   position: relative;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
-
 .page + .page {
   page-break-before: always;
   break-before: page;
 }
 
-@media print {
-  .page { page-break-after: always; break-after: page; }
-  .page:last-child { page-break-after: avoid; }
-}
-
-/* ══════════════════════════════════════════════════════
-   EN-TÊTE
-══════════════════════════════════════════════════════ */
+/* ══ EN-TÊTE ══ */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding-bottom: 5px;
   margin-bottom: 6px;
-  border-bottom: 2.5px solid var(--bleu);
+  border-bottom: 2.5px solid #1c3f6e;
   flex-shrink: 0;
 }
 .header-logo img { height: 36px; }
-.header-center { text-align: center; flex: 1; padding: 0 10px; }
-.header-center h1 {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--bleu);
-  line-height: 1.3;
+.header-logo-text {
+  font-size: 11px; font-weight: 700; color: #1c3f6e; line-height: 1.3;
 }
+.header-logo-text span { font-size: 7px; font-weight: 400; color: #555; display: block; }
+.header-center { text-align: center; flex: 1; padding: 0 10px; }
+.header-center h1 { font-size: 13px; font-weight: 700; color: #1c3f6e; line-height: 1.3; }
 .header-center .sub { font-size: 10px; font-weight: 400; color: #444; }
 .header-center .pg  { font-size: 8.5px; color: #888; }
-.club-box {
-  font-size: 8px; font-weight: 600; color: var(--bleu);
-  border: 1.5px solid var(--bleu);
-  padding: 4px 7px; border-radius: 3px;
-  display: inline-block;
-}
-
-/* ══════════════════════════════════════════════════════
-   BLOC PATIENT
-══════════════════════════════════════════════════════ */
-.patient-block {
-  border: 1.5px solid var(--bleu);
-  border-radius: 3px;
-  margin-bottom: 6px;
+.header-right {
   overflow: hidden;
   flex-shrink: 0;
+  max-width: 90px;
+}
+.header-right img {
+  width: 100%; max-width: 80px; max-height: 42px;
+  height: auto; object-fit: contain; display: block;
+}
+.header-right .club-box {
+  font-size: 8px; font-weight: 700; color: #1c3f6e;
+  border: 2px solid #1c3f6e; padding: 5px 8px;
+  border-radius: 4px; display: inline-block; text-align: center;
+  max-width: 80px;
+}
+
+/* ══ PATIENT ══ */
+.patient-block {
+  border: 1.5px solid #1c3f6e;
+  border-radius: 4px; margin-bottom: 5px; overflow: hidden; flex-shrink: 0;
 }
 .patient-title {
-  background: var(--bleu); color: #fff;
+  background: #1c3f6e; color: #ffffff;
   text-align: center; font-size: 8.5px;
   font-weight: 700; padding: 2.5px 0;
   letter-spacing: 0.8px; text-transform: uppercase;
 }
 .patient-body {
   display: flex; align-items: center;
-  padding: 6px 12px; gap: 12px;
-  background: #fff;
+  padding: 6px 12px; gap: 12px; background: #ffffff;
 }
 .patient-photo {
-  width: 50px; height: 60px; object-fit: cover;
-  border: 1px solid var(--bleu); border-radius: 2px; flex-shrink: 0;
+  width: 52px; height: 62px; object-fit: cover;
+  border: 1px solid #1c3f6e; border-radius: 2px; flex-shrink: 0;
 }
 .photo-placeholder {
-  width: 50px; height: 60px;
-  border: 1.5px dashed var(--bleu); border-radius: 2px;
+  width: 52px; height: 62px;
+  border: 1.5px dashed #1c3f6e; border-radius: 2px;
   display: flex; align-items: center; justify-content: center;
-  background: #f5f8fc; color: var(--bleu);
+  background: #f5f8fc; color: #1c3f6e;
   font-size: 7px; text-align: center; flex-shrink: 0;
 }
-.patient-info { flex: 1; }
+.patient-info { flex: 1; min-width: 0; }
 .patient-name {
-  font-size: 13px; font-weight: 700; color: var(--bleu);
+  font-size: 13px; font-weight: 700; color: #1c3f6e;
   text-transform: uppercase; margin-bottom: 3px;
 }
 .patient-details { font-size: 8px; color: #333; line-height: 1.9; }
-.patient-details b { color: #111; }
-.patient-dates { text-align: right; font-size: 8.5px; line-height: 2.1; }
-.patient-dates strong { color: var(--bleu); font-weight: 700; }
+.patient-details b { color: #111; font-weight: 700; }
+.patient-dates {
+  text-align: right; font-size: 8px; line-height: 2.0;
+  white-space: nowrap; flex-shrink: 0;
+}
+.patient-dates strong { color: #1c3f6e; font-weight: 700; }
 
-/* ══════════════════════════════════════════════════════
-   SECTION TITRE
-══════════════════════════════════════════════════════ */
+/* ══ SECTION TITRE ══ */
 .section-title {
-  background: var(--bleu); color: #fff;
+  background: #1c3f6e; color: #ffffff;
   text-align: center; font-size: 9px; font-weight: 700;
-  padding: 3px 0; border-radius: 2px 2px 0 0;
-  margin-bottom: 0;
+  padding: 3px 0; border-radius: 2px 2px 0 0; margin-bottom: 0;
+  flex-shrink: 0;
 }
 
-/* ══════════════════════════════════════════════════════
-   TABLEAU MÉTRIQUE
-   Colonnes : Métrique | Entrée(Sain|Lésé|Déf) | Sortie(Sain|Lésé|Déf) | ProgSain | ProgLésé | Interp
-══════════════════════════════════════════════════════ */
-.mt {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 5px;
-  font-size: 7.8px;
-}
+/* ══ TABLEAUX ══ */
+.mt { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-size: 7.5px; table-layout: fixed; }
+
 .mt th {
-  background: var(--bleu-th);
-  color: #1a1a1a;
-  font-weight: 700;
-  padding: 3px 3px;
-  text-align: center;
-  border: 1px solid #99aac4;
-  font-size: 7px;
-  text-transform: uppercase;
-  line-height: 1.3;
+  background: #c8d4e8;
+  color: #1a1a1a; font-weight: 700;
+  padding: 2px 2px; text-align: center;
+  border: 1px solid #99aac4; font-size: 6.5px;
+  text-transform: uppercase; line-height: 1.2;
 }
-.mt th.hm { text-align: left; width: 88px; background: var(--bleu-th2); }
-.mt th.hg { background: #d4e2f0; }  /* groupe Entrée/Sortie */
+.mt th.hm { text-align: left; width: 76px; background: #b0c2d8; }
+.mt th.hg { background: #d4e2f0; }
 
 .mt td {
-  padding: 3px 3px;
-  border: 1px solid var(--bord);
-  text-align: center;
-  vertical-align: middle;
-  line-height: 1.3;
+  padding: 2px 3px; border: 1px solid #cccccc;
+  text-align: center; vertical-align: middle; line-height: 1.2;
+  overflow: hidden;
 }
 .mt td.cm {
-  text-align: left;
-  font-weight: 700;
-  background: var(--bleu-cl);
-  font-size: 7.5px;
+  text-align: left; font-weight: 700;
+  background: #e8eef5; font-size: 7px;
 }
 .mt td.cm .sl {
-  font-weight: 400; font-size: 6.5px;
-  color: #666; display: block; margin-top: 1px;
+  font-weight: 400; font-size: 6px; color: #666;
+  display: block; margin-top: 1px;
 }
 .mt tr.alt td { background: #f7f9fc; }
 .mt tr.alt td.cm { background: #dae3ee; }
 
-/* Séparateur de groupe (Extension / Flexion / Ratio) */
+/* Séparateurs groupe */
 .mt tr.grp td {
   background: #dce6f2 !important;
-  color: var(--bleu);
-  font-weight: 700;
-  font-size: 7px;
-  padding: 2px 5px;
-  border-color: #99aac4;
+  color: #1c3f6e; font-weight: 700; font-size: 6.5px;
+  padding: 2px 4px; border-color: #99aac4;
 }
 
-/* Cellules déficit colorées */
-.dg { background: var(--vert)   !important; color: #fff !important; font-weight: 700; }
-.do { background: var(--orange) !important; color: #fff !important; font-weight: 700; }
-.dr { background: var(--rouge)  !important; color: #fff !important; font-weight: 700; }
-.dw { background: #999          !important; color: #fff !important; font-weight: 700; }
+/* Déficits colorés — COULEURS EN DUR */
+.dg { background: #2a8a36 !important; color: #ffffff !important; font-weight: 700; }
+.do { background: #d97000 !important; color: #ffffff !important; font-weight: 700; }
+.dr { background: #c41a1a !important; color: #ffffff !important; font-weight: 700; }
+.dw { background: #999999 !important; color: #ffffff !important; font-weight: 700; }
 
-/* Progression */
-.pg { color: var(--vert);  font-weight: 700; }
-.pr { color: var(--rouge); font-weight: 700; }
-.pn { color: #888; }
+/* Progressions */
+.pg { color: #2a8a36; font-weight: 700; }
+.pr { color: #c41a1a; font-weight: 700; }
+.pn { color: #888888; }
 
 /* Interprétation */
-.interp { font-size: 6.8px; color: #333; text-align: left !important; line-height: 1.3; }
+.interp { font-size: 6.5px; color: #333333; text-align: left !important; line-height: 1.2; overflow: hidden; }
 
-/* ══════════════════════════════════════════════════════
-   LÉGENDE
-══════════════════════════════════════════════════════ */
+/* ══ LÉGENDE ══ */
 .legende {
-  display: flex; gap: 0; margin-bottom: 5px;
-  border-radius: 2px; overflow: hidden; border: 1px solid #aaa;
+  display: flex; gap: 0; margin-bottom: 4px;
+  border-radius: 2px; overflow: hidden; border: 1px solid #aaaaaa;
   flex-shrink: 0;
 }
-.legende div {
-  flex: 1; padding: 3px 4px;
-  text-align: center; font-size: 7.5px;
-  font-weight: 700; color: #fff;
-}
-.lr { background: var(--rouge);  }
-.lo { background: var(--orange); }
-.lv { background: var(--vert);   }
+.legende .lr { flex: 1; padding: 2px 4px; text-align: center; font-size: 7px; font-weight: 700; color: #ffffff; background: #c41a1a; }
+.legende .lo { flex: 1; padding: 2px 4px; text-align: center; font-size: 7px; font-weight: 700; color: #ffffff; background: #d97000; }
+.legende .lv { flex: 1; padding: 2px 4px; text-align: center; font-size: 7px; font-weight: 700; color: #ffffff; background: #2a8a36; }
 
-/* ══════════════════════════════════════════════════════
-   REMARQUES
-══════════════════════════════════════════════════════ */
+/* ══ REMARQUES ══ */
 .rem-block {
-  border: 1.5px solid var(--bleu);
-  border-radius: 3px; overflow: hidden;
-  margin-bottom: 5px; flex-shrink: 0;
+  border: 1.5px solid #1c3f6e; border-radius: 3px;
+  overflow: hidden; margin-bottom: 4px; flex-shrink: 0;
 }
 .rem-title {
-  background: var(--bleu); color: #fff;
-  font-size: 8.5px; font-weight: 700; padding: 2.5px 8px;
+  background: #1c3f6e; color: #ffffff;
+  font-size: 8.5px; font-weight: 700; padding: 2px 8px;
 }
 .rem-body {
-  padding: 5px 8px; background: #f5f8fc;
-  display: flex; gap: 10px;
+  padding: 4px 8px; background: #f5f8fc; display: flex; gap: 8px;
 }
-.rem-col { flex: 1; }
+.rem-col { flex: 1; min-width: 0; }
 .rem-col h4 {
-  font-size: 7px; font-weight: 700; color: var(--bleu);
+  font-size: 6.5px; font-weight: 700; color: #1c3f6e;
   text-transform: uppercase; margin-bottom: 2px;
-  border-bottom: 1px solid var(--bleu-th); padding-bottom: 1px;
+  border-bottom: 1px solid #c8d4e8; padding-bottom: 1px;
 }
-.rem-col p { font-size: 6.8px; padding: 1px 0; color: #222; line-height: 1.4; }
+.rem-col p { font-size: 6.5px; padding: 1px 0; color: #222222; line-height: 1.3; }
+.rem-col p .dot-ok  { color: #2a8a36; font-weight: 700; }
+.rem-col p .dot-att { color: #d97000; font-weight: 700; }
+.rem-col p .dot-prog{ color: #1c3f6e; font-weight: 700; }
 
-/* ══════════════════════════════════════════════════════
-   GRAPHIQUES (page 2)
-══════════════════════════════════════════════════════ */
+/* ══ GRAPHIQUES ══ */
 .graph-grid {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 5px; margin-bottom: 6px;
 }
 .graph-card {
-  border: 1px solid #ddd; border-radius: 3px; overflow: hidden;
+  border: 1px solid #dddddd; border-radius: 3px; overflow: hidden;
 }
 .graph-card-label {
-  background: var(--bleu-cl); color: var(--bleu);
+  background: #e8eef5; color: #1c3f6e;
   font-size: 7.5px; font-weight: 700;
   text-align: center; padding: 2.5px 0;
-  border-bottom: 1px solid var(--bleu-th);
+  border-bottom: 1px solid #c8d4e8;
 }
 .graph-card img { width: 100%; height: auto; display: block; }
 
-/* ══════════════════════════════════════════════════════
-   FOOTER
-══════════════════════════════════════════════════════ */
+/* ══ SECTION GRAPHIQUES TITRE ══ */
+.graph-section-title {
+  background: #1c3f6e; color: #ffffff;
+  text-align: center; font-size: 9px; font-weight: 700;
+  padding: 3px 0; border-radius: 2px 2px 0 0; margin-bottom: 4px;
+  flex-shrink: 0;
+}
+
+/* ══ FOOTER ══ */
 .footer {
   display: flex; align-items: center; justify-content: space-between;
-  border-top: 1.5px solid var(--bleu);
-  padding-top: 4px; margin-top: auto;  /* pousse vers le bas */
+  border-top: 1.5px solid #1c3f6e;
+  padding-top: 4px; margin-top: auto;
+  flex-shrink: 0;
 }
-.footer img { height: 18px; }
+.footer-logo img { height: 18px; }
+.footer-logo-text { font-size: 8px; font-weight: 700; color: #1c3f6e; }
 .footer-mention {
-  font-size: 6.5px; color: #777;
-  font-style: italic; text-align: center;
-  flex: 1; padding: 0 8px;
+  font-size: 6.5px; color: #777777;
+  font-style: italic; text-align: center; flex: 1; padding: 0 8px;
 }
-.footer-page { font-size: 7px; color: #999; white-space: nowrap; }
+.footer-page { font-size: 7px; color: #999999; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -281,11 +256,13 @@ body {
      ╚══════════════════════════════════════════════════╝ -->
 <div class="page">
 
-  <!-- ── EN-TÊTE ── -->
+  <!-- EN-TÊTE -->
   <div class="header">
     <div class="header-logo">
-      {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
-      {% else %}<div style="font-size:11px;font-weight:700;color:var(--bleu);">CERS<br><span style="font-size:7px;font-weight:400;color:#555;">Ramsay Santé</span></div>
+      {% if logo_cers_b64 %}
+        <img src="{{ logo_cers_b64 }}" alt="CERS">
+      {% else %}
+        <div class="header-logo-text">CERS<span>Ramsay Santé</span></div>
       {% endif %}
     </div>
     <div class="header-center">
@@ -294,18 +271,24 @@ body {
         <span class="pg"> — Page 1/2</span>
       </h1>
     </div>
-    <div>
-      {% if logo_club_b64 %}<img src="{{ logo_club_b64 }}" alt="{{ nom_club }}" style="height:38px;">
-      {% else %}<div class="club-box">{{ nom_club }}</div>{% endif %}
+    <div class="header-right">
+      {% if logo_club_b64 %}
+        <img src="{{ logo_club_b64 }}" alt="{{ nom_club }}">
+      {% else %}
+        <div class="club-box">{{ nom_club }}</div>
+      {% endif %}
     </div>
   </div>
 
-  <!-- ── PATIENT ── -->
+  <!-- PATIENT -->
   <div class="patient-block">
     <div class="patient-title">Identité du Patient</div>
     <div class="patient-body">
-      {% if photo_b64 %}<img class="patient-photo" src="{{ photo_b64 }}" alt="Photo">
-      {% else %}<div class="photo-placeholder">Photo<br>patient</div>{% endif %}
+      {% if photo_b64 %}
+        <img class="patient-photo" src="{{ photo_b64 }}" alt="Photo">
+      {% else %}
+        <div class="photo-placeholder">Photo<br>patient</div>
+      {% endif %}
       <div class="patient-info">
         <div class="patient-name">{{ patient.nom }}</div>
         <div class="patient-details">
@@ -323,9 +306,7 @@ body {
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════
-       MACRO : un tableau de série
-  ════════════════════════════════════════════════ -->
+  <!-- MACRO TABLEAU -->
   {% macro tableau(s, meta, titre, date_e, date_s) %}
   <div class="section-title">{{ titre }}</div>
   <table class="mt">
@@ -334,8 +315,8 @@ body {
         <th class="hm" rowspan="2">Métrique</th>
         <th class="hg" colspan="3">Entrée — {{ date_e }}</th>
         <th class="hg" colspan="3">Sortie — {{ date_s }}</th>
-        <th rowspan="2">Prog.<br>Sain&nbsp;(D)</th>
-        <th rowspan="2">Prog.<br>Lésé&nbsp;(G)</th>
+        <th rowspan="2">Prog.<br>Sain (D)</th>
+        <th rowspan="2">Prog.<br>Lésé (G)</th>
         <th rowspan="2">Interprétation</th>
       </tr>
       <tr>
@@ -345,21 +326,16 @@ body {
     </thead>
     <tbody>
 
-      <!-- ── EXTENSION ── -->
-      <tr class="grp"><td colspan="10">▶&nbsp;EXTENSION</td></tr>
+      <tr class="grp"><td colspan="10">&#9658;&nbsp;EXTENSION</td></tr>
 
       <tr>
         <td class="cm">Moment Max<span class="sl">N·m</span></td>
-        <td>{{ s.ext_moment_max.entree_sain_d }}</td>
-        <td>{{ s.ext_moment_max.entree_lese_g }}</td>
-        <td class="d{{ s.ext_moment_max.couleur_deficit_entree[0] }}">
-          {% if s.ext_moment_max.entree_deficit_pct is not none %}{{ "%.1f"|format(s.ext_moment_max.entree_deficit_pct) }}%{% else %}—{% endif %}
-        </td>
-        <td>{{ s.ext_moment_max.sortie_sain_d }}</td>
-        <td>{{ s.ext_moment_max.sortie_lese_g }}</td>
-        <td class="d{{ s.ext_moment_max.couleur_deficit[0] }}">
-          {% if s.ext_moment_max.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.ext_moment_max.sortie_deficit_pct) }}%{% else %}—{% endif %}
-        </td>
+        <td>{{ s.ext_moment_max.entree_sain_d | fmt }}</td>
+        <td>{{ s.ext_moment_max.entree_lese_g | fmt }}</td>
+        <td class="d{{ s.ext_moment_max.couleur_deficit_entree[0] }}">{% if s.ext_moment_max.entree_deficit_pct is not none %}{{ "%.1f"|format(s.ext_moment_max.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
+        <td>{{ s.ext_moment_max.sortie_sain_d | fmt }}</td>
+        <td>{{ s.ext_moment_max.sortie_lese_g | fmt }}</td>
+        <td class="d{{ s.ext_moment_max.couleur_deficit[0] }}">{% if s.ext_moment_max.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.ext_moment_max.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.ext_moment_max.couleur_prog_sain[0] }}">{% if s.ext_moment_max.progression_sain is not none %}{{ "%+.1f"|format(s.ext_moment_max.progression_sain) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.ext_moment_max.couleur_prog[0] }}">{% if s.ext_moment_max.progression_pct is not none %}{{ "%+.1f"|format(s.ext_moment_max.progression_pct) }}%{% else %}—{% endif %}</td>
         <td class="interp">{{ s.ext_moment_max.interpretation }}</td>
@@ -367,11 +343,11 @@ body {
 
       <tr class="alt">
         <td class="cm">Moment/Poids<span class="sl">%</span></td>
-        <td>{{ s.ext_moment_poids.entree_sain_d }}</td>
-        <td>{{ s.ext_moment_poids.entree_lese_g }}</td>
+        <td>{{ s.ext_moment_poids.entree_sain_d | fmt }}</td>
+        <td>{{ s.ext_moment_poids.entree_lese_g | fmt }}</td>
         <td class="dw">—</td>
-        <td>{{ s.ext_moment_poids.sortie_sain_d }}</td>
-        <td>{{ s.ext_moment_poids.sortie_lese_g }}</td>
+        <td>{{ s.ext_moment_poids.sortie_sain_d | fmt }}</td>
+        <td>{{ s.ext_moment_poids.sortie_lese_g | fmt }}</td>
         <td class="dw">—</td>
         <td class="p{{ s.ext_moment_poids.couleur_prog_sain[0] }}">{% if s.ext_moment_poids.progression_sain is not none %}{{ "%+.1f"|format(s.ext_moment_poids.progression_sain) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.ext_moment_poids.couleur_prog[0] }}">{% if s.ext_moment_poids.progression_pct is not none %}{{ "%+.1f"|format(s.ext_moment_poids.progression_pct) }}%{% else %}—{% endif %}</td>
@@ -380,16 +356,12 @@ body {
 
       <tr>
         <td class="cm">Travail Total<span class="sl">J</span></td>
-        <td>{{ s.ext_travail_total.entree_sain_d }}</td>
-        <td>{{ s.ext_travail_total.entree_lese_g }}</td>
-        <td class="d{{ s.ext_travail_total.couleur_deficit_entree[0] }}">
-          {% if s.ext_travail_total.entree_deficit_pct is not none %}{{ "%.1f"|format(s.ext_travail_total.entree_deficit_pct) }}%{% else %}—{% endif %}
-        </td>
-        <td>{{ s.ext_travail_total.sortie_sain_d }}</td>
-        <td>{{ s.ext_travail_total.sortie_lese_g }}</td>
-        <td class="d{{ s.ext_travail_total.couleur_deficit[0] }}">
-          {% if s.ext_travail_total.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.ext_travail_total.sortie_deficit_pct) }}%{% else %}—{% endif %}
-        </td>
+        <td>{{ s.ext_travail_total.entree_sain_d | fmt }}</td>
+        <td>{{ s.ext_travail_total.entree_lese_g | fmt }}</td>
+        <td class="d{{ s.ext_travail_total.couleur_deficit_entree[0] }}">{% if s.ext_travail_total.entree_deficit_pct is not none %}{{ "%.1f"|format(s.ext_travail_total.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
+        <td>{{ s.ext_travail_total.sortie_sain_d | fmt }}</td>
+        <td>{{ s.ext_travail_total.sortie_lese_g | fmt }}</td>
+        <td class="d{{ s.ext_travail_total.couleur_deficit[0] }}">{% if s.ext_travail_total.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.ext_travail_total.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.ext_travail_total.couleur_prog_sain[0] }}">{% if s.ext_travail_total.progression_sain is not none %}{{ "%+.1f"|format(s.ext_travail_total.progression_sain) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.ext_travail_total.couleur_prog[0] }}">{% if s.ext_travail_total.progression_pct is not none %}{{ "%+.1f"|format(s.ext_travail_total.progression_pct) }}%{% else %}—{% endif %}</td>
         <td class="interp">{{ s.ext_travail_total.interpretation }}</td>
@@ -397,36 +369,27 @@ body {
 
       <tr class="alt">
         <td class="cm">Puissance Max<span class="sl">W</span></td>
-        <td>{{ s.ext_puissance_max.entree_sain_d }}</td>
-        <td>{{ s.ext_puissance_max.entree_lese_g }}</td>
-        <td class="d{{ s.ext_puissance_max.couleur_deficit_entree[0] }}">
-          {% if s.ext_puissance_max.entree_deficit_pct is not none %}{{ "%.1f"|format(s.ext_puissance_max.entree_deficit_pct) }}%{% else %}—{% endif %}
-        </td>
-        <td>{{ s.ext_puissance_max.sortie_sain_d }}</td>
-        <td>{{ s.ext_puissance_max.sortie_lese_g }}</td>
-        <td class="d{{ s.ext_puissance_max.couleur_deficit[0] }}">
-          {% if s.ext_puissance_max.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.ext_puissance_max.sortie_deficit_pct) }}%{% else %}—{% endif %}
-        </td>
+        <td>{{ s.ext_puissance_max.entree_sain_d | fmt }}</td>
+        <td>{{ s.ext_puissance_max.entree_lese_g | fmt }}</td>
+        <td class="d{{ s.ext_puissance_max.couleur_deficit_entree[0] }}">{% if s.ext_puissance_max.entree_deficit_pct is not none %}{{ "%.1f"|format(s.ext_puissance_max.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
+        <td>{{ s.ext_puissance_max.sortie_sain_d | fmt }}</td>
+        <td>{{ s.ext_puissance_max.sortie_lese_g | fmt }}</td>
+        <td class="d{{ s.ext_puissance_max.couleur_deficit[0] }}">{% if s.ext_puissance_max.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.ext_puissance_max.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.ext_puissance_max.couleur_prog_sain[0] }}">{% if s.ext_puissance_max.progression_sain is not none %}{{ "%+.1f"|format(s.ext_puissance_max.progression_sain) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.ext_puissance_max.couleur_prog[0] }}">{% if s.ext_puissance_max.progression_pct is not none %}{{ "%+.1f"|format(s.ext_puissance_max.progression_pct) }}%{% else %}—{% endif %}</td>
         <td class="interp">{{ s.ext_puissance_max.interpretation }}</td>
       </tr>
 
-      <!-- ── FLEXION ── -->
-      <tr class="grp"><td colspan="10">▶&nbsp;FLEXION</td></tr>
+      <tr class="grp"><td colspan="10">&#9658;&nbsp;FLEXION</td></tr>
 
       <tr>
         <td class="cm">Moment Max<span class="sl">N·m</span></td>
-        <td>{{ s.flex_moment_max.entree_sain_d }}</td>
-        <td>{{ s.flex_moment_max.entree_lese_g }}</td>
-        <td class="d{{ s.flex_moment_max.couleur_deficit_entree[0] }}">
-          {% if s.flex_moment_max.entree_deficit_pct is not none %}{{ "%.1f"|format(s.flex_moment_max.entree_deficit_pct) }}%{% else %}—{% endif %}
-        </td>
-        <td>{{ s.flex_moment_max.sortie_sain_d }}</td>
-        <td>{{ s.flex_moment_max.sortie_lese_g }}</td>
-        <td class="d{{ s.flex_moment_max.couleur_deficit[0] }}">
-          {% if s.flex_moment_max.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.flex_moment_max.sortie_deficit_pct) }}%{% else %}—{% endif %}
-        </td>
+        <td>{{ s.flex_moment_max.entree_sain_d | fmt }}</td>
+        <td>{{ s.flex_moment_max.entree_lese_g | fmt }}</td>
+        <td class="d{{ s.flex_moment_max.couleur_deficit_entree[0] }}">{% if s.flex_moment_max.entree_deficit_pct is not none %}{{ "%.1f"|format(s.flex_moment_max.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
+        <td>{{ s.flex_moment_max.sortie_sain_d | fmt }}</td>
+        <td>{{ s.flex_moment_max.sortie_lese_g | fmt }}</td>
+        <td class="d{{ s.flex_moment_max.couleur_deficit[0] }}">{% if s.flex_moment_max.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.flex_moment_max.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.flex_moment_max.couleur_prog_sain[0] }}">{% if s.flex_moment_max.progression_sain is not none %}{{ "%+.1f"|format(s.flex_moment_max.progression_sain) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.flex_moment_max.couleur_prog[0] }}">{% if s.flex_moment_max.progression_pct is not none %}{{ "%+.1f"|format(s.flex_moment_max.progression_pct) }}%{% else %}—{% endif %}</td>
         <td class="interp">{{ s.flex_moment_max.interpretation }}</td>
@@ -434,11 +397,11 @@ body {
 
       <tr class="alt">
         <td class="cm">Moment/Poids<span class="sl">%</span></td>
-        <td>{{ s.flex_moment_poids.entree_sain_d }}</td>
-        <td>{{ s.flex_moment_poids.entree_lese_g }}</td>
+        <td>{{ s.flex_moment_poids.entree_sain_d | fmt }}</td>
+        <td>{{ s.flex_moment_poids.entree_lese_g | fmt }}</td>
         <td class="dw">—</td>
-        <td>{{ s.flex_moment_poids.sortie_sain_d }}</td>
-        <td>{{ s.flex_moment_poids.sortie_lese_g }}</td>
+        <td>{{ s.flex_moment_poids.sortie_sain_d | fmt }}</td>
+        <td>{{ s.flex_moment_poids.sortie_lese_g | fmt }}</td>
         <td class="dw">—</td>
         <td class="p{{ s.flex_moment_poids.couleur_prog_sain[0] }}">{% if s.flex_moment_poids.progression_sain is not none %}{{ "%+.1f"|format(s.flex_moment_poids.progression_sain) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.flex_moment_poids.couleur_prog[0] }}">{% if s.flex_moment_poids.progression_pct is not none %}{{ "%+.1f"|format(s.flex_moment_poids.progression_pct) }}%{% else %}—{% endif %}</td>
@@ -447,16 +410,12 @@ body {
 
       <tr>
         <td class="cm">Travail Total<span class="sl">J</span></td>
-        <td>{{ s.flex_travail_total.entree_sain_d }}</td>
-        <td>{{ s.flex_travail_total.entree_lese_g }}</td>
-        <td class="d{{ s.flex_travail_total.couleur_deficit_entree[0] }}">
-          {% if s.flex_travail_total.entree_deficit_pct is not none %}{{ "%.1f"|format(s.flex_travail_total.entree_deficit_pct) }}%{% else %}—{% endif %}
-        </td>
-        <td>{{ s.flex_travail_total.sortie_sain_d }}</td>
-        <td>{{ s.flex_travail_total.sortie_lese_g }}</td>
-        <td class="d{{ s.flex_travail_total.couleur_deficit[0] }}">
-          {% if s.flex_travail_total.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.flex_travail_total.sortie_deficit_pct) }}%{% else %}—{% endif %}
-        </td>
+        <td>{{ s.flex_travail_total.entree_sain_d | fmt }}</td>
+        <td>{{ s.flex_travail_total.entree_lese_g | fmt }}</td>
+        <td class="d{{ s.flex_travail_total.couleur_deficit_entree[0] }}">{% if s.flex_travail_total.entree_deficit_pct is not none %}{{ "%.1f"|format(s.flex_travail_total.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
+        <td>{{ s.flex_travail_total.sortie_sain_d | fmt }}</td>
+        <td>{{ s.flex_travail_total.sortie_lese_g | fmt }}</td>
+        <td class="d{{ s.flex_travail_total.couleur_deficit[0] }}">{% if s.flex_travail_total.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.flex_travail_total.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.flex_travail_total.couleur_prog_sain[0] }}">{% if s.flex_travail_total.progression_sain is not none %}{{ "%+.1f"|format(s.flex_travail_total.progression_sain) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.flex_travail_total.couleur_prog[0] }}">{% if s.flex_travail_total.progression_pct is not none %}{{ "%+.1f"|format(s.flex_travail_total.progression_pct) }}%{% else %}—{% endif %}</td>
         <td class="interp">{{ s.flex_travail_total.interpretation }}</td>
@@ -464,23 +423,18 @@ body {
 
       <tr class="alt">
         <td class="cm">Puissance Max<span class="sl">W</span></td>
-        <td>{{ s.flex_puissance_max.entree_sain_d }}</td>
-        <td>{{ s.flex_puissance_max.entree_lese_g }}</td>
-        <td class="d{{ s.flex_puissance_max.couleur_deficit_entree[0] }}">
-          {% if s.flex_puissance_max.entree_deficit_pct is not none %}{{ "%.1f"|format(s.flex_puissance_max.entree_deficit_pct) }}%{% else %}—{% endif %}
-        </td>
-        <td>{{ s.flex_puissance_max.sortie_sain_d }}</td>
-        <td>{{ s.flex_puissance_max.sortie_lese_g }}</td>
-        <td class="d{{ s.flex_puissance_max.couleur_deficit[0] }}">
-          {% if s.flex_puissance_max.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.flex_puissance_max.sortie_deficit_pct) }}%{% else %}—{% endif %}
-        </td>
+        <td>{{ s.flex_puissance_max.entree_sain_d | fmt }}</td>
+        <td>{{ s.flex_puissance_max.entree_lese_g | fmt }}</td>
+        <td class="d{{ s.flex_puissance_max.couleur_deficit_entree[0] }}">{% if s.flex_puissance_max.entree_deficit_pct is not none %}{{ "%.1f"|format(s.flex_puissance_max.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
+        <td>{{ s.flex_puissance_max.sortie_sain_d | fmt }}</td>
+        <td>{{ s.flex_puissance_max.sortie_lese_g | fmt }}</td>
+        <td class="d{{ s.flex_puissance_max.couleur_deficit[0] }}">{% if s.flex_puissance_max.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.flex_puissance_max.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.flex_puissance_max.couleur_prog_sain[0] }}">{% if s.flex_puissance_max.progression_sain is not none %}{{ "%+.1f"|format(s.flex_puissance_max.progression_sain) }}%{% else %}—{% endif %}</td>
         <td class="p{{ s.flex_puissance_max.couleur_prog[0] }}">{% if s.flex_puissance_max.progression_pct is not none %}{{ "%+.1f"|format(s.flex_puissance_max.progression_pct) }}%{% else %}—{% endif %}</td>
         <td class="interp">{{ s.flex_puissance_max.interpretation }}</td>
       </tr>
 
-      <!-- ── RATIO I/Q ── -->
-      <tr class="grp"><td colspan="10">▶&nbsp;RATIO I/Q — Norme : 0,50–0,70</td></tr>
+      <tr class="grp"><td colspan="10">&#9658;&nbsp;RATIO I/Q — Norme : 0,50–0,70</td></tr>
 
       <tr>
         <td class="cm">Ratio I/Q<span class="sl">Ischio/Quadri</span></td>
@@ -493,7 +447,6 @@ body {
         <td class="interp">Flexion / Extension</td>
       </tr>
 
-      <!-- ── RATIO / POIDS DU CORPS ── -->
       <tr class="alt">
         <td class="cm">Ratio/Poids corps<span class="sl">Ext N·m/kg</span></td>
         <td colspan="2" style="font-size:7.5px;">Sain: <b>{{ s.ext_ratio_poids.entree_sain_d | fmt(2) }}</b> &nbsp; Lésé: <b>{{ s.ext_ratio_poids.entree_lese_g | fmt(2) }}</b></td>
@@ -509,50 +462,49 @@ body {
   </table>
   {% endmacro %}
 
-  <!-- Tableau 60°/s -->
-  {{ tableau(s60, serie60_meta, "Vitesse 60°/s — Force (Isocinétique Lent)", entree.date_test, sortie.date_test) }}
-
-  <!-- Tableau 240°/s -->
+  {{ tableau(s60,  serie60_meta,  "Vitesse 60°/s — Force (Isocinétique Lent)",    entree.date_test, sortie.date_test) }}
   {{ tableau(s240, serie240_meta, "Vitesse 240°/s — Puissance (Isocinétique Rapide)", entree.date_test, sortie.date_test) }}
 
-  <!-- Légende -->
+  <!-- LÉGENDE -->
   <div class="legende">
     <div class="lr">Déficit &gt;20% — Déficit important</div>
     <div class="lo">Déficit 11–20% — Rééducation recommandée</div>
     <div class="lv">Déficit 1–10% — Plage normale</div>
   </div>
 
-  <!-- Remarques -->
+  <!-- REMARQUES -->
   <div class="rem-block">
-    <div class="rem-title">📋 Remarques cliniques</div>
+    <div class="rem-title">&#9656; Remarques cliniques</div>
     <div class="rem-body">
       <div class="rem-col">
         <h4>Points à améliorer</h4>
         {% for p in remarques.points_attention %}
-          <p>🟠 {{ p }}</p>
+          <p><span class="dot-att">&#9679;</span> {{ p }}</p>
         {% else %}
-          <p>✅ Aucun déficit significatif</p>
+          <p><span class="dot-ok">&#10003;</span> Aucun déficit significatif</p>
         {% endfor %}
       </div>
       <div class="rem-col">
         <h4>Points satisfaisants</h4>
         {% for p in remarques.points_positifs %}
-          <p>✅ {{ p }}</p>
+          <p><span class="dot-ok">&#10003;</span> {{ p }}</p>
         {% endfor %}
       </div>
       <div class="rem-col">
         <h4>Évolution du séjour</h4>
         {% for p in remarques.progression %}
-          <p>📈 {{ p }}</p>
+          <p><span class="dot-prog">&#9650;</span> {{ p }}</p>
         {% endfor %}
       </div>
     </div>
   </div>
 
-  <!-- Footer page 1 -->
+  <!-- FOOTER PAGE 1 -->
   <div class="footer">
-    <div>{% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
-    {% else %}<span style="font-size:8px;font-weight:700;color:var(--bleu);">CERS Capbreton</span>{% endif %}</div>
+    <div class="footer-logo">
+      {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
+      {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
+    </div>
     <div class="footer-mention">*Seuls les résultats clés sont affichés. Les rapports originaux détaillés ont été envoyés séparément.</div>
     <div class="footer-page">Page 1 / 2</div>
   </div>
@@ -565,11 +517,11 @@ body {
      ╚══════════════════════════════════════════════════╝ -->
 <div class="page">
 
-  <!-- ── EN-TÊTE ── -->
+  <!-- EN-TÊTE -->
   <div class="header">
     <div class="header-logo">
       {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
-      {% else %}<div style="font-size:11px;font-weight:700;color:var(--bleu);">CERS</div>{% endif %}
+      {% else %}<div class="header-logo-text">CERS<span>Ramsay Santé</span></div>{% endif %}
     </div>
     <div class="header-center">
       <h1>CERS Capbreton<br>
@@ -577,14 +529,14 @@ body {
         <span class="pg"> — Page 2/2</span>
       </h1>
     </div>
-    <div>
-      {% if logo_club_b64 %}<img src="{{ logo_club_b64 }}" alt="{{ nom_club }}" style="height:38px;">
+    <div class="header-right">
+      {% if logo_club_b64 %}<img src="{{ logo_club_b64 }}" alt="{{ nom_club }}">
       {% else %}<div class="club-box">{{ nom_club }}</div>{% endif %}
     </div>
   </div>
 
-  <!-- ── SECTION D vs G ── -->
-  <div class="section-title" style="margin-bottom:4px;">Courbes Isocinétiques 60°/s — Sain (D) vs Lésé (G)</div>
+  <!-- COURBES D vs G -->
+  <div class="graph-section-title">Courbes Isocinétiques 60°/s — Sain (D) vs Lésé (G)</div>
   <div class="graph-grid">
     <div class="graph-card">
       <div class="graph-card-label">Entrée {{ entree.date_test }} — Extension D vs G</div>
@@ -604,8 +556,8 @@ body {
     </div>
   </div>
 
-  <!-- ── SECTION PROGRESSION ── -->
-  <div class="section-title" style="margin-bottom:4px;">Progression Entrée → Sortie — Sain (D) et Lésé (G)</div>
+  <!-- PROGRESSION -->
+  <div class="graph-section-title">Progression Entrée &#8594; Sortie — Sain (D) et Lésé (G)</div>
   <div class="graph-grid">
     <div class="graph-card">
       <div class="graph-card-label">Extension — Progression Sain (D)</div>
@@ -625,10 +577,12 @@ body {
     </div>
   </div>
 
-  <!-- Footer page 2 -->
+  <!-- FOOTER PAGE 2 -->
   <div class="footer">
-    <div>{% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
-    {% else %}<span style="font-size:8px;font-weight:700;color:var(--bleu);">CERS Capbreton</span>{% endif %}</div>
+    <div class="footer-logo">
+      {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
+      {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
+    </div>
     <div class="footer-mention">*Seuls les résultats clés sont affichés. Les rapports originaux détaillés ont été envoyés séparément.</div>
     <div class="footer-page">Page 2 / 2</div>
   </div>

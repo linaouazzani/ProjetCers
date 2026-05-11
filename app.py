@@ -131,19 +131,36 @@ with col_left:
 
     # 2. Informations patient
     st.markdown('<div class="card"><div class="card-title">👤 Informations Patient</div>', unsafe_allow_html=True)
-    POSITIONS = [
-        "— Sélectionner —",
-        "Pilier gauche", "Talonneur", "Pilier droit",
-        "2ème ligne gauche", "2ème ligne droit",
-        "3ème ligne aile gauche", "3ème ligne aile droit", "3ème ligne centre (N°8)",
-        "Demi de mêlée", "Demi d'ouverture",
-        "Centre gauche", "Centre droit", "Ailier gauche", "Ailier droit", "Arrière",
-        "Pivot", "Ailier (basket/handball)", "Gardien",
-        "Attaquant", "Milieu", "Défenseur",
-    ]
-    position = st.selectbox("Position du joueur", POSITIONS)
-    if position == "— Sélectionner —":
-        position = "—"
+
+    sport = st.selectbox("Sport", [
+        "— Sélectionner —", "Rugby", "Football", "Basketball",
+        "Handball", "Tennis", "Natation", "Athlétisme", "Autre"
+    ])
+
+    date_operation = st.date_input(
+        "Date d'opération (optionnel)", value=None
+    )
+
+    type_blessure = st.text_input(
+        "Type de blessure (optionnel)",
+        placeholder="Ex: Rupture LCA, Ménisque..."
+    )
+
+    cote_opere = st.selectbox(
+        "Côté opéré (optionnel)",
+        ["— Sélectionner —", "Gauche", "Droit", "Bilatéral"]
+    )
+
+    acl_rsi_score = st.number_input(
+        "Score ACL-RSI % (optionnel)",
+        min_value=0, max_value=100, value=0, step=1
+    )
+
+    remarques_medecin = st.text_area(
+        "Remarques médicales (optionnel)",
+        placeholder="Zone libre pour le médecin ou kinésithérapeute...",
+        height=100
+    )
 
     photo = st.file_uploader("📸 Photo du joueur (optionnel)", type=["png","jpg","jpeg"], key="up_photo")
     if photo:
@@ -276,7 +293,7 @@ with col_right:
                     st.markdown(f"""
 📅 **Entrée :** {entree_data.date_test}
 📅 **Sortie :** {sortie_data.date_test}
-🏃 **Position :** {position}
+🏋️ **Sport :** {sport if sport != "— Sélectionner —" else "—"}
 🏆 **Club :** {st.session_state.club_selectionne['nom'] if st.session_state.club_selectionne else '—'}
                     """)
 
@@ -370,17 +387,6 @@ with col_right:
 
             progress.progress(60, text="📊 Calcul + graphiques en cours...")
 
-            print("DEBUG logo_club_upload:", logo_club_upload)
-            print("DEBUG logo_club_upload type:", type(logo_club_upload))
-            if logo_club_upload is not None:
-                data = logo_club_upload.getvalue()
-                print("DEBUG logo bytes length:", len(data))
-            print("DEBUG path_logo_club:", path_logo_club)
-            if path_logo_club:
-                print("DEBUG path exists:", os.path.exists(path_logo_club))
-                print("DEBUG path size:", os.path.getsize(path_logo_club) if os.path.exists(path_logo_club) else "N/A")
-            print("DEBUG nom_club:", nom_club)
-
             chemin = generer_rapport_biodex(
                 pdf_entree           = path_e,
                 pdf_sortie           = path_s,
@@ -389,10 +395,15 @@ with col_right:
                 output_html          = out_html,
                 output_pdf           = out_pdf,
                 template_dir         = os.path.join(_APP_DIR, "templates"),
-                position             = position,
                 nom_club             = nom_club,
                 logo_club_path       = path_logo_club,
                 photo_patient_path   = path_photo,
+                sport                = sport if sport != "— Sélectionner —" else "",
+                date_operation       = str(date_operation) if date_operation else "",
+                type_blessure        = type_blessure,
+                cote_opere           = cote_opere if cote_opere != "— Sélectionner —" else "",
+                acl_rsi_score        = acl_rsi_score if acl_rsi_score > 0 else None,
+                remarques_medecin    = remarques_medecin,
             )
 
             progress.progress(90, text="📄 Lecture du fichier généré...")

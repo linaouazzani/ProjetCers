@@ -200,10 +200,15 @@ def construire_contexte(
     entree, sortie, df_comp,
     comparatif_data: dict = None,
     comparatif_sain_data: dict = None,
-    position: str = "—",
     nom_club: str = "—",
     logo_club_path: Optional[str] = None,
     photo_patient_path: Optional[str] = None,
+    sport: str = "",
+    date_operation: str = "",
+    type_blessure: str = "",
+    cote_opere: str = "",
+    acl_rsi_score: Optional[int] = None,
+    remarques_medecin: str = "",
 ) -> dict:
 
     poids        = entree.poids_kg or sortie.poids_kg or 101.0
@@ -363,37 +368,59 @@ def construire_contexte(
     # Graphiques
     print("  🖼️  Génération des 8 graphiques...")
     graphs_dvsg = {
-        "entree_ext":  graphique_en_base64("entree_60_ext"),
-        "sortie_ext":  graphique_en_base64("sortie_60_ext"),
-        "entree_flex": graphique_en_base64("entree_60_flex"),
-        "sortie_flex": graphique_en_base64("sortie_60_flex"),
+        "entree_ext":  graphique_en_base64("entree_60_ext",  entree, "ext"),
+        "sortie_ext":  graphique_en_base64("sortie_60_ext",  sortie, "ext"),
+        "entree_flex": graphique_en_base64("entree_60_flex", entree, "flex"),
+        "sortie_flex": graphique_en_base64("sortie_60_flex", sortie, "flex"),
     }
-    params_e = {
+    params_e60 = {
         'ext':  {'sain': {'moment_max': (e60.ext_moment_max.sain_d  or 316.9), 'angle': 81, 'amplitude': 99},
                  'lese': {'moment_max': (e60.ext_moment_max.lese_g  or 313.6), 'angle': 70, 'amplitude': 101}},
         'flex': {'sain': {'moment_max': (e60.flex_moment_max.sain_d or 173.0), 'angle': 33, 'amplitude': 99},
                  'lese': {'moment_max': (e60.flex_moment_max.lese_g or 153.9), 'angle': 29, 'amplitude': 101}},
     } if e60 else {}
-    params_s = {
+    params_s60 = {
         'ext':  {'sain': {'moment_max': (s60p.ext_moment_max.sain_d  or 328.0), 'angle': 68, 'amplitude': 88},
                  'lese': {'moment_max': (s60p.ext_moment_max.lese_g  or 333.3), 'angle': 66, 'amplitude': 92}},
         'flex': {'sain': {'moment_max': (s60p.flex_moment_max.sain_d or 195.4), 'angle': 32, 'amplitude': 88},
                  'lese': {'moment_max': (s60p.flex_moment_max.lese_g or 162.0), 'angle': 27, 'amplitude': 92}},
     } if s60p else {}
-    graphs_prog = generer_graphiques_progression(params_e, params_s) if params_e and params_s else {}
+    params_e240 = {
+        'ext':  {'sain': {'moment_max': (e240.ext_moment_max.sain_d  or 200.0), 'angle': 75, 'amplitude': 99},
+                 'lese': {'moment_max': (e240.ext_moment_max.lese_g  or 195.0), 'angle': 68, 'amplitude': 101}},
+        'flex': {'sain': {'moment_max': (e240.flex_moment_max.sain_d or 120.0), 'angle': 30, 'amplitude': 99},
+                 'lese': {'moment_max': (e240.flex_moment_max.lese_g or 110.0), 'angle': 27, 'amplitude': 101}},
+    } if e240 else {}
+    params_s240 = {
+        'ext':  {'sain': {'moment_max': (s240p.ext_moment_max.sain_d  or 210.0), 'angle': 72, 'amplitude': 88},
+                 'lese': {'moment_max': (s240p.ext_moment_max.lese_g  or 205.0), 'angle': 65, 'amplitude': 92}},
+        'flex': {'sain': {'moment_max': (s240p.flex_moment_max.sain_d or 130.0), 'angle': 28, 'amplitude': 88},
+                 'lese': {'moment_max': (s240p.flex_moment_max.lese_g or 120.0), 'angle': 25, 'amplitude': 92}},
+    } if s240p else {}
+    graphs_prog = (
+        generer_graphiques_progression(params_e60, params_s60, params_e240, params_s240)
+        if params_e60 and params_s60 else {}
+    )
     print(f"  ✅ {len(graphs_dvsg) + len(graphs_prog)} graphiques générés")
 
     # Logos
     _base_dir = os.path.dirname(os.path.abspath(__file__))
     logo_cers = encoder_image(os.path.join(_base_dir, "assets", "logo_cers.png"))
     logo_club = encoder_image(logo_club_path) if logo_club_path else None
-    print("DEBUG construire_contexte logo_club_path:", logo_club_path)
-    print("DEBUG construire_contexte logo_club résultat:",
-          "None" if logo_club is None else f"OK ({len(logo_club)} chars)")
     photo     = encoder_image(photo_patient_path) if photo_patient_path else None
 
-    sortie.position = position
-    entree.position = position
+    # Calcul délai post-opératoire
+    delai_post_op = ""
+    if date_operation:
+        try:
+            from datetime import datetime
+            d_op = datetime.strptime(date_operation, "%Y-%m-%d")
+            d_test = datetime.strptime(entree.date_test, "%d/%m/%Y")
+            delta = (d_test - d_op).days
+            if delta >= 0:
+                delai_post_op = f"{delta} jours"
+        except Exception:
+            pass
 
     return {
         "patient": sortie, "entree": entree, "sortie": sortie,
@@ -404,14 +431,21 @@ def construire_contexte(
         "graph_sortie_ext":  graphs_dvsg.get("sortie_ext", ""),
         "graph_entree_flex": graphs_dvsg.get("entree_flex", ""),
         "graph_sortie_flex": graphs_dvsg.get("sortie_flex", ""),
-        "graph_prog_ext_sain":  graphs_prog.get("prog_ext_sain", ""),
-        "graph_prog_ext_lese":  graphs_prog.get("prog_ext_lese", ""),
-        "graph_prog_flex_sain": graphs_prog.get("prog_flex_sain", ""),
-        "graph_prog_flex_lese": graphs_prog.get("prog_flex_lese", ""),
-        "logo_cers_b64": logo_cers,
-        "logo_club_b64": logo_club,
-        "photo_b64":     photo,
-        "nom_club":      nom_club,
+        "graph_prog_ext_60":   graphs_prog.get("prog_ext_60", ""),
+        "graph_prog_ext_240":  graphs_prog.get("prog_ext_240", ""),
+        "graph_prog_flex_60":  graphs_prog.get("prog_flex_60", ""),
+        "graph_prog_flex_240": graphs_prog.get("prog_flex_240", ""),
+        "logo_cers_b64":    logo_cers,
+        "logo_club_b64":    logo_club,
+        "photo_b64":        photo,
+        "nom_club":         nom_club,
+        "sport":            sport,
+        "date_operation":   date_operation,
+        "type_blessure":    type_blessure,
+        "cote_opere":       cote_opere,
+        "acl_rsi_score":    acl_rsi_score,
+        "remarques_medecin": remarques_medecin,
+        "delai_post_op":    delai_post_op,
     }
 
 
@@ -513,10 +547,15 @@ def generer_rapport_biodex(
     output_html:         str = "outputs/rapport_biodex.html",
     output_pdf:          str = "outputs/rapport_biodex.pdf",
     template_dir:        str = "templates",
-    position:            str = "—",
     nom_club:            str = "—",
     logo_club_path:      Optional[str] = None,
     photo_patient_path:  Optional[str] = None,
+    sport:               str = "",
+    date_operation:      str = "",
+    type_blessure:       str = "",
+    cote_opere:          str = "",
+    acl_rsi_score:       Optional[int] = None,
+    remarques_medecin:   str = "",
 ) -> str:
 
     print("\n" + "█" * 60)
@@ -548,9 +587,15 @@ def generer_rapport_biodex(
         entree, sortie, df_comp,
         comparatif_data=comparatif_data,
         comparatif_sain_data=comparatif_sain_data,
-        position=position, nom_club=nom_club,
+        nom_club=nom_club,
         logo_club_path=logo_club_path,
         photo_patient_path=photo_patient_path,
+        sport=sport,
+        date_operation=date_operation,
+        type_blessure=type_blessure,
+        cote_opere=cote_opere,
+        acl_rsi_score=acl_rsi_score,
+        remarques_medecin=remarques_medecin,
     )
     print("  ✅ Contexte prêt")
 
@@ -580,6 +625,6 @@ if __name__ == "__main__":
         output_html    = "outputs/rapport_biodex.html",
         output_pdf     = "outputs/rapport_biodex.pdf",
         template_dir   = "templates",
-        position       = "3ème ligne",
         nom_club       = "ASM Clermont",
+        sport          = "Rugby",
     )

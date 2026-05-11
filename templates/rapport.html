@@ -64,13 +64,18 @@ body {
 .header-center .sub { font-size: 10px; font-weight: 400; color: #444; }
 .header-center .pg  { font-size: 8.5px; color: #888; }
 .header-right {
-  overflow: hidden;
+  min-width: 80px;
+  min-height: 50px;
+  overflow: visible;
   flex-shrink: 0;
-  max-width: 90px;
 }
 .header-right img {
-  width: 100%; max-width: 80px; max-height: 42px;
-  height: auto; object-fit: contain; display: block;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 80px;
+  max-height: 50px;
+  object-fit: contain;
 }
 .header-right .club-box {
   font-size: 8px; font-weight: 700; color: #1c3f6e;
@@ -273,7 +278,8 @@ body {
     </div>
     <div class="header-right">
       {% if logo_club_b64 %}
-        <img src="{{ logo_club_b64 }}" alt="{{ nom_club }}">
+        <img src="{{ logo_club_b64 }}" alt="{{ nom_club }}"
+             style="display:block; width:auto; height:auto; max-width:80px; max-height:50px; object-fit:contain;">
       {% else %}
         <div class="club-box">{{ nom_club }}</div>
       {% endif %}
@@ -533,7 +539,8 @@ body {
       </h1>
     </div>
     <div class="header-right">
-      {% if logo_club_b64 %}<img src="{{ logo_club_b64 }}" alt="{{ nom_club }}">
+      {% if logo_club_b64 %}<img src="{{ logo_club_b64 }}" alt="{{ nom_club }}"
+           style="display:block; width:auto; height:auto; max-width:80px; max-height:50px; object-fit:contain;">
       {% else %}<div class="club-box">{{ nom_club }}</div>{% endif %}
     </div>
   </div>

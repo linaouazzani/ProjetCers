@@ -41,35 +41,43 @@ import os
 
 PARAMS = {
     "entree_60_ext": {
-        "titre": "Entrée 60°/s Extension (D vs G)",
-        "sain":  {"moment_max": 316.9, "angle": 81,  "amplitude": 99},
-        "lese":  {"moment_max": 313.6, "angle": 70,  "amplitude": 101},
-        "ylim": (0, 350),
+        "titre": "Entree 60deg/s Extension (D vs G)",
+        "sain":  {"moment_max": 316.9, "angle": 81, "amplitude": 99},
+        "lese":  {"moment_max": 313.6, "angle": 70, "amplitude": 101},
+        "ylim":  (0, 350),
+        "couleur": COULEUR_ENTREE,
     },
     "sortie_60_ext": {
-        "titre": "Sortie 60°/s Extension (D vs G)",
-        "sain":  {"moment_max": 328.0, "angle": 68,  "amplitude": 88},
-        "lese":  {"moment_max": 333.3, "angle": 66,  "amplitude": 92},
-        "ylim": (0, 380),
+        "titre": "Sortie 60deg/s Extension (D vs G)",
+        "sain":  {"moment_max": 328.0, "angle": 68, "amplitude": 88},
+        "lese":  {"moment_max": 333.3, "angle": 66, "amplitude": 92},
+        "ylim":  (0, 380),
+        "couleur": COULEUR_SORTIE,
     },
     "entree_60_flex": {
-        "titre": "Entrée 60°/s Flexion (D vs G)",
-        "sain":  {"moment_max": 173.0, "angle": 33,  "amplitude": 99},
-        "lese":  {"moment_max": 153.9, "angle": 29,  "amplitude": 101},
-        "ylim": (0, 210),
+        "titre": "Entree 60deg/s Flexion (D vs G)",
+        "sain":  {"moment_max": 173.0, "angle": 33, "amplitude": 99},
+        "lese":  {"moment_max": 153.9, "angle": 29, "amplitude": 101},
+        "ylim":  (0, 210),
+        "couleur": COULEUR_ENTREE,
     },
     "sortie_60_flex": {
-        "titre": "Sortie 60°/s Flexion (D vs G)",
-        "sain":  {"moment_max": 195.4, "angle": 32,  "amplitude": 88},
-        "lese":  {"moment_max": 162.0, "angle": 27,  "amplitude": 92},
-        "ylim": (0, 230),
+        "titre": "Sortie 60deg/s Flexion (D vs G)",
+        "sain":  {"moment_max": 195.4, "angle": 32, "amplitude": 88},
+        "lese":  {"moment_max": 162.0, "angle": 27, "amplitude": 92},
+        "ylim":  (0, 230),
+        "couleur": COULEUR_SORTIE,
     },
 }
 
-# Couleurs — style Biodex fidèle à l'image de référence
-BLEU_SAIN  = "#1a5fa8"   # bleu foncé — jambe saine (D)
-ROUGE_LESE = "#cc2200"   # rouge foncé — jambe lésée (G)
-GRIS_REF   = "#888888"   # gris — ligne de référence
+# Couleurs — code couleur entrée/sortie
+COULEUR_ENTREE = "#1c3f6e"  # bleu CERS — tests d'entrée
+COULEUR_SORTIE = "#c0392b"  # rouge bordeaux — tests de sortie
+GRIS_REF       = "#888888"  # gris — ligne de référence
+
+# Alias pour compatibilité avec generer_graphiques_biodex()
+BLEU_SAIN  = COULEUR_ENTREE
+ROUGE_LESE = COULEUR_SORTIE
 
 
 # ---------------------------------------------------------------------------
@@ -130,92 +138,63 @@ def courbe_biodex(moment_max: float, angle_peak: float,
 def generer_graphique(ax, params: dict, show_ylabel: bool = True):
     """
     Dessine un graphique D vs G sur un axe matplotlib.
-
-    Args:
-        ax     : axe matplotlib sur lequel dessiner
-        params : dict avec 'titre', 'sain', 'lese', 'ylim'
-        show_ylabel : afficher le label Y (uniquement colonne gauche)
+    La couleur (entrée=#1c3f6e ou sortie=#c0392b) est dans params['couleur'].
+    Sain = trait plein, Lésé = pointillé.
     """
-    sain = params["sain"]
-    lese = params["lese"]
+    sain   = params["sain"]
+    lese   = params["lese"]
+    couleur = params.get("couleur", COULEUR_ENTREE)
 
-    # --- Génération des courbes ---
-    angles_s, moments_s = courbe_biodex(
-        sain["moment_max"], sain["angle"], sain["amplitude"]
-    )
-    angles_l, moments_l = courbe_biodex(
-        lese["moment_max"], lese["angle"], lese["amplitude"]
-    )
+    angles_s, moments_s = courbe_biodex(sain["moment_max"], sain["angle"], sain["amplitude"])
+    angles_l, moments_l = courbe_biodex(lese["moment_max"], lese["angle"], lese["amplitude"])
 
-    # --- Tracé des courbes ---
     ax.plot(angles_s, moments_s,
-            color=BLEU_SAIN, linewidth=2.2, linestyle='-',
+            color=couleur, linewidth=2.2, linestyle='-',
             label='Sain (D)', zorder=3)
 
     ax.plot(angles_l, moments_l,
-            color=ROUGE_LESE, linewidth=2.0, linestyle='--',
-            label='Lésé (G)', dashes=(6, 3), zorder=3)
+            color=couleur, linewidth=2.0, linestyle='--',
+            label='Lese (G)', dashes=(6, 3), zorder=3)
 
-    # --- Ligne horizontale : niveau du Moment Max Sain ---
     ax.axhline(y=sain["moment_max"],
                color=GRIS_REF, linewidth=1.0, linestyle='--',
                alpha=0.6, zorder=1)
 
-    # --- Ligne verticale : angle du pic lésé ---
     ax.axvline(x=lese["angle"],
-               color=ROUGE_LESE, linewidth=1.0, linestyle=':',
+               color=couleur, linewidth=1.0, linestyle=':',
                alpha=0.7, zorder=2)
 
-    # --- Annotations ---
-    # Moment Max sain (coin haut gauche)
     ax.text(2, sain["moment_max"] * 1.04,
             f'Moment Max, {sain["moment_max"]}',
-            fontsize=7.5, color='#222222', fontweight='normal',
-            va='bottom')
+            fontsize=7.5, color='#222222', fontweight='normal', va='bottom')
 
-    # Angle du pic lésé (annotation en bas à droite du marqueur)
     ax.annotate(f'Angle = {lese["angle"]}',
                 xy=(lese["angle"], lese["moment_max"] * 0.15),
                 xytext=(lese["angle"] + 3, lese["moment_max"] * 0.08),
-                fontsize=7.5, color=ROUGE_LESE,
-                arrowprops=None)
+                fontsize=7.5, color=couleur, arrowprops=None)
 
-    # Label "D" sur la courbe saine (vers la fin de la courbe)
     idx_d = int(len(angles_s) * 0.82)
     ax.text(angles_s[idx_d], moments_s[idx_d] + sain["moment_max"] * 0.04,
-            'D', fontsize=8, color=BLEU_SAIN, fontweight='bold')
+            'D', fontsize=8, color=couleur, fontweight='bold')
 
-    # Label "G" sur la courbe lésée
     idx_g = int(len(angles_l) * 0.82)
     ax.text(angles_l[idx_g], moments_l[idx_g] - sain["moment_max"] * 0.12,
-            'G', fontsize=8, color=ROUGE_LESE, fontweight='bold')
+            'G', fontsize=8, color=couleur, fontweight='bold')
 
-    # --- Style des axes ---
-    ax.set_title(params["titre"], fontsize=9, fontweight='bold',
-                 pad=6, color='#1a1a1a')
-
-    ax.set_xlabel('Angle (°)', fontsize=8, color='#444444')
+    ax.set_title(params["titre"], fontsize=9, fontweight='bold', pad=6, color='#1a1a1a')
+    ax.set_xlabel('Angle (deg)', fontsize=8, color='#444444')
     if show_ylabel:
         ax.set_ylabel('Moment Max', fontsize=8, color='#444444')
 
     ax.set_xlim(0, max(sain["amplitude"], lese["amplitude"]) + 2)
     ax.set_ylim(params["ylim"])
-
-    # Graduations
     ax.tick_params(axis='both', labelsize=7.5, colors='#555555')
     ax.set_xticks(range(0, 110, 20))
-
-    # Grille légère
-    ax.grid(True, axis='both', alpha=0.25, linewidth=0.5,
-            color='#aaaaaa', linestyle='-')
+    ax.grid(True, axis='both', alpha=0.25, linewidth=0.5, color='#aaaaaa', linestyle='-')
     ax.set_axisbelow(True)
-
-    # Bordure fine
     for spine in ax.spines.values():
         spine.set_linewidth(0.8)
         spine.set_color('#cccccc')
-
-    # Fond blanc
     ax.set_facecolor('#ffffff')
 
 
@@ -260,14 +239,14 @@ def generer_graphiques_biodex(output_path: str = "outputs/graphiques_biodex.png"
 
     # --- Légende commune en bas ---
     legend_elements = [
-        Line2D([0], [0], color=BLEU_SAIN,  linewidth=2, linestyle='-',
-               label='Sain (D)'),
-        Line2D([0], [0], color=ROUGE_LESE, linewidth=2, linestyle='--',
-               dashes=(6, 3), label='Lésé (G)'),
+        Line2D([0], [0], color=COULEUR_ENTREE, linewidth=2, linestyle='-',  label='Entree Sain (D)'),
+        Line2D([0], [0], color=COULEUR_ENTREE, linewidth=2, linestyle='--', dashes=(6, 3), label='Entree Lese (G)'),
+        Line2D([0], [0], color=COULEUR_SORTIE, linewidth=2, linestyle='-',  label='Sortie Sain (D)'),
+        Line2D([0], [0], color=COULEUR_SORTIE, linewidth=2, linestyle='--', dashes=(6, 3), label='Sortie Lese (G)'),
     ]
     fig.legend(handles=legend_elements,
-               loc='lower center', ncol=2,
-               fontsize=8.5, frameon=True,
+               loc='lower center', ncol=4,
+               fontsize=7.5, frameon=True,
                framealpha=0.9, edgecolor='#cccccc',
                bbox_to_anchor=(0.5, 0.001))
 
@@ -284,25 +263,40 @@ def generer_graphiques_biodex(output_path: str = "outputs/graphiques_biodex.png"
 # Génération d'un graphique individuel (pour intégration Jinja2 — base64)
 # ---------------------------------------------------------------------------
 
-def graphique_en_base64(cle: str) -> str:
+def graphique_en_base64(cle: str, biodex_data=None, mouvement: str = "ext") -> str:
     """
-    Génère un graphique individuel et le retourne en base64 (pour HTML inline).
-    Utilisé par generate_rapport.py pour injecter les images dans le template.
-
-    Args:
-        cle : clé du graphique ('entree_60_ext', 'sortie_60_ext', etc.)
-
-    Returns:
-        string base64 de l'image PNG
+    Génère un graphique D vs G individuel en base64.
+    Si biodex_data est fourni, les moment_max réels remplacent les valeurs PARAMS.
     """
     import io
     import base64
+
+    p = dict(PARAMS[cle])
+
+    if biodex_data is not None:
+        try:
+            serie = biodex_data.serie_60
+            if serie is not None:
+                if mouvement == "ext":
+                    sain_mm = getattr(getattr(serie, 'ext_moment_max', None), 'sain_d', None)
+                    lese_mm = getattr(getattr(serie, 'ext_moment_max', None), 'lese_g', None)
+                else:
+                    sain_mm = getattr(getattr(serie, 'flex_moment_max', None), 'sain_d', None)
+                    lese_mm = getattr(getattr(serie, 'flex_moment_max', None), 'lese_g', None)
+                if sain_mm:
+                    p["sain"] = dict(p["sain"]); p["sain"]["moment_max"] = sain_mm
+                    ymax = max(p["sain"]["moment_max"], p["lese"]["moment_max"] if not lese_mm else lese_mm) * 1.2
+                    p["ylim"] = (0, ymax)
+                if lese_mm:
+                    p["lese"] = dict(p["lese"]); p["lese"]["moment_max"] = lese_mm
+        except Exception:
+            pass
 
     fig, ax = plt.subplots(1, 1, figsize=(5.2, 3.5))
     fig.patch.set_facecolor('#ffffff')
     plt.subplots_adjust(left=0.12, right=0.96, top=0.88, bottom=0.14)
 
-    generer_graphique(ax, PARAMS[cle], show_ylabel=True)
+    generer_graphique(ax, p, show_ylabel=True)
 
     buf = io.BytesIO()
     plt.savefig(buf, format='png', dpi=150, bbox_inches='tight',
@@ -310,8 +304,7 @@ def graphique_en_base64(cle: str) -> str:
     plt.close()
     buf.seek(0)
 
-    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
-    return f"data:image/png;base64,{img_base64}"
+    return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode('utf-8')
 
 
 # ---------------------------------------------------------------------------
@@ -340,58 +333,65 @@ if __name__ == "__main__":
 # Graphiques de progression entrée → sortie
 # ---------------------------------------------------------------------------
 
-def graphique_progression(
+def _graphique_progression_4courbes(
     titre: str,
-    val_entree: float,
-    val_sortie: float,
-    angle_entree: float,
-    angle_sortie: float,
-    amplitude_entree: float,
-    amplitude_sortie: float,
-    ylim: tuple,
-    couleur: str,
+    pe_sain: dict, ps_sain: dict,
+    pe_lese: dict, ps_lese: dict,
 ) -> str:
     """
-    Génère un graphique de progression entrée→sortie pour un côté (sain ou lésé).
-    Superpose les 2 courbes : entrée (pointillé) et sortie (plein).
+    Graphique de progression avec 4 courbes :
+      - Sain Entree  : COULEUR_ENTREE, trait plein
+      - Sain Sortie  : COULEUR_SORTIE, trait plein
+      - Lese Entree  : COULEUR_ENTREE, pointille
+      - Lese Sortie  : COULEUR_SORTIE, pointille
+    Affiche le % de progression Lese en titre.
     """
     import io, base64
 
+    prog_lese = 0.0
+    if pe_lese["moment_max"] and pe_lese["moment_max"] != 0:
+        prog_lese = ((ps_lese["moment_max"] - pe_lese["moment_max"])
+                     / abs(pe_lese["moment_max"]) * 100)
+
+    ymax = max(pe_sain["moment_max"], ps_sain["moment_max"],
+               pe_lese["moment_max"], ps_lese["moment_max"]) * 1.25
+
     fig, ax = plt.subplots(figsize=(5, 3.2))
     fig.patch.set_facecolor('#fff')
-    plt.subplots_adjust(left=0.12, right=0.96, top=0.88, bottom=0.14)
+    plt.subplots_adjust(left=0.12, right=0.96, top=0.86, bottom=0.14)
 
-    ae, me = courbe_biodex(val_entree, angle_entree, amplitude_entree)
-    as_, ms = courbe_biodex(val_sortie, angle_sortie, amplitude_sortie)
+    def _plot(p_e, p_s, couleur, label_e, label_s, plein=True):
+        ae, me = courbe_biodex(p_e["moment_max"], p_e["angle"], p_e["amplitude"])
+        as_, ms = courbe_biodex(p_s["moment_max"], p_s["angle"], p_s["amplitude"])
+        ls_e = '-' if plein else '--'
+        ls_s = '-' if plein else '--'
+        ax.plot(ae, me, color=COULEUR_ENTREE, linewidth=1.6,
+                linestyle=ls_e, dashes=(5, 3) if not plein else (None, None),
+                alpha=0.8, label=label_e)
+        ax.plot(as_, ms, color=COULEUR_SORTIE, linewidth=1.8,
+                linestyle=ls_s, dashes=(5, 3) if not plein else (None, None),
+                alpha=0.9, label=label_s)
 
-    # Courbes
-    ax.plot(ae, me, color=couleur, linewidth=1.8, linestyle='--',
-            alpha=0.55, dashes=(5, 3), label=f'Entrée ({val_entree:.0f})')
-    ax.plot(as_, ms, color=couleur, linewidth=2.2, linestyle='-',
-            label=f'Sortie ({val_sortie:.0f})')
-    ax.fill_between(as_, 0, ms, alpha=0.06, color=couleur)
+    _plot(pe_sain, ps_sain, COULEUR_ENTREE,
+          f'Sain entree ({pe_sain["moment_max"]:.0f})',
+          f'Sain sortie ({ps_sain["moment_max"]:.0f})', plein=True)
+    _plot(pe_lese, ps_lese, COULEUR_ENTREE,
+          f'Lese entree ({pe_lese["moment_max"]:.0f})',
+          f'Lese sortie ({ps_lese["moment_max"]:.0f})', plein=False)
 
-    # Ligne de référence entrée
-    ax.axhline(y=val_entree, color='gray', linewidth=0.7, linestyle=':', alpha=0.5)
-
-    # Annotation progression
-    prog = round(((val_sortie - val_entree) / abs(val_entree)) * 100, 1) if val_entree else 0
-    c_p = '#2a8a36' if prog >= 0 else '#c41a1a'
-    ax.text(2, val_sortie * 1.06,
-            f'Progression : {prog:+.1f}%',
-            fontsize=8, color=c_p, fontweight='bold')
-
-    ax.set_title(titre, fontsize=8.5, fontweight='bold', color='#1a1a1a', pad=5)
-    ax.set_xlabel('Angle (°)', fontsize=7.5)
-    ax.set_ylabel('Moment Max (N·m)', fontsize=7.5)
-    ax.set_ylim(ylim)
-    ax.set_xlim(0, max(amplitude_entree, amplitude_sortie) + 2)
+    c_prog = '#2a8a36' if prog_lese >= 0 else '#c0392b'
+    full_titre = f'{titre}  (Lese: {prog_lese:+.1f}%)'
+    ax.set_title(full_titre, fontsize=8, fontweight='bold', color='#1a1a1a', pad=4)
+    ax.set_xlabel('Angle (deg)', fontsize=7.5)
+    ax.set_ylabel('Moment Max (N.m)', fontsize=7.5)
+    ax.set_ylim(0, ymax)
+    ax.set_xlim(0, max(pe_sain["amplitude"], ps_sain["amplitude"],
+                       pe_lese["amplitude"], ps_lese["amplitude"]) + 2)
     ax.grid(True, alpha=0.2, linewidth=0.5, color='#aaa')
     ax.tick_params(labelsize=7)
-    ax.legend(fontsize=7, loc='upper right', framealpha=0.8)
+    ax.legend(fontsize=6, loc='upper right', framealpha=0.8, ncol=2)
     for sp in ax.spines.values():
-        sp.set_linewidth(0.7)
-        sp.set_color('#cccccc')
+        sp.set_linewidth(0.7); sp.set_color('#cccccc')
 
     buf = io.BytesIO()
     plt.savefig(buf, format='png', dpi=150, bbox_inches='tight', facecolor='white')
@@ -400,76 +400,44 @@ def graphique_progression(
     return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()
 
 
-def generer_graphiques_progression(params_entree: dict, params_sortie: dict) -> dict:
+def generer_graphiques_progression(
+    params_e60: dict, params_s60: dict,
+    params_e240: dict = None, params_s240: dict = None,
+) -> dict:
     """
-    Génère les 4 graphiques de progression (Ext Sain, Ext Lésé, Flex Sain, Flex Lésé).
-
-    params format :
-    {
-        'ext': {'sain': {'moment_max': X, 'angle': Y, 'amplitude': Z},
-                'lese': {'moment_max': X, 'angle': Y, 'amplitude': Z}},
-        'flex': { ... }
-    }
+    Genere 4 graphiques de progression (Extension 60, Extension 240, Flexion 60, Flexion 240).
+    Chaque graphique superpose 4 courbes : Sain/Lese x Entree/Sortie.
     """
-    BLEU_SAIN  = '#1c3f6e'
-    ROUGE_LESE = '#cc2200'
-
     graphs = {}
 
-    # Extension Sain
-    graphs['prog_ext_sain'] = graphique_progression(
-        titre="Extension — Sain (D)",
-        val_entree=params_entree['ext']['sain']['moment_max'],
-        val_sortie=params_sortie['ext']['sain']['moment_max'],
-        angle_entree=params_entree['ext']['sain']['angle'],
-        angle_sortie=params_sortie['ext']['sain']['angle'],
-        amplitude_entree=params_entree['ext']['sain']['amplitude'],
-        amplitude_sortie=params_sortie['ext']['sain']['amplitude'],
-        ylim=(0, max(params_entree['ext']['sain']['moment_max'],
-                     params_sortie['ext']['sain']['moment_max']) * 1.3),
-        couleur=BLEU_SAIN,
+    graphs['prog_ext_60'] = _graphique_progression_4courbes(
+        titre="Extension 60deg/s",
+        pe_sain=params_e60['ext']['sain'], ps_sain=params_s60['ext']['sain'],
+        pe_lese=params_e60['ext']['lese'], ps_lese=params_s60['ext']['lese'],
     )
 
-    # Extension Lésé
-    graphs['prog_ext_lese'] = graphique_progression(
-        titre="Extension — Lésé (G)",
-        val_entree=params_entree['ext']['lese']['moment_max'],
-        val_sortie=params_sortie['ext']['lese']['moment_max'],
-        angle_entree=params_entree['ext']['lese']['angle'],
-        angle_sortie=params_sortie['ext']['lese']['angle'],
-        amplitude_entree=params_entree['ext']['lese']['amplitude'],
-        amplitude_sortie=params_sortie['ext']['lese']['amplitude'],
-        ylim=(0, max(params_entree['ext']['lese']['moment_max'],
-                     params_sortie['ext']['lese']['moment_max']) * 1.3),
-        couleur=ROUGE_LESE,
+    if params_e240 and params_s240:
+        graphs['prog_ext_240'] = _graphique_progression_4courbes(
+            titre="Extension 240deg/s",
+            pe_sain=params_e240['ext']['sain'], ps_sain=params_s240['ext']['sain'],
+            pe_lese=params_e240['ext']['lese'], ps_lese=params_s240['ext']['lese'],
+        )
+    else:
+        graphs['prog_ext_240'] = graphs['prog_ext_60']
+
+    graphs['prog_flex_60'] = _graphique_progression_4courbes(
+        titre="Flexion 60deg/s",
+        pe_sain=params_e60['flex']['sain'], ps_sain=params_s60['flex']['sain'],
+        pe_lese=params_e60['flex']['lese'], ps_lese=params_s60['flex']['lese'],
     )
 
-    # Flexion Sain
-    graphs['prog_flex_sain'] = graphique_progression(
-        titre="Flexion — Sain (D)",
-        val_entree=params_entree['flex']['sain']['moment_max'],
-        val_sortie=params_sortie['flex']['sain']['moment_max'],
-        angle_entree=params_entree['flex']['sain']['angle'],
-        angle_sortie=params_sortie['flex']['sain']['angle'],
-        amplitude_entree=params_entree['flex']['sain']['amplitude'],
-        amplitude_sortie=params_sortie['flex']['sain']['amplitude'],
-        ylim=(0, max(params_entree['flex']['sain']['moment_max'],
-                     params_sortie['flex']['sain']['moment_max']) * 1.3),
-        couleur=BLEU_SAIN,
-    )
-
-    # Flexion Lésé
-    graphs['prog_flex_lese'] = graphique_progression(
-        titre="Flexion — Lésé (G)",
-        val_entree=params_entree['flex']['lese']['moment_max'],
-        val_sortie=params_sortie['flex']['lese']['moment_max'],
-        angle_entree=params_entree['flex']['lese']['angle'],
-        angle_sortie=params_sortie['flex']['lese']['angle'],
-        amplitude_entree=params_entree['flex']['lese']['amplitude'],
-        amplitude_sortie=params_sortie['flex']['lese']['amplitude'],
-        ylim=(0, max(params_entree['flex']['lese']['moment_max'],
-                     params_sortie['flex']['lese']['moment_max']) * 1.3),
-        couleur=ROUGE_LESE,
-    )
+    if params_e240 and params_s240:
+        graphs['prog_flex_240'] = _graphique_progression_4courbes(
+            titre="Flexion 240deg/s",
+            pe_sain=params_e240['flex']['sain'], ps_sain=params_s240['flex']['sain'],
+            pe_lese=params_e240['flex']['lese'], ps_lese=params_s240['flex']['lese'],
+        )
+    else:
+        graphs['prog_flex_240'] = graphs['prog_flex_60']
 
     return graphs

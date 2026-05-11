@@ -387,9 +387,9 @@ def construire_contexte(
     _base_dir = os.path.dirname(os.path.abspath(__file__))
     logo_cers = encoder_image(os.path.join(_base_dir, "assets", "logo_cers.png"))
     logo_club = encoder_image(logo_club_path) if logo_club_path else None
-    print("DEBUG logo_club_b64 est None:", logo_club is None)
-    if logo_club:
-        print("DEBUG logo_club_b64 longueur:", len(logo_club))
+    print("DEBUG construire_contexte logo_club_path:", logo_club_path)
+    print("DEBUG construire_contexte logo_club résultat:",
+          "None" if logo_club is None else f"OK ({len(logo_club)} chars)")
     photo     = encoder_image(photo_patient_path) if photo_patient_path else None
 
     sortie.position = position

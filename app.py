@@ -370,10 +370,15 @@ with col_right:
 
             progress.progress(60, text="📊 Calcul + graphiques en cours...")
 
+            print("DEBUG logo_club_upload:", logo_club_upload)
+            print("DEBUG logo_club_upload type:", type(logo_club_upload))
+            if logo_club_upload is not None:
+                data = logo_club_upload.getvalue()
+                print("DEBUG logo bytes length:", len(data))
             print("DEBUG path_logo_club:", path_logo_club)
             if path_logo_club:
-                print("DEBUG fichier existe:", os.path.exists(path_logo_club))
-                print("DEBUG taille fichier:", os.path.getsize(path_logo_club), "octets")
+                print("DEBUG path exists:", os.path.exists(path_logo_club))
+                print("DEBUG path size:", os.path.getsize(path_logo_club) if os.path.exists(path_logo_club) else "N/A")
             print("DEBUG nom_club:", nom_club)
 
             chemin = generer_rapport_biodex(

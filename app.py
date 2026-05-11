@@ -115,14 +115,16 @@ with col_left:
 
     # 1. PDFs Biodex
     st.markdown('<div class="card"><div class="card-title">📄 Fichiers Biodex</div>', unsafe_allow_html=True)
-    pdf_entree = st.file_uploader("Test d'ENTRÉE (début de séjour)", type=["pdf"], key="up_entree")
-    pdf_sortie = st.file_uploader("Test de SORTIE (fin de séjour)",  type=["pdf"], key="up_sortie")
-    pdf_comp   = st.file_uploader("Rapport Comparatif (optionnel)",  type=["pdf"], key="up_comp")
+    pdf_entree    = st.file_uploader("Test d'ENTRÉE (début de séjour)",  type=["pdf"], key="up_entree")
+    pdf_sortie    = st.file_uploader("Test de SORTIE (fin de séjour)",   type=["pdf"], key="up_sortie")
+    pdf_comp      = st.file_uploader("Comparatif Lésé (optionnel)",      type=["pdf"], key="up_comp")
+    pdf_comp_sain = st.file_uploader("Comparatif Sain (optionnel)",      type=["pdf"], key="up_comp_sain")
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     with c1: st.markdown(f'<span class="badge {"badge-ok" if pdf_entree else "badge-wait"}">{"✅ Entrée" if pdf_entree else "⏳ Entrée"}</span>', unsafe_allow_html=True)
     with c2: st.markdown(f'<span class="badge {"badge-ok" if pdf_sortie else "badge-wait"}">{"✅ Sortie" if pdf_sortie else "⏳ Sortie"}</span>', unsafe_allow_html=True)
-    with c3: st.markdown(f'<span class="badge {"badge-ok" if pdf_comp else "badge-opt"}">{"✅ Comparatif" if pdf_comp else "Optionnel"}</span>', unsafe_allow_html=True)
+    with c3: st.markdown(f'<span class="badge {"badge-ok" if pdf_comp else "badge-opt"}">{"✅ Comp. Lésé" if pdf_comp else "Comp. Lésé"}</span>', unsafe_allow_html=True)
+    with c4: st.markdown(f'<span class="badge {"badge-ok" if pdf_comp_sain else "badge-opt"}">{"✅ Comp. Sain" if pdf_comp_sain else "Comp. Sain"}</span>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     # 2. Informations patient
@@ -337,6 +339,7 @@ with col_right:
             if photo:
                 ext_ph = photo.name.rsplit(".", 1)[-1]
                 with tempfile.NamedTemporaryFile(suffix=f".{ext_ph}", delete=False) as f:
+                    photo.seek(0)  # st.image() consomme le pointeur — rembobiner
                     f.write(photo.read()); path_photo = f.name
 
             # Logo club : priorité à l'upload manuel
@@ -344,7 +347,13 @@ with col_right:
             if logo_club_upload:
                 ext_logo = logo_club_upload.name.rsplit(".", 1)[-1]
                 with tempfile.NamedTemporaryFile(suffix=f".{ext_logo}", delete=False) as f:
+                    logo_club_upload.seek(0)  # st.image() consomme le pointeur — rembobiner
                     f.write(logo_club_upload.read()); path_logo_club = f.name
+
+            path_comp_sain = None
+            if pdf_comp_sain:
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(pdf_comp_sain.read()); path_comp_sain = f.name
 
             progress.progress(30, text="🔍 Parsing des PDFs Biodex...")
 
@@ -357,16 +366,17 @@ with col_right:
             progress.progress(60, text="📊 Calcul + graphiques en cours...")
 
             chemin = generer_rapport_biodex(
-                pdf_entree          = path_e,
-                pdf_sortie          = path_s,
-                pdf_comparatif      = path_comp,
-                output_html         = out_html,
-                output_pdf          = out_pdf,
-                template_dir        = os.path.join(_APP_DIR, "templates"),
-                position            = position,
-                nom_club            = nom_club,
-                logo_club_path      = path_logo_club,
-                photo_patient_path  = path_photo,
+                pdf_entree           = path_e,
+                pdf_sortie           = path_s,
+                pdf_comparatif       = path_comp,
+                pdf_comparatif_sain  = path_comp_sain,
+                output_html          = out_html,
+                output_pdf           = out_pdf,
+                template_dir         = os.path.join(_APP_DIR, "templates"),
+                position             = position,
+                nom_club             = nom_club,
+                logo_club_path       = path_logo_club,
+                photo_patient_path   = path_photo,
             )
 
             progress.progress(90, text="📄 Lecture du fichier généré...")
@@ -388,7 +398,7 @@ with col_right:
             st.session_state.rapport_ext   = ext_out
 
             # Nettoyer fichiers temporaires
-            for p in [path_e, path_s, path_comp, path_photo, path_logo_club]:
+            for p in [path_e, path_s, path_comp, path_comp_sain, path_photo, path_logo_club]:
                 if p and os.path.exists(p):
                     try: os.unlink(p)
                     except: pass

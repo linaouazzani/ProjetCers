@@ -94,6 +94,7 @@ class PatientBiodex:
     lese: str = ""          # "Gauche" ou "Droit"
     date_test: str = ""     # "30/03/2026"
     articulation: str = ""  # "Genou"
+    position: str = ""      # Renseigné par l'app (non présent dans le PDF)
 
     # Résultats
     serie_60: Optional[SerieIso] = None

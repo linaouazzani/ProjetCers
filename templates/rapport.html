@@ -295,7 +295,7 @@ body {
           Âge : <b>{{ patient.age }} ans</b> &nbsp;|&nbsp;
           <b>{{ patient.taille_cm }} cm</b> &nbsp;|&nbsp;
           <b>{{ patient.poids_kg }} kg</b><br>
-          Position : <b>{{ patient.position }}</b><br>
+          Position : <b>{{ patient.position if patient.position else "—" }}</b><br>
           Lésion : <b>{{ patient.articulation }} {{ patient.lese }}</b>
         </div>
       </div>

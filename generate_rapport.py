@@ -141,8 +141,8 @@ def encoder_image(path: str) -> Optional[str]:
 # 3. PARSER COMPARATIF BIODEX
 # ════════════════════════════════════════════════════════════════
 
-def parse_comparatif(pdf_path: str) -> dict:
-    """Extrait Moment/Poids et Travail Total depuis le PDF comparatif Biodex."""
+def _parse_comparatif_pdf(pdf_path: str, label: str) -> dict:
+    """Parse générique d'un PDF de progrès Biodex (même format lésé et sain)."""
     import pdfplumber
     result = {}
 
@@ -174,10 +174,20 @@ def parse_comparatif(pdf_path: str) -> dict:
                         data['flex_travail_total_sortie'] = nums[3]
                         data['flex_travail_total_entree'] = nums[4]
                 result[vitesse] = data
-        print(f"  ✅ Comparatif parsé")
+        print(f"  ✅ {label} parsé")
     except Exception as e:
-        print(f"  ⚠️  Comparatif non disponible : {e}")
+        print(f"  ⚠️  {label} non disponible : {e}")
     return result
+
+
+def parse_comparatif(pdf_path: str) -> dict:
+    """Extrait Travail Total Lésé depuis le PDF comparatif Lésé Biodex."""
+    return _parse_comparatif_pdf(pdf_path, "Comparatif lésé")
+
+
+def parse_comparatif_sain(pdf_path: str) -> dict:
+    """Extrait Travail Total Sain depuis le PDF comparatif Sain Biodex."""
+    return _parse_comparatif_pdf(pdf_path, "Comparatif sain")
 
 
 # ════════════════════════════════════════════════════════════════
@@ -187,15 +197,18 @@ def parse_comparatif(pdf_path: str) -> dict:
 def construire_contexte(
     entree, sortie, df_comp,
     comparatif_data: dict = None,
+    comparatif_sain_data: dict = None,
     position: str = "—",
     nom_club: str = "—",
     logo_club_path: Optional[str] = None,
     photo_patient_path: Optional[str] = None,
 ) -> dict:
 
-    poids   = entree.poids_kg or sortie.poids_kg or 101.0
-    comp60  = (comparatif_data or {}).get("60",  {})
-    comp240 = (comparatif_data or {}).get("240", {})
+    poids        = entree.poids_kg or sortie.poids_kg or 101.0
+    comp60       = (comparatif_data      or {}).get("60",  {})
+    comp240      = (comparatif_data      or {}).get("240", {})
+    comp60_sain  = (comparatif_sain_data or {}).get("60",  {})
+    comp240_sain = (comparatif_sain_data or {}).get("240", {})
 
     def get_row(vitesse, mouvement, metrique):
         mask = ((df_comp["vitesse"] == vitesse) &
@@ -247,15 +260,19 @@ def construire_contexte(
             interpretation="Moment normalisé au poids",
         )
 
-    def make_ligne_travail_total(comp: dict, cle: str, mouvement: str) -> LigneMetrique:
-        e_val = comp.get(f"{cle}_travail_total_entree")
-        s_val = comp.get(f"{cle}_travail_total_sortie")
-        pl = calc_prog(e_val, s_val)
+    def make_ligne_travail_total(comp: dict, comp_sain: dict, cle: str, mouvement: str) -> LigneMetrique:
+        e_lese = comp.get(f"{cle}_travail_total_entree")
+        s_lese = comp.get(f"{cle}_travail_total_sortie")
+        e_sain = comp_sain.get(f"{cle}_travail_total_entree") if comp_sain else None
+        s_sain = comp_sain.get(f"{cle}_travail_total_sortie") if comp_sain else None
+        pl = calc_prog(e_lese, s_lese)
+        ps = calc_prog(e_sain, s_sain)
         return LigneMetrique(
-            entree_lese_g=e_val, sortie_lese_g=s_val,
-            progression_pct=pl,
+            entree_sain_d=e_sain, sortie_sain_d=s_sain,
+            entree_lese_g=e_lese, sortie_lese_g=s_lese,
+            progression_sain=ps, progression_pct=pl,
             couleur_deficit_entree="gray", couleur_deficit="gray",
-            couleur_prog_sain="gray",
+            couleur_prog_sain=couleur_progression(ps),
             couleur_prog=couleur_progression(pl),
             interpretation=interpreter_deficit(None, mouvement),
         )
@@ -285,23 +302,23 @@ def construire_contexte(
     s60 = SerieTemplate(
         ext_moment_max    = make_ligne("60°/s", "Extension", "Moment Max"),
         ext_moment_poids  = make_ligne_moment_poids_sain(e60, s60p, "Extension"),
-        ext_travail_total = make_ligne_travail_total(comp60, "ext", "Extension"),
+        ext_travail_total = make_ligne_travail_total(comp60, comp60_sain, "ext", "Extension"),
         ext_puissance_max = make_ligne("60°/s", "Extension", "Puissance Max"),
         ext_ratio_poids   = make_ratio_poids(e60, s60p, "Extension"),
         flex_moment_max    = make_ligne("60°/s", "Flexion", "Moment Max"),
         flex_moment_poids  = make_ligne_moment_poids_sain(e60, s60p, "Flexion"),
-        flex_travail_total = make_ligne_travail_total(comp60, "flex", "Flexion"),
+        flex_travail_total = make_ligne_travail_total(comp60, comp60_sain, "flex", "Flexion"),
         flex_puissance_max = make_ligne("60°/s", "Flexion", "Puissance Max"),
     )
     s240 = SerieTemplate(
         ext_moment_max    = make_ligne("240°/s", "Extension", "Moment Max"),
         ext_moment_poids  = make_ligne_moment_poids_sain(e240, s240p, "Extension"),
-        ext_travail_total = make_ligne_travail_total(comp240, "ext", "Extension"),
+        ext_travail_total = make_ligne_travail_total(comp240, comp240_sain, "ext", "Extension"),
         ext_puissance_max = make_ligne("240°/s", "Extension", "Puissance Max"),
         ext_ratio_poids   = make_ratio_poids(e240, s240p, "Extension"),
         flex_moment_max    = make_ligne("240°/s", "Flexion", "Moment Max"),
         flex_moment_poids  = make_ligne_moment_poids_sain(e240, s240p, "Flexion"),
-        flex_travail_total = make_ligne_travail_total(comp240, "flex", "Flexion"),
+        flex_travail_total = make_ligne_travail_total(comp240, comp240_sain, "flex", "Flexion"),
         flex_puissance_max = make_ligne("240°/s", "Flexion", "Puissance Max"),
     )
 
@@ -484,16 +501,17 @@ def _fallback_html(html: str, output_path: str) -> str:
 # ════════════════════════════════════════════════════════════════
 
 def generer_rapport_biodex(
-    pdf_entree:         str,
-    pdf_sortie:         str,
-    pdf_comparatif:     Optional[str] = None,
-    output_html:        str = "outputs/rapport_biodex.html",
-    output_pdf:         str = "outputs/rapport_biodex.pdf",
-    template_dir:       str = "templates",
-    position:           str = "—",
-    nom_club:           str = "—",
-    logo_club_path:     Optional[str] = None,
-    photo_patient_path: Optional[str] = None,
+    pdf_entree:          str,
+    pdf_sortie:          str,
+    pdf_comparatif:      Optional[str] = None,
+    pdf_comparatif_sain: Optional[str] = None,
+    output_html:         str = "outputs/rapport_biodex.html",
+    output_pdf:          str = "outputs/rapport_biodex.pdf",
+    template_dir:        str = "templates",
+    position:            str = "—",
+    nom_club:            str = "—",
+    logo_club_path:      Optional[str] = None,
+    photo_patient_path:  Optional[str] = None,
 ) -> str:
 
     print("\n" + "█" * 60)
@@ -508,8 +526,13 @@ def generer_rapport_biodex(
 
     comparatif_data = {}
     if pdf_comparatif and os.path.exists(pdf_comparatif):
-        print("\n📋 Parsing comparatif...")
+        print("\n📋 Parsing comparatif lésé...")
         comparatif_data = parse_comparatif(pdf_comparatif)
+
+    comparatif_sain_data = {}
+    if pdf_comparatif_sain and os.path.exists(pdf_comparatif_sain):
+        print("\n📋 Parsing comparatif sain...")
+        comparatif_sain_data = parse_comparatif_sain(pdf_comparatif_sain)
 
     print("\n📊 Calcul progressions...")
     df_comp = comparer_tests(entree, sortie)
@@ -519,6 +542,7 @@ def generer_rapport_biodex(
     ctx = construire_contexte(
         entree, sortie, df_comp,
         comparatif_data=comparatif_data,
+        comparatif_sain_data=comparatif_sain_data,
         position=position, nom_club=nom_club,
         logo_club_path=logo_club_path,
         photo_patient_path=photo_patient_path,

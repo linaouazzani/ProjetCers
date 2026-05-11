@@ -11,6 +11,8 @@ import os
 import base64
 from clubs_database import CLUBS_DATABASE, search_clubs
 
+_APP_DIR = os.path.dirname(os.path.abspath(__file__))
+
 st.set_page_config(
     page_title="CERS Capbreton — Bilan Isocinétique",
     page_icon="🏥",
@@ -347,9 +349,10 @@ with col_right:
             progress.progress(30, text="🔍 Parsing des PDFs Biodex...")
 
             # Dossier de sortie FIXE (obligatoire pour pdfkit sur Windows)
-            os.makedirs("outputs", exist_ok=True)
-            out_html = os.path.abspath(os.path.join("outputs", "rapport_temp.html"))
-            out_pdf  = os.path.abspath(os.path.join("outputs", "rapport_temp.pdf"))
+            out_dir  = os.path.join(_APP_DIR, "outputs")
+            os.makedirs(out_dir, exist_ok=True)
+            out_html = os.path.join(out_dir, "rapport_temp.html")
+            out_pdf  = os.path.join(out_dir, "rapport_temp.pdf")
 
             progress.progress(60, text="📊 Calcul + graphiques en cours...")
 
@@ -359,7 +362,7 @@ with col_right:
                 pdf_comparatif      = path_comp,
                 output_html         = out_html,
                 output_pdf          = out_pdf,
-                template_dir        = "templates",
+                template_dir        = os.path.join(_APP_DIR, "templates"),
                 position            = position,
                 nom_club            = nom_club,
                 logo_club_path      = path_logo_club,

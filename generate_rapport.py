@@ -345,7 +345,8 @@ def construire_contexte(
     print(f"  ✅ {len(graphs_dvsg) + len(graphs_prog)} graphiques générés")
 
     # Logos
-    logo_cers = encoder_image("assets/logo_cers.png")
+    _base_dir = os.path.dirname(os.path.abspath(__file__))
+    logo_cers = encoder_image(os.path.join(_base_dir, "assets", "logo_cers.png"))
     logo_club = encoder_image(logo_club_path) if logo_club_path else None
     photo     = encoder_image(photo_patient_path) if photo_patient_path else None
 
@@ -377,6 +378,9 @@ def construire_contexte(
 # ════════════════════════════════════════════════════════════════
 
 def generer_html(contexte: dict, template_dir: str = "templates") -> str:
+    if not os.path.isabs(template_dir):
+        base = os.path.dirname(os.path.abspath(__file__))
+        template_dir = os.path.join(base, template_dir)
     env = Environment(loader=FileSystemLoader(template_dir), autoescape=False)
     env.filters["fmt"] = lambda v, d=1: f"{v:.{d}f}" if v is not None else "—"
     env.filters["format_ratio"] = format_ratio
@@ -435,10 +439,14 @@ def exporter_pdf(html: str, output_path: str) -> str:
                 f.write(html)
             return html_path
     else:
-        from weasyprint import HTML as WP_HTML
-        WP_HTML(string=html).write_pdf(output_path)
-        print(f"  ✅ PDF : {output_path}")
-        return output_path
+        try:
+            from weasyprint import HTML as WP_HTML
+            WP_HTML(string=html, base_url=os.path.dirname(os.path.abspath(output_path))).write_pdf(output_path)
+            print(f"  ✅ PDF : {output_path}")
+            return output_path
+        except Exception as e:
+            print(f"  ⚠️  WeasyPrint erreur : {e}")
+            return _fallback_html(html, output_path)
 
 
 def _fallback_html(html: str, output_path: str) -> str:

@@ -363,6 +363,12 @@ with col_right:
 
             progress.progress(60, text="📊 Calcul + graphiques en cours...")
 
+            print("DEBUG path_logo_club:", path_logo_club)
+            if path_logo_club:
+                print("DEBUG fichier existe:", os.path.exists(path_logo_club))
+                print("DEBUG taille fichier:", os.path.getsize(path_logo_club), "octets")
+            print("DEBUG nom_club:", nom_club)
+
             chemin = generer_rapport_biodex(
                 pdf_entree           = path_e,
                 pdf_sortie           = path_s,

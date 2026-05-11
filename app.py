@@ -82,6 +82,8 @@ def get_logo(nom_club: str, couleur: str) -> str:
 
 if "club_selectionne" not in st.session_state:
     st.session_state.club_selectionne = None
+if "nom_club_cache" not in st.session_state:
+    st.session_state.nom_club_cache = ""
 if "rapport_bytes" not in st.session_state:
     st.session_state.rapport_bytes = None
 if "rapport_nom" not in st.session_state:
@@ -180,6 +182,7 @@ with col_left:
                 with col_info:
                     if st.button(f"{club['nom']}  ·  {club['sport']} — {club['division']}", key=f"btn_{club['nom']}", use_container_width=True):
                         st.session_state.club_selectionne = club
+                        st.session_state.nom_club_cache = club["nom"]
                         st.rerun()
         else:
             st.info("Aucun club trouvé. Essaie un autre terme.")
@@ -206,6 +209,7 @@ with col_left:
                                 "division": division_choix,
                                 "couleur": club_data.get("couleur", "#1c3f6e"),
                             }
+                            st.session_state.nom_club_cache = club_data["nom"]
                             st.rerun()
 
     if st.session_state.club_selectionne:
@@ -307,7 +311,8 @@ with col_right:
     erreurs = []
     if not pdf_entree: erreurs.append("PDF Entrée manquant")
     if not pdf_sortie: erreurs.append("PDF Sortie manquant")
-    if not st.session_state.club_selectionne: erreurs.append("Club non sélectionné")
+    if not st.session_state.get("club_selectionne") and not st.session_state.get("nom_club_cache"):
+        erreurs.append("Club non sélectionné")
 
     for e in erreurs:
         st.warning(f"⚠️ {e}")
@@ -315,8 +320,10 @@ with col_right:
     btn_gen = st.button("🔄  Générer le Rapport PDF Complet", disabled=bool(erreurs), use_container_width=True)
 
     if btn_gen:
-        club    = st.session_state.club_selectionne
-        nom_club = nom_club_manuel if nom_club_manuel else club["nom"]
+        club = st.session_state.get("club_selectionne")
+        nom_club = (nom_club_manuel
+                    or (club["nom"] if club else "")
+                    or st.session_state.get("nom_club_cache", ""))
         progress = st.progress(0, text="Initialisation...")
 
         try:

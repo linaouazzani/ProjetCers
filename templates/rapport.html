@@ -463,7 +463,7 @@ body {
 
         <!-- Col 2 : Age, Poids, Taille -->
         <div style="display:table-cell; vertical-align:middle; width:18%; padding:0 8px; border-right:1px solid #dce6f0;">
-          <div style="font-size:7.5px; color:#444; margin-bottom:2px;"><b style="color:#1c3f6e;">Age :</b> {{ entree.age }} ans</div>
+          <div style="font-size:7.5px; color:#444; margin-bottom:2px;"><b style="color:#1c3f6e;">Age :</b> {{ entree.age }} ans{% if date_naissance %} ({{ date_naissance }}){% endif %}</div>
           <div style="font-size:7.5px; color:#444; margin-bottom:2px;"><b style="color:#1c3f6e;">Poids :</b> {{ entree.poids_kg }} kg</div>
           <div style="font-size:7.5px; color:#444;"><b style="color:#1c3f6e;">Taille :</b> {{ entree.taille_cm }} cm</div>
         </div>

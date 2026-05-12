@@ -9,6 +9,7 @@ import streamlit as st
 import tempfile
 import os
 import base64
+import datetime
 from clubs_database import CLUBS_DATABASE, search_clubs
 
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -131,6 +132,14 @@ with col_left:
 
     # 2. Informations patient
     st.markdown('<div class="card"><div class="card-title">👤 Informations Patient</div>', unsafe_allow_html=True)
+
+    date_naissance = st.date_input(
+        "Date de naissance (optionnel)",
+        value=None,
+        min_value=datetime.date(1950, 1, 1),
+        max_value=datetime.date.today(),
+        key="date_naissance"
+    )
 
     sport = st.selectbox("Sport", [
         "— Sélectionner —", "Rugby", "Football", "Basketball",
@@ -426,6 +435,7 @@ with col_right:
                 logo_club_path       = path_logo_club,
                 photo_patient_path   = path_photo,
                 sport                = sport if sport != "— Sélectionner —" else "",
+                date_naissance       = str(date_naissance) if date_naissance else "",
                 date_operation       = str(date_operation) if date_operation else "",
                 type_blessure        = type_blessure,
                 cote_opere           = cote_opere if cote_opere != "— Sélectionner —" else "",

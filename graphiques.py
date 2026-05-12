@@ -399,12 +399,15 @@ def _graphique_progression_2courbes_impl(
     ymax = max(p_entree["moment_max"], p_sortie["moment_max"]) * 1.28
 
     fig, ax = plt.subplots(figsize=(4.5, 2.8))
-    fig.patch.set_facecolor('#fff')
-    plt.subplots_adjust(left=0.12, right=0.96, top=0.83, bottom=0.15)
+    fig.patch.set_facecolor('white')
+    ax.set_facecolor('white')
 
     dashes = (5, 3) if linestyle == '--' else (None, None)
-    ae, me = courbe_biodex(p_entree["moment_max"], p_entree["angle"], p_entree["amplitude"])
-    as_, ms = courbe_biodex(p_sortie["moment_max"], p_sortie["angle"], p_sortie["amplitude"])
+    # Amplitude clampee a 100 pour eviter le depassement de l'axe x
+    amp_e = min(p_entree["amplitude"], 100)
+    amp_s = min(p_sortie["amplitude"], 100)
+    ae, me = courbe_biodex(p_entree["moment_max"], p_entree["angle"], amp_e)
+    as_, ms = courbe_biodex(p_sortie["moment_max"], p_sortie["angle"], amp_s)
 
     ax.plot(ae, me, color=COULEUR_ENTREE, linewidth=2.0, linestyle=linestyle,
             dashes=dashes, label=f'Entree ({p_entree["moment_max"]:.0f} N.m)')
@@ -417,11 +420,11 @@ def _graphique_progression_2courbes_impl(
                  fontsize=8, fontweight='bold', color=c_prog, pad=4)
     ax.set_xlabel('Angle (deg)', fontsize=7.5)
     ax.set_ylabel('Moment Max (N.m)', fontsize=7.5)
-    ax.set_ylim(0, ymax)
-    ax.set_xlim(0, 103)
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, None)
     ax.grid(True, alpha=0.2, linewidth=0.5, color='#aaa')
-    ax.tick_params(labelsize=7, colors='#666666')
-    ax.legend(fontsize=7, loc='upper right', framealpha=0.85)
+    ax.tick_params(colors='#666666', labelsize=6)
+    ax.legend(fontsize=6, loc='upper left', framealpha=0.8, edgecolor='#dddddd')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_color('#dddddd')
@@ -429,9 +432,10 @@ def _graphique_progression_2courbes_impl(
     ax.spines['bottom'].set_color('#dddddd')
     ax.spines['bottom'].set_linewidth(0.7)
 
+    fig.tight_layout(pad=0.5)
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=90, bbox_inches='tight', facecolor='white')
-    plt.close()
+    fig.savefig(buf, format='png', dpi=90, bbox_inches='tight', facecolor='white')
+    plt.close(fig)
     buf.seek(0)
     return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()
 

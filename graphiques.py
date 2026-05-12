@@ -413,11 +413,16 @@ def _graphique_progression_2courbes_impl(
     ax.set_facecolor('white')
 
     dashes = (5, 3) if linestyle == '--' else (None, None)
-    ax.plot(x, y_e, color=COULEUR_ENTREE, linewidth=1.8, linestyle=linestyle,
-            dashes=dashes, label=f'Entree ({val_e:.0f} N.m)')
-    ax.plot(x, y_s, color=COULEUR_SORTIE, linewidth=1.8, linestyle=linestyle,
-            dashes=dashes, label=f'Sortie ({val_s:.0f} N.m)')
-    ax.fill_between(x, 0, y_s, alpha=0.05, color=COULEUR_SORTIE)
+    ax.plot(x, y_e, color='#1c3f6e', linewidth=2.5, linestyle=linestyle,
+            dashes=dashes, alpha=1.0)
+    ax.plot(x, y_s, color='#2176c7', linewidth=2.5, linestyle=linestyle,
+            dashes=dashes, alpha=1.0)
+
+    # Marqueurs sur les pics
+    idx_e = int(np.argmax(y_e))
+    idx_s = int(np.argmax(y_s))
+    ax.plot(x[idx_e], y_e[idx_e], 'o', color='#1c3f6e', markersize=5, zorder=5)
+    ax.plot(x[idx_s], y_s[idx_s], 's', color='#2176c7', markersize=5, zorder=5)
 
     c_prog = '#1c3f6e' if prog >= 0 else '#555555'
     ax.set_title(f'{titre} : {prog:+.1f}%',
@@ -428,7 +433,10 @@ def _graphique_progression_2courbes_impl(
     ax.set_ylim(0, max(val_e, val_s) * 1.2)
     ax.grid(True, alpha=0.2, linewidth=0.5, color='#aaa')
     ax.tick_params(colors='#666666', labelsize=5.5)
-    ax.legend(fontsize=5.5, loc='upper right', framealpha=0.8, edgecolor='#dddddd')
+    ax.legend(
+        [f'Entree ({val_e:.0f} N.m)', f'Sortie  ({val_s:.0f} N.m)'],
+        fontsize=6, loc='upper right', framealpha=0.9, edgecolor='#dddddd'
+    )
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_color('#dddddd')

@@ -336,18 +336,14 @@ if __name__ == "__main__":
 # Graphiques de progression entrée → sortie
 # ---------------------------------------------------------------------------
 
-def _graphique_progression_4courbes(
+def _graphique_progression_lese(
     titre: str,
-    pe_sain: dict, ps_sain: dict,
-    pe_lese: dict, ps_lese: dict,
+    pe_lese: dict,
+    ps_lese: dict,
 ) -> str:
     """
-    Graphique de progression avec 4 courbes :
-      - Sain Entree  : COULEUR_ENTREE, trait plein
-      - Sain Sortie  : COULEUR_SORTIE, trait plein
-      - Lese Entree  : COULEUR_ENTREE, pointille
-      - Lese Sortie  : COULEUR_SORTIE, pointille
-    Affiche le % de progression Lese en titre.
+    2 courbes uniquement : Lese Entree (#1c3f6e '--') et Lese Sortie (#2176c7 '--').
+    Le % de progression Lese est affiché dans le titre.
     """
     import io, base64
 
@@ -356,43 +352,31 @@ def _graphique_progression_4courbes(
         prog_lese = ((ps_lese["moment_max"] - pe_lese["moment_max"])
                      / abs(pe_lese["moment_max"]) * 100)
 
-    ymax = max(pe_sain["moment_max"], ps_sain["moment_max"],
-               pe_lese["moment_max"], ps_lese["moment_max"]) * 1.25
+    ymax = max(pe_lese["moment_max"], ps_lese["moment_max"]) * 1.30
 
     fig, ax = plt.subplots(figsize=(5, 3.2))
     fig.patch.set_facecolor('#fff')
-    plt.subplots_adjust(left=0.12, right=0.96, top=0.86, bottom=0.14)
+    plt.subplots_adjust(left=0.13, right=0.96, top=0.84, bottom=0.14)
 
-    def _plot(p_e, p_s, couleur, label_e, label_s, plein=True):
-        ae, me = courbe_biodex(p_e["moment_max"], p_e["angle"], p_e["amplitude"])
-        as_, ms = courbe_biodex(p_s["moment_max"], p_s["angle"], p_s["amplitude"])
-        ls_e = '-' if plein else '--'
-        ls_s = '-' if plein else '--'
-        ax.plot(ae, me, color=COULEUR_ENTREE, linewidth=1.6,
-                linestyle=ls_e, dashes=(5, 3) if not plein else (None, None),
-                alpha=0.8, label=label_e)
-        ax.plot(as_, ms, color=COULEUR_SORTIE, linewidth=1.8,
-                linestyle=ls_s, dashes=(5, 3) if not plein else (None, None),
-                alpha=0.9, label=label_s)
+    ae, me = courbe_biodex(pe_lese["moment_max"], pe_lese["angle"], pe_lese["amplitude"])
+    as_, ms = courbe_biodex(ps_lese["moment_max"], ps_lese["angle"], ps_lese["amplitude"])
 
-    _plot(pe_sain, ps_sain, COULEUR_ENTREE,
-          f'Sain entree ({pe_sain["moment_max"]:.0f})',
-          f'Sain sortie ({ps_sain["moment_max"]:.0f})', plein=True)
-    _plot(pe_lese, ps_lese, COULEUR_ENTREE,
-          f'Lese entree ({pe_lese["moment_max"]:.0f})',
-          f'Lese sortie ({ps_lese["moment_max"]:.0f})', plein=False)
+    ax.plot(ae, me, color=COULEUR_ENTREE, linewidth=2.0, linestyle='--', dashes=(6, 3),
+            label=f'Entree ({pe_lese["moment_max"]:.0f} N.m)')
+    ax.plot(as_, ms, color=COULEUR_SORTIE, linewidth=2.0, linestyle='--', dashes=(6, 3),
+            label=f'Sortie ({ps_lese["moment_max"]:.0f} N.m)')
+    ax.fill_between(as_, 0, ms, alpha=0.05, color=COULEUR_SORTIE)
 
-    c_prog = '#2a8a36' if prog_lese >= 0 else '#1c3f6e'
-    full_titre = f'{titre}  (Lese: {prog_lese:+.1f}%)'
-    ax.set_title(full_titre, fontsize=8, fontweight='bold', color='#1a1a1a', pad=4)
+    c_prog = '#2a8a36' if prog_lese >= 0 else '#c0392b'
+    ax.set_title(f'{titre} — Lese : {prog_lese:+.1f}%',
+                 fontsize=8.5, fontweight='bold', color=c_prog, pad=5)
     ax.set_xlabel('Angle (deg)', fontsize=7.5)
     ax.set_ylabel('Moment Max (N.m)', fontsize=7.5)
     ax.set_ylim(0, ymax)
-    ax.set_xlim(0, max(pe_sain["amplitude"], ps_sain["amplitude"],
-                       pe_lese["amplitude"], ps_lese["amplitude"]) + 2)
+    ax.set_xlim(0, max(pe_lese["amplitude"], ps_lese["amplitude"]) + 2)
     ax.grid(True, alpha=0.2, linewidth=0.5, color='#aaa')
     ax.tick_params(labelsize=7)
-    ax.legend(fontsize=6, loc='upper right', framealpha=0.8, ncol=2)
+    ax.legend(fontsize=7, loc='upper right', framealpha=0.85)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_color('#cccccc')
@@ -413,35 +397,31 @@ def generer_graphiques_progression(
 ) -> dict:
     """
     Genere 4 graphiques de progression (Extension 60, Extension 240, Flexion 60, Flexion 240).
-    Chaque graphique superpose 4 courbes : Sain/Lese x Entree/Sortie.
+    Chaque graphique montre 2 courbes Lese : entree (#1c3f6e) et sortie (#2176c7).
     """
     graphs = {}
 
-    graphs['prog_ext_60'] = _graphique_progression_4courbes(
+    graphs['prog_ext_60'] = _graphique_progression_lese(
         titre="Extension 60deg/s",
-        pe_sain=params_e60['ext']['sain'], ps_sain=params_s60['ext']['sain'],
         pe_lese=params_e60['ext']['lese'], ps_lese=params_s60['ext']['lese'],
     )
 
     if params_e240 and params_s240:
-        graphs['prog_ext_240'] = _graphique_progression_4courbes(
+        graphs['prog_ext_240'] = _graphique_progression_lese(
             titre="Extension 240deg/s",
-            pe_sain=params_e240['ext']['sain'], ps_sain=params_s240['ext']['sain'],
             pe_lese=params_e240['ext']['lese'], ps_lese=params_s240['ext']['lese'],
         )
     else:
         graphs['prog_ext_240'] = graphs['prog_ext_60']
 
-    graphs['prog_flex_60'] = _graphique_progression_4courbes(
+    graphs['prog_flex_60'] = _graphique_progression_lese(
         titre="Flexion 60deg/s",
-        pe_sain=params_e60['flex']['sain'], ps_sain=params_s60['flex']['sain'],
         pe_lese=params_e60['flex']['lese'], ps_lese=params_s60['flex']['lese'],
     )
 
     if params_e240 and params_s240:
-        graphs['prog_flex_240'] = _graphique_progression_4courbes(
+        graphs['prog_flex_240'] = _graphique_progression_lese(
             titre="Flexion 240deg/s",
-            pe_sain=params_e240['flex']['sain'], ps_sain=params_s240['flex']['sain'],
             pe_lese=params_e240['flex']['lese'], ps_lese=params_s240['flex']['lese'],
         )
     else:

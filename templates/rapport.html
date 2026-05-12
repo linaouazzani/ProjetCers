@@ -184,6 +184,7 @@ body {
   margin: 6px 0 4px 0;
   border-radius: 3px;
   flex-shrink: 0;
+  text-align: center;
 }
 
 /* ====== TABLEAUX ====== */
@@ -253,12 +254,12 @@ body {
 /* Deficit colors */
 .dg { background: #2a8a36 !important; color: #ffffff !important; font-weight: 700; }
 .do { background: #e07b00 !important; color: #ffffff !important; font-weight: 700; }
-.dr { background: #2176c7 !important; color: #ffffff !important; font-weight: 700; }
+.dr { background: #c0392b !important; color: #ffffff !important; font-weight: 700; }
 .dw { background: #999999 !important; color: #ffffff !important; font-weight: 700; }
 
 /* Progressions */
 .pg { color: #2a8a36; font-weight: 700; }
-.pr { color: #2176c7; font-weight: 700; }
+.pr { color: #c0392b; font-weight: 700; }
 .pn { color: #888888; }
 
 .interp { font-size: 6.5px; color: #333333; text-align: left !important; line-height: 1.2; overflow: hidden; }
@@ -273,7 +274,7 @@ body {
   border: 1px solid #aaaaaa;
   flex-shrink: 0;
 }
-.legende .lr { flex: 1; padding: 2px 4px; text-align: center; font-size: 7px; font-weight: 700; color: #ffffff; background: #2176c7; }
+.legende .lr { flex: 1; padding: 2px 4px; text-align: center; font-size: 7px; font-weight: 700; color: #ffffff; background: #c0392b; }
 .legende .lo { flex: 1; padding: 2px 4px; text-align: center; font-size: 7px; font-weight: 700; color: #ffffff; background: #e07b00; }
 .legende .lv { flex: 1; padding: 2px 4px; text-align: center; font-size: 7px; font-weight: 700; color: #ffffff; background: #2a8a36; }
 
@@ -307,11 +308,11 @@ body {
   border-bottom: 1px solid #c8d4e8;
   padding-bottom: 1px;
 }
-.rem-col h4.h-att   { color: #2176c7; }
+.rem-col h4.h-att   { color: #c0392b; }
 .rem-col h4.h-pos   { color: #2a8a36; }
 .rem-col h4.h-prog  { color: #1c3f6e; }
 .rem-col p { font-size: 6.5px; padding: 1px 0; line-height: 1.3; }
-.rem-col p.p-att    { color: #2176c7; }
+.rem-col p.p-att    { color: #c0392b; }
 .rem-col p.p-att-mod { color: #e07b00; }
 .rem-col p.p-pos    { color: #2a8a36; }
 .rem-col p.p-prog   { color: #1c3f6e; }
@@ -559,6 +560,19 @@ body {
           <td class="interp">{{ s.ext_puissance_max.interpretation }}</td>
         </tr>
 
+        <tr>
+          <td class="cm">Ratio/Poids Quadri<span class="sl">N.m/kg</span></td>
+          <td>{{ s.ext_ratio_poids.entree_sain_d | fmt(2) }}</td>
+          <td>{{ s.ext_ratio_poids.entree_lese_g | fmt(2) }}</td>
+          <td class="dw">—</td>
+          <td>{{ s.ext_ratio_poids.sortie_sain_d | fmt(2) }}</td>
+          <td>{{ s.ext_ratio_poids.sortie_lese_g | fmt(2) }}</td>
+          <td class="dw">—</td>
+          <td class="p{{ s.ext_ratio_poids.couleur_prog_sain[0] }}">{% if s.ext_ratio_poids.progression_sain is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.progression_sain) }}%{% else %}—{% endif %}</td>
+          <td class="p{{ s.ext_ratio_poids.couleur_prog[0] }}">{% if s.ext_ratio_poids.progression_pct is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.progression_pct) }}%{% else %}—{% endif %}</td>
+          <td class="interp">Quadriceps / poids (N.m/kg)</td>
+        </tr>
+
         <tr class="grp"><td colspan="10">&#9658;&nbsp;FLEXION</td></tr>
 
         <tr>
@@ -613,6 +627,19 @@ body {
           <td class="interp">{{ s.flex_puissance_max.interpretation }}</td>
         </tr>
 
+        <tr>
+          <td class="cm">Ratio/Poids Ischio<span class="sl">N.m/kg</span></td>
+          <td>{{ "%.2f"|format(s.flex_moment_poids.entree_sain_d / 100) if s.flex_moment_poids.entree_sain_d is not none else "—" }}</td>
+          <td>{{ "%.2f"|format(s.flex_moment_poids.entree_lese_g / 100) if s.flex_moment_poids.entree_lese_g is not none else "—" }}</td>
+          <td class="dw">—</td>
+          <td>{{ "%.2f"|format(s.flex_moment_poids.sortie_sain_d / 100) if s.flex_moment_poids.sortie_sain_d is not none else "—" }}</td>
+          <td>{{ "%.2f"|format(s.flex_moment_poids.sortie_lese_g / 100) if s.flex_moment_poids.sortie_lese_g is not none else "—" }}</td>
+          <td class="dw">—</td>
+          <td class="p{{ s.flex_moment_poids.couleur_prog_sain[0] }}">{% if s.flex_moment_poids.progression_sain is not none %}{{ "%+.1f"|format(s.flex_moment_poids.progression_sain) }}%{% else %}—{% endif %}</td>
+          <td class="p{{ s.flex_moment_poids.couleur_prog[0] }}">{% if s.flex_moment_poids.progression_pct is not none %}{{ "%+.1f"|format(s.flex_moment_poids.progression_pct) }}%{% else %}—{% endif %}</td>
+          <td class="interp">Ischio / poids (N.m/kg)</td>
+        </tr>
+
         <tr class="grp"><td colspan="10">&#9658;&nbsp;RATIO I/Q — Norme : 0,50-0,70</td></tr>
 
         <tr>
@@ -626,17 +653,6 @@ body {
           <td class="p{{ meta.ratio_prog_couleur[0] }}">{% if meta.ratio_prog is not none %}{{ "%+.1f"|format(meta.ratio_prog) }}%{% else %}—{% endif %}</td>
           <td>—</td>
           <td class="interp">Flexion / Extension</td>
-        </tr>
-
-        <tr class="alt">
-          <td class="cm">Ratio/Poids<span class="sl">Ext N.m/kg</span></td>
-          <td colspan="2" style="font-size:7px;">Sain: <b>{{ s.ext_ratio_poids.entree_sain_d | fmt(2) }}</b> &nbsp; Lese: <b>{{ s.ext_ratio_poids.entree_lese_g | fmt(2) }}</b></td>
-          <td class="dw">—</td>
-          <td colspan="2" style="font-size:7px;">Sain: <b>{{ s.ext_ratio_poids.sortie_sain_d | fmt(2) }}</b> &nbsp; Lese: <b>{{ s.ext_ratio_poids.sortie_lese_g | fmt(2) }}</b></td>
-          <td class="dw">—</td>
-          <td class="p{{ s.ext_ratio_poids.couleur_prog_sain[0] }}">{% if s.ext_ratio_poids.progression_sain is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.progression_sain) }}%{% else %}—{% endif %}</td>
-          <td class="p{{ s.ext_ratio_poids.couleur_prog[0] }}">{% if s.ext_ratio_poids.progression_pct is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.progression_pct) }}%{% else %}—{% endif %}</td>
-          <td class="interp">Moment max / poids (N.m/kg)</td>
         </tr>
 
       </tbody>
@@ -661,7 +677,7 @@ body {
           <h4 class="h-att">Points a ameliorer</h4>
           {% for p in remarques.points_attention %}
             {% if "important" in p|lower %}
-              <p class="p-att"><span style="color:#2176c7;font-weight:700;">&#9679;</span> {{ p }}</p>
+              <p class="p-att"><span style="color:#c0392b;font-weight:700;">&#9679;</span> {{ p }}</p>
             {% else %}
               <p class="p-att-mod"><span style="color:#e07b00;font-weight:700;">&#9679;</span> {{ p }}</p>
             {% endif %}

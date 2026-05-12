@@ -373,6 +373,10 @@ with col_right:
     btn_gen = st.button("🔄  Générer le Rapport PDF Complet", disabled=bool(erreurs), use_container_width=True)
 
     if btn_gen:
+        if not pdf_entree or not pdf_sortie:
+            st.error("❌ Les fichiers PDF ne sont plus disponibles — veuillez les re-uploader.")
+            st.stop()
+
         club = st.session_state.get("club_selectionne")
         nom_club = (nom_club_manuel
                     or (club["nom"] if club else "")

@@ -1,0 +1,21 @@
+# Python cache — NEVER commit these
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Outputs générés
+outputs/
+
+# Environnements
+.env
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -372,14 +372,15 @@ def _graphique_progression_2courbes(
     """
     2 courbes : Entree (#1c3f6e, lw=2.0) et Sortie (#2176c7, lw=2.0).
     linestyle='-' pour Sain, '--' pour Lese.
-    Titre : "Progression Sain (D) — 60deg/s : +X.X%"
-    Retourne une chaine vide en cas d'erreur.
     """
-    import io, base64
+    import io, base64, traceback
     try:
-        return _graphique_progression_2courbes_impl(titre, p_entree, p_sortie, linestyle)
+        result = _graphique_progression_2courbes_impl(titre, p_entree, p_sortie, linestyle)
+        print(f"  graphique '{titre}': OK ({len(result)} chars)")
+        return result
     except Exception as e:
-        print(f"  Erreur graphique progression '{titre}': {e}")
+        print(f"  ERREUR graphique '{titre}': {e}")
+        traceback.print_exc()
         return ""
 
 
@@ -407,7 +408,7 @@ def _graphique_progression_2courbes_impl(
     y_e = np.clip(y_e, 0, None)
     y_s = np.clip(y_s, 0, None)
 
-    fig, ax = plt.subplots(figsize=(3.8, 2.2))
+    fig, ax = plt.subplots(figsize=(4, 2.2))
     fig.patch.set_facecolor('white')
     ax.set_facecolor('white')
 
@@ -437,7 +438,7 @@ def _graphique_progression_2courbes_impl(
 
     fig.tight_layout(pad=0.3)
     buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=85, bbox_inches='tight', facecolor='white')
+    fig.savefig(buf, format='png', dpi=90, bbox_inches='tight', facecolor='white')
     plt.close(fig)
     buf.seek(0)
     return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()

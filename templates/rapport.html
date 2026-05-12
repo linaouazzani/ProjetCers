@@ -853,12 +853,12 @@ body {
     <div style="background:#5a6472; color:white; font-size:7px; font-weight:700; padding:2px 8px; text-align:center; margin-bottom:2px; border-radius:2px; flex-shrink:0;">
       PROGRESSION 60&#176;/s &#8212; Entr&#233;e &#8594; Sortie
     </div>
-    <div style="display:table; width:100%; margin-bottom:4px; flex-shrink:0;">
+    <div style="display:table; width:100%; table-layout:fixed; margin-bottom:4px; flex-shrink:0;">
       <div style="display:table-row;">
-        <div style="display:table-cell; width:50%; padding:1px; vertical-align:top;">
+        <div style="display:table-cell; width:50%; padding-right:2px; vertical-align:top;">
           <img src="{{ graphiques.prog_sain_60 }}" style="width:100%; height:auto; display:block; max-height:130px;">
         </div>
-        <div style="display:table-cell; width:50%; padding:1px; vertical-align:top;">
+        <div style="display:table-cell; width:50%; padding-left:2px; vertical-align:top;">
           <img src="{{ graphiques.prog_lese_60 }}" style="width:100%; height:auto; display:block; max-height:130px;">
         </div>
       </div>
@@ -868,12 +868,12 @@ body {
     <div style="background:#5a6472; color:white; font-size:7px; font-weight:700; padding:2px 8px; text-align:center; margin-bottom:2px; border-radius:2px; flex-shrink:0;">
       PROGRESSION 240&#176;/s &#8212; Entr&#233;e &#8594; Sortie
     </div>
-    <div style="display:table; width:100%; margin-bottom:6px; flex-shrink:0;">
+    <div style="display:table; width:100%; table-layout:fixed; margin-bottom:6px; flex-shrink:0;">
       <div style="display:table-row;">
-        <div style="display:table-cell; width:50%; padding:1px; vertical-align:top;">
+        <div style="display:table-cell; width:50%; padding-right:2px; vertical-align:top;">
           <img src="{{ graphiques.prog_sain_240 }}" style="width:100%; height:auto; display:block; max-height:130px;">
         </div>
-        <div style="display:table-cell; width:50%; padding:1px; vertical-align:top;">
+        <div style="display:table-cell; width:50%; padding-left:2px; vertical-align:top;">
           <img src="{{ graphiques.prog_lese_240 }}" style="width:100%; height:auto; display:block; max-height:130px;">
         </div>
       </div>
@@ -885,7 +885,7 @@ body {
     </div>
     <div style="border:1.5px solid #1c3f6e; border-radius:6px; padding:8px 12px; min-height:50px; background:#f8fafd; max-width:100%; overflow:hidden; flex-shrink:0;">
       {% if remarques_medecin %}
-      <div style="font-size:8px; color:#374151; line-height:1.5; word-wrap:break-word; overflow-wrap:break-word; white-space:pre-wrap; max-width:100%;">{{ remarques_medecin }}</div>
+      <div style="font-size:8px; color:#374151; line-height:1.4; word-break:break-all; overflow-wrap:anywhere; max-width:100%; overflow:hidden;">{{ remarques_medecin }}</div>
       {% else %}
       <div style="font-size:8px; color:#aaa; font-style:italic;">Aucune remarque renseign&#233;e.</div>
       {% endif %}

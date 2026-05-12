@@ -229,6 +229,33 @@ with col_left:
                             st.session_state.nom_club_cache = club_data["nom"]
                             st.rerun()
 
+    if not st.session_state.club_selectionne:
+        st.markdown("---")
+        st.markdown("**Club non trouvé dans la liste ?**")
+        col_nom, col_sport = st.columns(2)
+        with col_nom:
+            club_manuel_nom = st.text_input(
+                "Nom du club",
+                placeholder="Ex: FC Bayeux, AS Villemur...",
+                key="club_manuel_nom"
+            )
+        with col_sport:
+            club_manuel_sport = st.selectbox(
+                "Sport",
+                ["Rugby", "Football", "Basketball",
+                 "Handball", "Volleyball", "Autre"],
+                key="club_manuel_sport"
+            )
+        if club_manuel_nom and st.button("✅ Utiliser ce club", key="btn_club_manuel"):
+            st.session_state.club_selectionne = {
+                "nom": club_manuel_nom,
+                "sport": club_manuel_sport,
+                "division": "Autre",
+                "couleur": "#1c3f6e",
+            }
+            st.session_state.nom_club_cache = club_manuel_nom
+            st.rerun()
+
     if st.session_state.club_selectionne:
         club = st.session_state.club_selectionne
         logo_b64 = get_logo(club["nom"], club["couleur"])

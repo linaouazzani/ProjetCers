@@ -39,6 +39,15 @@ import os
 # Structure : (moment_max_sain, angle_sain, moment_max_lese, angle_lese, amplitude)
 # Amplitude de mouvement ≈ 100° (99-101° selon les tests)
 
+# Couleurs — code couleur entrée/sortie
+COULEUR_ENTREE = "#1c3f6e"  # bleu CERS — tests d'entree
+COULEUR_SORTIE = "#c0392b"  # rouge bordeaux — tests de sortie
+GRIS_REF       = "#888888"  # gris — ligne de reference
+
+# Alias pour compatibilite
+BLEU_SAIN  = COULEUR_ENTREE
+ROUGE_LESE = COULEUR_SORTIE
+
 PARAMS = {
     "entree_60_ext": {
         "titre": "Entree 60deg/s Extension (D vs G)",
@@ -69,15 +78,6 @@ PARAMS = {
         "couleur": COULEUR_SORTIE,
     },
 }
-
-# Couleurs — code couleur entrée/sortie
-COULEUR_ENTREE = "#1c3f6e"  # bleu CERS — tests d'entrée
-COULEUR_SORTIE = "#c0392b"  # rouge bordeaux — tests de sortie
-GRIS_REF       = "#888888"  # gris — ligne de référence
-
-# Alias pour compatibilité avec generer_graphiques_biodex()
-BLEU_SAIN  = COULEUR_ENTREE
-ROUGE_LESE = COULEUR_SORTIE
 
 
 # ---------------------------------------------------------------------------

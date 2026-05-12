@@ -157,7 +157,7 @@ with col_left:
     )
 
     remarques_medecin = st.text_area(
-        "Remarques médicales (optionnel)",
+        "Remarques médicales finales (optionnel)",
         placeholder="Zone libre pour le médecin ou kinésithérapeute...",
         height=100
     )

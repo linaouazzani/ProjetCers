@@ -373,7 +373,22 @@ def _graphique_progression_2courbes(
     2 courbes : Entree (#1c3f6e, lw=2.0) et Sortie (#2176c7, lw=2.0).
     linestyle='-' pour Sain, '--' pour Lese.
     Titre : "Progression Sain (D) — 60deg/s : +X.X%"
+    Retourne une chaine vide en cas d'erreur.
     """
+    import io, base64
+    try:
+        return _graphique_progression_2courbes_impl(titre, p_entree, p_sortie, linestyle)
+    except Exception as e:
+        print(f"  Erreur graphique progression '{titre}': {e}")
+        return ""
+
+
+def _graphique_progression_2courbes_impl(
+    titre: str,
+    p_entree: dict,
+    p_sortie: dict,
+    linestyle: str = '-',
+) -> str:
     import io, base64
 
     prog = 0.0

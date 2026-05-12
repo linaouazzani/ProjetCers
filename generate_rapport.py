@@ -377,35 +377,41 @@ def construire_contexte(
         "entree_flex_240": graphique_en_base64("entree_240_flex", entree, "flex"),
         "sortie_flex_240": graphique_en_base64("sortie_240_flex", sortie, "flex"),
     }
+    def _v(serie, attr, subattr, default):
+        """Acces securise a serie.attr.subattr avec fallback."""
+        try:
+            v = getattr(getattr(serie, attr, None), subattr, None)
+            return v if v else default
+        except Exception:
+            return default
+
     params_e60 = {
-        'ext':  {'sain': {'moment_max': (e60.ext_moment_max.sain_d  or 316.9), 'angle': 81, 'amplitude': 99},
-                 'lese': {'moment_max': (e60.ext_moment_max.lese_g  or 313.6), 'angle': 70, 'amplitude': 101}},
-        'flex': {'sain': {'moment_max': (e60.flex_moment_max.sain_d or 173.0), 'angle': 33, 'amplitude': 99},
-                 'lese': {'moment_max': (e60.flex_moment_max.lese_g or 153.9), 'angle': 29, 'amplitude': 101}},
-    } if e60 else {}
+        'ext':  {'sain': {'moment_max': _v(e60, 'ext_moment_max', 'sain_d',  316.9), 'angle': 81, 'amplitude': 99},
+                 'lese': {'moment_max': _v(e60, 'ext_moment_max', 'lese_g',  313.6), 'angle': 70, 'amplitude': 101}},
+        'flex': {'sain': {'moment_max': _v(e60, 'flex_moment_max', 'sain_d', 173.0), 'angle': 33, 'amplitude': 99},
+                 'lese': {'moment_max': _v(e60, 'flex_moment_max', 'lese_g', 153.9), 'angle': 29, 'amplitude': 101}},
+    }
     params_s60 = {
-        'ext':  {'sain': {'moment_max': (s60p.ext_moment_max.sain_d  or 328.0), 'angle': 68, 'amplitude': 88},
-                 'lese': {'moment_max': (s60p.ext_moment_max.lese_g  or 333.3), 'angle': 66, 'amplitude': 92}},
-        'flex': {'sain': {'moment_max': (s60p.flex_moment_max.sain_d or 195.4), 'angle': 32, 'amplitude': 88},
-                 'lese': {'moment_max': (s60p.flex_moment_max.lese_g or 162.0), 'angle': 27, 'amplitude': 92}},
-    } if s60p else {}
+        'ext':  {'sain': {'moment_max': _v(s60p, 'ext_moment_max', 'sain_d',  328.0), 'angle': 68, 'amplitude': 88},
+                 'lese': {'moment_max': _v(s60p, 'ext_moment_max', 'lese_g',  333.3), 'angle': 66, 'amplitude': 92}},
+        'flex': {'sain': {'moment_max': _v(s60p, 'flex_moment_max', 'sain_d', 195.4), 'angle': 32, 'amplitude': 88},
+                 'lese': {'moment_max': _v(s60p, 'flex_moment_max', 'lese_g', 162.0), 'angle': 27, 'amplitude': 92}},
+    }
     params_e240 = {
-        'ext':  {'sain': {'moment_max': (e240.ext_moment_max.sain_d  or 200.0), 'angle': 75, 'amplitude': 99},
-                 'lese': {'moment_max': (e240.ext_moment_max.lese_g  or 195.0), 'angle': 68, 'amplitude': 101}},
-        'flex': {'sain': {'moment_max': (e240.flex_moment_max.sain_d or 120.0), 'angle': 30, 'amplitude': 99},
-                 'lese': {'moment_max': (e240.flex_moment_max.lese_g or 110.0), 'angle': 27, 'amplitude': 101}},
-    } if e240 else {}
+        'ext':  {'sain': {'moment_max': _v(e240, 'ext_moment_max', 'sain_d',  200.0), 'angle': 56, 'amplitude': 99},
+                 'lese': {'moment_max': _v(e240, 'ext_moment_max', 'lese_g',  195.0), 'angle': 54, 'amplitude': 101}},
+        'flex': {'sain': {'moment_max': _v(e240, 'flex_moment_max', 'sain_d', 120.0), 'angle': 29, 'amplitude': 99},
+                 'lese': {'moment_max': _v(e240, 'flex_moment_max', 'lese_g', 110.0), 'angle': 27, 'amplitude': 101}},
+    }
     params_s240 = {
-        'ext':  {'sain': {'moment_max': (s240p.ext_moment_max.sain_d  or 210.0), 'angle': 72, 'amplitude': 88},
-                 'lese': {'moment_max': (s240p.ext_moment_max.lese_g  or 205.0), 'angle': 65, 'amplitude': 92}},
-        'flex': {'sain': {'moment_max': (s240p.flex_moment_max.sain_d or 130.0), 'angle': 28, 'amplitude': 88},
-                 'lese': {'moment_max': (s240p.flex_moment_max.lese_g or 120.0), 'angle': 25, 'amplitude': 92}},
-    } if s240p else {}
-    graphs_prog = (
-        generer_graphiques_progression(params_e60, params_s60, params_e240, params_s240)
-        if params_e60 and params_s60 else {}
-    )
-    print(f"  ✅ {len(graphs_dvsg) + len(graphs_prog)} graphiques générés")
+        'ext':  {'sain': {'moment_max': _v(s240p, 'ext_moment_max', 'sain_d',  210.0), 'angle': 56, 'amplitude': 88},
+                 'lese': {'moment_max': _v(s240p, 'ext_moment_max', 'lese_g',  205.0), 'angle': 54, 'amplitude': 92}},
+        'flex': {'sain': {'moment_max': _v(s240p, 'flex_moment_max', 'sain_d', 130.0), 'angle': 29, 'amplitude': 88},
+                 'lese': {'moment_max': _v(s240p, 'flex_moment_max', 'lese_g', 120.0), 'angle': 27, 'amplitude': 92}},
+    }
+    graphs_prog = generer_graphiques_progression(params_e60, params_s60, params_e240, params_s240)
+    print(f"  ✅ {len(graphs_dvsg) + len(graphs_prog)} graphiques generés")
+    print("  Cles graphiques:", sorted(list(graphs_dvsg.keys()) + list(graphs_prog.keys())))
 
     # Logos
     _base_dir = os.path.dirname(os.path.abspath(__file__))

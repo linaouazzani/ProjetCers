@@ -725,14 +725,6 @@ body {
     </div>
     {% endif %}
 
-    <!-- REMARQUES MEDECIN -->
-    {% if remarques_medecin %}
-    <div class="med-block">
-      <div class="med-label">Remarques medicales</div>
-      <div class="med-text">{{ remarques_medecin }}</div>
-    </div>
-    {% endif %}
-
     <!-- FOOTER PAGE 1 -->
     <div class="footer">
       <div class="footer-logo">
@@ -740,7 +732,7 @@ body {
         {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
       </div>
       <div class="footer-mention">*Seuls les resultats cles sont affiches. Les rapports originaux detailles ont ete envoyes separement.</div>
-      <div class="footer-page">Page 1 / 2</div>
+      <div class="footer-page">Page 1 / 3</div>
     </div>
 
   </div><!-- fin page-content -->
@@ -821,29 +813,6 @@ body {
       </div>
     </div>
 
-    <!-- SECTION C : Progression -->
-    <div style="background:#5a6472; color:white; font-size:7px; font-weight:700; padding:2px 10px; border-radius:3px; margin:3px 0 2px 0; text-align:center; flex-shrink:0;">
-      PROGRESSION ENTREE &#8594; SORTIE — Sain (plein) | Lese (pointille) | Entree=#1c3f6e | Sortie=#2176c7
-    </div>
-    <div style="display:table; width:100%; border-collapse:collapse; margin-bottom:3px; flex-shrink:0;">
-      <div style="display:table-row;">
-        <div style="display:table-cell; width:50%; padding:1px; vertical-align:top;">
-          <img src="{{ graphiques.prog_ext_60 }}" style="width:100%; height:auto; display:block;">
-        </div>
-        <div style="display:table-cell; width:50%; padding:1px; vertical-align:top;">
-          <img src="{{ graphiques.prog_ext_240 }}" style="width:100%; height:auto; display:block;">
-        </div>
-      </div>
-      <div style="display:table-row;">
-        <div style="display:table-cell; width:50%; padding:1px; vertical-align:top;">
-          <img src="{{ graphiques.prog_flex_60 }}" style="width:100%; height:auto; display:block;">
-        </div>
-        <div style="display:table-cell; width:50%; padding:1px; vertical-align:top;">
-          <img src="{{ graphiques.prog_flex_240 }}" style="width:100%; height:auto; display:block;">
-        </div>
-      </div>
-    </div>
-
     <!-- FOOTER PAGE 2 -->
     <div class="footer">
       <div class="footer-logo">
@@ -851,11 +820,89 @@ body {
         {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
       </div>
       <div class="footer-mention">*Seuls les resultats cles sont affiches. Les rapports originaux detailles ont ete envoyes separement.</div>
-      <div class="footer-page">Page 2 / 2</div>
+      <div class="footer-page">Page 2 / 3</div>
     </div>
 
   </div><!-- fin page-content -->
 </div><!-- fin page 2 -->
+
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 3 — PROGRESSION + REMARQUES FINALES
+     ══════════════════════════════════════════════════ -->
+<div class="page">
+
+  <!-- EN-TETE -->
+  <div class="header-global">
+    <div class="hg-left">
+      {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">{% endif %}
+    </div>
+    <div class="hg-center">
+      <div class="title">CERS Capbreton</div>
+      <div class="sub">Bilan Isocinetique — Progression</div>
+    </div>
+    <div class="hg-right">
+      {% if logo_club_b64 %}<img src="{{ logo_club_b64 }}" alt="{{ nom_club }}">{% endif %}
+      {% if nom_club and nom_club != "—" %}<div class="club-name">{{ nom_club }}</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- SECTION : Progression 60 deg/s -->
+    <div style="background:#5a6472; color:white; font-size:8px; font-weight:700; padding:3px 10px; text-align:center; margin:4px 0 4px 0; border-radius:3px; flex-shrink:0;">
+      PROGRESSION 60 deg/s — Entree &#8594; Sortie
+    </div>
+    <div style="display:table; width:100%; border-collapse:collapse; margin-bottom:6px; flex-shrink:0;">
+      <div style="display:table-row;">
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <img src="{{ graphiques.prog_sain_60 }}" style="width:100%; height:auto; display:block;">
+        </div>
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <img src="{{ graphiques.prog_lese_60 }}" style="width:100%; height:auto; display:block;">
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION : Progression 240 deg/s -->
+    <div style="background:#5a6472; color:white; font-size:8px; font-weight:700; padding:3px 10px; text-align:center; margin:4px 0 4px 0; border-radius:3px; flex-shrink:0;">
+      PROGRESSION 240 deg/s — Entree &#8594; Sortie
+    </div>
+    <div style="display:table; width:100%; border-collapse:collapse; margin-bottom:8px; flex-shrink:0;">
+      <div style="display:table-row;">
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <img src="{{ graphiques.prog_sain_240 }}" style="width:100%; height:auto; display:block;">
+        </div>
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <img src="{{ graphiques.prog_lese_240 }}" style="width:100%; height:auto; display:block;">
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION : Remarques finales -->
+    <div style="background:#1c3f6e; color:white; font-size:8px; font-weight:700; padding:3px 10px; text-align:center; margin:8px 0 4px 0; border-radius:3px; flex-shrink:0;">
+      REMARQUES FINALES
+    </div>
+    <div style="border:1.5px solid #1c3f6e; border-radius:6px; padding:10px 14px; min-height:60px; background:#f8fafd; flex-shrink:0;">
+      {% if remarques_medecin %}
+      <div style="font-size:8.5px; color:#374151; line-height:1.6; white-space:pre-wrap;">{{ remarques_medecin }}</div>
+      {% else %}
+      <div style="font-size:8px; color:#aaa; font-style:italic;">Aucune remarque renseignee.</div>
+      {% endif %}
+    </div>
+
+    <!-- FOOTER PAGE 3 -->
+    <div class="footer">
+      <div class="footer-logo">
+        {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
+        {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
+      </div>
+      <div class="footer-mention">*Seuls les resultats cles sont affiches. Les rapports originaux detailles ont ete envoyes separement.</div>
+      <div class="footer-page">Page 3 / 3</div>
+    </div>
+
+  </div><!-- fin page-content -->
+</div><!-- fin page 3 -->
 
 </body>
 </html>

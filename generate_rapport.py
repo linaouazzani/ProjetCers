@@ -366,12 +366,16 @@ def construire_contexte(
     }
 
     # Graphiques
-    print("  🖼️  Génération des 8 graphiques...")
+    print("  🖼️  Génération des 12 graphiques...")
     graphs_dvsg = {
-        "entree_ext":  graphique_en_base64("entree_60_ext",  entree, "ext"),
-        "sortie_ext":  graphique_en_base64("sortie_60_ext",  sortie, "ext"),
-        "entree_flex": graphique_en_base64("entree_60_flex", entree, "flex"),
-        "sortie_flex": graphique_en_base64("sortie_60_flex", sortie, "flex"),
+        "entree_ext":      graphique_en_base64("entree_60_ext",   entree, "ext"),
+        "sortie_ext":      graphique_en_base64("sortie_60_ext",   sortie, "ext"),
+        "entree_flex":     graphique_en_base64("entree_60_flex",  entree, "flex"),
+        "sortie_flex":     graphique_en_base64("sortie_60_flex",  sortie, "flex"),
+        "entree_ext_240":  graphique_en_base64("entree_240_ext",  entree, "ext"),
+        "sortie_ext_240":  graphique_en_base64("sortie_240_ext",  sortie, "ext"),
+        "entree_flex_240": graphique_en_base64("entree_240_flex", entree, "flex"),
+        "sortie_flex_240": graphique_en_base64("sortie_240_flex", sortie, "flex"),
     }
     params_e60 = {
         'ext':  {'sain': {'moment_max': (e60.ext_moment_max.sain_d  or 316.9), 'angle': 81, 'amplitude': 99},
@@ -427,10 +431,14 @@ def construire_contexte(
         "s60": s60, "s240": s240,
         "serie60_meta": serie60_meta, "serie240_meta": serie240_meta,
         "remarques": remarques,
-        "graph_entree_ext":  graphs_dvsg.get("entree_ext", ""),
-        "graph_sortie_ext":  graphs_dvsg.get("sortie_ext", ""),
-        "graph_entree_flex": graphs_dvsg.get("entree_flex", ""),
-        "graph_sortie_flex": graphs_dvsg.get("sortie_flex", ""),
+        "graph_entree_ext":      graphs_dvsg.get("entree_ext", ""),
+        "graph_sortie_ext":      graphs_dvsg.get("sortie_ext", ""),
+        "graph_entree_flex":     graphs_dvsg.get("entree_flex", ""),
+        "graph_sortie_flex":     graphs_dvsg.get("sortie_flex", ""),
+        "graph_entree_ext_240":  graphs_dvsg.get("entree_ext_240", ""),
+        "graph_sortie_ext_240":  graphs_dvsg.get("sortie_ext_240", ""),
+        "graph_entree_flex_240": graphs_dvsg.get("entree_flex_240", ""),
+        "graph_sortie_flex_240": graphs_dvsg.get("sortie_flex_240", ""),
         "graph_prog_ext_60":   graphs_prog.get("prog_ext_60", ""),
         "graph_prog_ext_240":  graphs_prog.get("prog_ext_240", ""),
         "graph_prog_flex_60":  graphs_prog.get("prog_flex_60", ""),

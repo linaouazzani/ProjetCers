@@ -285,6 +285,7 @@ body {
   overflow: hidden;
   margin-bottom: 4px;
   flex-shrink: 0;
+  height: auto;
 }
 .rem-title {
   background: #1c3f6e;
@@ -299,8 +300,9 @@ body {
   display: flex;
   gap: 8px;
   align-items: flex-start;
+  height: auto;
 }
-.rem-col { flex: 1; min-width: 0; }
+.rem-col { flex: 1; min-width: 0; height: auto; }
 .rem-col h4 {
   font-size: 6.5px;
   font-weight: 700;
@@ -774,45 +776,80 @@ body {
 
   <div class="page-content">
 
-    <!-- COURBES D vs G -->
-    <div class="graph-section-title">Courbes Isocinetiques 60deg/s — Sain (D) vs Lese (G) | Bleu=Entree | Rouge=Sortie | Plein=Sain | Pointille=Lese</div>
-    <div class="graph-grid">
-      <div class="graph-card">
-        <div class="graph-card-label">Entree {{ entree.date_test }} — Extension D vs G</div>
-        <img src="{{ graph_entree_ext }}" alt="Entree Ext">
+    <!-- SECTION A — Courbes 60 deg/s D vs G -->
+    <div style="background:#5a6472; color:white; font-size:8px; font-weight:700; padding:3px 10px; border-radius:3px; margin:4px 0 3px 0; text-align:center; flex-shrink:0;">
+      COURBES ISOCINETIQUES 60 deg/s — Sain D (plein) vs Lese G (pointille)
+    </div>
+    <div style="display:table; width:100%; border-collapse:collapse; margin-bottom:3px; flex-shrink:0;">
+      <div style="display:table-row;">
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <div style="font-size:6.5px; font-weight:700; color:#1c3f6e; text-align:center; background:#e8eef5; padding:1px 0; margin-bottom:1px;">Entree {{ entree.date_test }} — Extension</div>
+          <img src="{{ graph_entree_ext }}" style="width:100%; height:auto; display:block;">
+        </div>
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <div style="font-size:6.5px; font-weight:700; color:#2176c7; text-align:center; background:#e8eef5; padding:1px 0; margin-bottom:1px;">Sortie {{ sortie.date_test }} — Extension</div>
+          <img src="{{ graph_sortie_ext }}" style="width:100%; height:auto; display:block;">
+        </div>
       </div>
-      <div class="graph-card">
-        <div class="graph-card-label">Sortie {{ sortie.date_test }} — Extension D vs G</div>
-        <img src="{{ graph_sortie_ext }}" alt="Sortie Ext">
-      </div>
-      <div class="graph-card">
-        <div class="graph-card-label">Entree {{ entree.date_test }} — Flexion D vs G</div>
-        <img src="{{ graph_entree_flex }}" alt="Entree Flex">
-      </div>
-      <div class="graph-card">
-        <div class="graph-card-label">Sortie {{ sortie.date_test }} — Flexion D vs G</div>
-        <img src="{{ graph_sortie_flex }}" alt="Sortie Flex">
+      <div style="display:table-row;">
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <div style="font-size:6.5px; font-weight:700; color:#1c3f6e; text-align:center; background:#e8eef5; padding:1px 0; margin-bottom:1px;">Entree {{ entree.date_test }} — Flexion</div>
+          <img src="{{ graph_entree_flex }}" style="width:100%; height:auto; display:block;">
+        </div>
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <div style="font-size:6.5px; font-weight:700; color:#2176c7; text-align:center; background:#e8eef5; padding:1px 0; margin-bottom:1px;">Sortie {{ sortie.date_test }} — Flexion</div>
+          <img src="{{ graph_sortie_flex }}" style="width:100%; height:auto; display:block;">
+        </div>
       </div>
     </div>
 
-    <!-- PROGRESSION 60deg/s vs 240deg/s -->
-    <div class="graph-section-title">Progression Entree vers Sortie — 60deg/s et 240deg/s | Bleu=Entree | Rouge=Sortie</div>
-    <div class="graph-grid">
-      <div class="graph-card">
-        <div class="graph-card-label">Extension — 60deg/s</div>
-        <img src="{{ graph_prog_ext_60 }}" alt="Prog Ext 60">
+    <!-- SECTION B — Courbes 240 deg/s D vs G -->
+    <div style="background:#5a6472; color:white; font-size:8px; font-weight:700; padding:3px 10px; border-radius:3px; margin:4px 0 3px 0; text-align:center; flex-shrink:0;">
+      COURBES ISOCINETIQUES 240 deg/s — Sain D (plein) vs Lese G (pointille)
+    </div>
+    <div style="display:table; width:100%; border-collapse:collapse; margin-bottom:3px; flex-shrink:0;">
+      <div style="display:table-row;">
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <div style="font-size:6.5px; font-weight:700; color:#1c3f6e; text-align:center; background:#e8eef5; padding:1px 0; margin-bottom:1px;">Entree {{ entree.date_test }} — Extension</div>
+          <img src="{{ graph_entree_ext_240 }}" style="width:100%; height:auto; display:block;">
+        </div>
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <div style="font-size:6.5px; font-weight:700; color:#2176c7; text-align:center; background:#e8eef5; padding:1px 0; margin-bottom:1px;">Sortie {{ sortie.date_test }} — Extension</div>
+          <img src="{{ graph_sortie_ext_240 }}" style="width:100%; height:auto; display:block;">
+        </div>
       </div>
-      <div class="graph-card">
-        <div class="graph-card-label">Extension — 240deg/s</div>
-        <img src="{{ graph_prog_ext_240 }}" alt="Prog Ext 240">
+      <div style="display:table-row;">
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <div style="font-size:6.5px; font-weight:700; color:#1c3f6e; text-align:center; background:#e8eef5; padding:1px 0; margin-bottom:1px;">Entree {{ entree.date_test }} — Flexion</div>
+          <img src="{{ graph_entree_flex_240 }}" style="width:100%; height:auto; display:block;">
+        </div>
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <div style="font-size:6.5px; font-weight:700; color:#2176c7; text-align:center; background:#e8eef5; padding:1px 0; margin-bottom:1px;">Sortie {{ sortie.date_test }} — Flexion</div>
+          <img src="{{ graph_sortie_flex_240 }}" style="width:100%; height:auto; display:block;">
+        </div>
       </div>
-      <div class="graph-card">
-        <div class="graph-card-label">Flexion — 60deg/s</div>
-        <img src="{{ graph_prog_flex_60 }}" alt="Prog Flex 60">
+    </div>
+
+    <!-- SECTION C — Progression Entree -> Sortie -->
+    <div style="background:#5a6472; color:white; font-size:8px; font-weight:700; padding:3px 10px; border-radius:3px; margin:4px 0 3px 0; text-align:center; flex-shrink:0;">
+      PROGRESSION ENTREE &#8594; SORTIE — 4 courbes : Sain/Lese x Entree (#1c3f6e) / Sortie (#2176c7)
+    </div>
+    <div style="display:table; width:100%; border-collapse:collapse; margin-bottom:3px; flex-shrink:0;">
+      <div style="display:table-row;">
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <img src="{{ graph_prog_ext_60 }}" style="width:100%; height:auto; display:block;">
+        </div>
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <img src="{{ graph_prog_ext_240 }}" style="width:100%; height:auto; display:block;">
+        </div>
       </div>
-      <div class="graph-card">
-        <div class="graph-card-label">Flexion — 240deg/s</div>
-        <img src="{{ graph_prog_flex_240 }}" alt="Prog Flex 240">
+      <div style="display:table-row;">
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <img src="{{ graph_prog_flex_60 }}" style="width:100%; height:auto; display:block;">
+        </div>
+        <div style="display:table-cell; width:50%; padding:2px; vertical-align:top;">
+          <img src="{{ graph_prog_flex_240 }}" style="width:100%; height:auto; display:block;">
+        </div>
       </div>
     </div>
 

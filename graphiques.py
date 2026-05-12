@@ -79,29 +79,29 @@ PARAMS = {
     },
     "entree_240_ext": {
         "titre": "Entree 240deg/s Extension (D vs G)",
-        "sain":  {"moment_max": 200.0, "angle": 75, "amplitude": 99},
-        "lese":  {"moment_max": 195.0, "angle": 68, "amplitude": 101},
+        "sain":  {"moment_max": 200.0, "angle": 56, "amplitude": 99},
+        "lese":  {"moment_max": 195.0, "angle": 54, "amplitude": 101},
         "ylim":  (0, 250),
         "couleur": COULEUR_ENTREE,
     },
     "sortie_240_ext": {
         "titre": "Sortie 240deg/s Extension (D vs G)",
-        "sain":  {"moment_max": 210.0, "angle": 72, "amplitude": 88},
-        "lese":  {"moment_max": 205.0, "angle": 65, "amplitude": 92},
+        "sain":  {"moment_max": 210.0, "angle": 56, "amplitude": 88},
+        "lese":  {"moment_max": 205.0, "angle": 54, "amplitude": 92},
         "ylim":  (0, 260),
         "couleur": COULEUR_SORTIE,
     },
     "entree_240_flex": {
         "titre": "Entree 240deg/s Flexion (D vs G)",
-        "sain":  {"moment_max": 120.0, "angle": 30, "amplitude": 99},
+        "sain":  {"moment_max": 120.0, "angle": 29, "amplitude": 99},
         "lese":  {"moment_max": 110.0, "angle": 27, "amplitude": 101},
         "ylim":  (0, 160),
         "couleur": COULEUR_ENTREE,
     },
     "sortie_240_flex": {
         "titre": "Sortie 240deg/s Flexion (D vs G)",
-        "sain":  {"moment_max": 130.0, "angle": 28, "amplitude": 88},
-        "lese":  {"moment_max": 120.0, "angle": 25, "amplitude": 92},
+        "sain":  {"moment_max": 130.0, "angle": 29, "amplitude": 88},
+        "lese":  {"moment_max": 120.0, "angle": 27, "amplitude": 92},
         "ylim":  (0, 170),
         "couleur": COULEUR_SORTIE,
     },
@@ -322,14 +322,14 @@ def graphique_en_base64(cle: str, biodex_data=None, mouvement: str = "ext") -> s
         except Exception:
             pass
 
-    fig, ax = plt.subplots(1, 1, figsize=(5.2, 3.5))
+    fig, ax = plt.subplots(1, 1, figsize=(4, 2.2))
     fig.patch.set_facecolor('#ffffff')
-    plt.subplots_adjust(left=0.12, right=0.96, top=0.88, bottom=0.14)
+    plt.subplots_adjust(left=0.12, right=0.96, top=0.88, bottom=0.16)
 
     generer_graphique(ax, p, show_ylabel=True)
 
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=150, bbox_inches='tight',
+    plt.savefig(buf, format='png', dpi=90, bbox_inches='tight',
                 facecolor='white', edgecolor='none')
     plt.close()
     buf.seek(0)
@@ -390,9 +390,9 @@ def _graphique_progression_4courbes(
     ymax = max(pe_sain["moment_max"], ps_sain["moment_max"],
                pe_lese["moment_max"], ps_lese["moment_max"]) * 1.28
 
-    fig, ax = plt.subplots(figsize=(5, 3.2))
+    fig, ax = plt.subplots(figsize=(4, 2.2))
     fig.patch.set_facecolor('#fff')
-    plt.subplots_adjust(left=0.13, right=0.96, top=0.84, bottom=0.14)
+    plt.subplots_adjust(left=0.13, right=0.96, top=0.82, bottom=0.16)
 
     ae_s, me_s = courbe_biodex(pe_sain["moment_max"], pe_sain["angle"], pe_sain["amplitude"])
     as_s, ms_s = courbe_biodex(ps_sain["moment_max"], ps_sain["angle"], ps_sain["amplitude"])
@@ -408,9 +408,9 @@ def _graphique_progression_4courbes(
     ax.plot(as_l, ms_l, color=COULEUR_SORTIE, linewidth=1.5, linestyle='--', dashes=(5, 3),
             label=f'Lese sortie ({ps_lese["moment_max"]:.0f})')
 
-    c_prog = '#2a8a36' if prog_lese >= 0 else '#c0392b'
-    ax.set_title(f'{titre} — Lese : {prog_lese:+.1f}% | Sain : {prog_sain:+.1f}%',
-                 fontsize=7.5, fontweight='bold', color=c_prog, pad=5)
+    c_prog = '#1c3f6e' if prog_lese >= 0 else '#555555'
+    ax.set_title(f'{titre} — Sain:{prog_sain:+.1f}% | Lese:{prog_lese:+.1f}%',
+                 fontsize=7, fontweight='bold', color=c_prog, pad=4)
     ax.set_xlabel('Angle (deg)', fontsize=7.5)
     ax.set_ylabel('Moment Max (N.m)', fontsize=7.5)
     ax.set_ylim(0, ymax)
@@ -426,7 +426,7 @@ def _graphique_progression_4courbes(
     ax.spines['bottom'].set_linewidth(0.7)
 
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=150, bbox_inches='tight', facecolor='white')
+    plt.savefig(buf, format='png', dpi=90, bbox_inches='tight', facecolor='white')
     plt.close()
     buf.seek(0)
     return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()

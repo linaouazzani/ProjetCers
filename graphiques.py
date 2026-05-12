@@ -186,17 +186,17 @@ def generer_graphique(ax, params: dict, show_ylabel: bool = True):
     if show_ylabel:
         ax.set_ylabel('Moment Max', fontsize=8, color='#444444')
 
-    ax.set_xlim(0, max(sain["amplitude"], lese["amplitude"]) + 2)
+    ax.set_xlim(0, 103)
     ax.set_ylim(params["ylim"])
-    ax.tick_params(axis='both', labelsize=7.5, colors='#555555')
-    ax.set_xticks(range(0, 110, 20))
+    ax.tick_params(axis='both', labelsize=7.5, colors='#666666')
+    ax.set_xticks([0, 20, 40, 60, 80, 100])
     ax.grid(True, axis='both', alpha=0.25, linewidth=0.5, color='#aaaaaa', linestyle='-')
     ax.set_axisbelow(True)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_color('#cccccc')
+    ax.spines['left'].set_color('#dddddd')
     ax.spines['left'].set_linewidth(0.8)
-    ax.spines['bottom'].set_color('#cccccc')
+    ax.spines['bottom'].set_color('#dddddd')
     ax.spines['bottom'].set_linewidth(0.8)
     ax.set_facecolor('#ffffff')
 
@@ -336,14 +336,18 @@ if __name__ == "__main__":
 # Graphiques de progression entrée → sortie
 # ---------------------------------------------------------------------------
 
-def _graphique_progression_lese(
+def _graphique_progression_4courbes(
     titre: str,
-    pe_lese: dict,
-    ps_lese: dict,
+    pe_sain: dict, ps_sain: dict,
+    pe_lese: dict, ps_lese: dict,
 ) -> str:
     """
-    2 courbes uniquement : Lese Entree (#1c3f6e '--') et Lese Sortie (#2176c7 '--').
-    Le % de progression Lese est affiché dans le titre.
+    4 courbes :
+      Sain Entree  : #1c3f6e, plein,      linewidth=1.8
+      Sain Sortie  : #2176c7, plein,      linewidth=1.8
+      Lese Entree  : #1c3f6e, pointille,  linewidth=1.5
+      Lese Sortie  : #2176c7, pointille,  linewidth=1.5
+    Titre : "Extension 60deg/s — Lese : +X.X%"
     """
     import io, base64
 
@@ -352,20 +356,26 @@ def _graphique_progression_lese(
         prog_lese = ((ps_lese["moment_max"] - pe_lese["moment_max"])
                      / abs(pe_lese["moment_max"]) * 100)
 
-    ymax = max(pe_lese["moment_max"], ps_lese["moment_max"]) * 1.30
+    ymax = max(pe_sain["moment_max"], ps_sain["moment_max"],
+               pe_lese["moment_max"], ps_lese["moment_max"]) * 1.28
 
     fig, ax = plt.subplots(figsize=(5, 3.2))
     fig.patch.set_facecolor('#fff')
     plt.subplots_adjust(left=0.13, right=0.96, top=0.84, bottom=0.14)
 
-    ae, me = courbe_biodex(pe_lese["moment_max"], pe_lese["angle"], pe_lese["amplitude"])
-    as_, ms = courbe_biodex(ps_lese["moment_max"], ps_lese["angle"], ps_lese["amplitude"])
+    ae_s, me_s = courbe_biodex(pe_sain["moment_max"], pe_sain["angle"], pe_sain["amplitude"])
+    as_s, ms_s = courbe_biodex(ps_sain["moment_max"], ps_sain["angle"], ps_sain["amplitude"])
+    ae_l, me_l = courbe_biodex(pe_lese["moment_max"], pe_lese["angle"], pe_lese["amplitude"])
+    as_l, ms_l = courbe_biodex(ps_lese["moment_max"], ps_lese["angle"], ps_lese["amplitude"])
 
-    ax.plot(ae, me, color=COULEUR_ENTREE, linewidth=2.0, linestyle='--', dashes=(6, 3),
-            label=f'Entree ({pe_lese["moment_max"]:.0f} N.m)')
-    ax.plot(as_, ms, color=COULEUR_SORTIE, linewidth=2.0, linestyle='--', dashes=(6, 3),
-            label=f'Sortie ({ps_lese["moment_max"]:.0f} N.m)')
-    ax.fill_between(as_, 0, ms, alpha=0.05, color=COULEUR_SORTIE)
+    ax.plot(ae_s, me_s, color=COULEUR_ENTREE, linewidth=1.8, linestyle='-',
+            label=f'Sain entree ({pe_sain["moment_max"]:.0f})')
+    ax.plot(as_s, ms_s, color=COULEUR_SORTIE, linewidth=1.8, linestyle='-',
+            label=f'Sain sortie ({ps_sain["moment_max"]:.0f})')
+    ax.plot(ae_l, me_l, color=COULEUR_ENTREE, linewidth=1.5, linestyle='--', dashes=(5, 3),
+            label=f'Lese entree ({pe_lese["moment_max"]:.0f})')
+    ax.plot(as_l, ms_l, color=COULEUR_SORTIE, linewidth=1.5, linestyle='--', dashes=(5, 3),
+            label=f'Lese sortie ({ps_lese["moment_max"]:.0f})')
 
     c_prog = '#2a8a36' if prog_lese >= 0 else '#c0392b'
     ax.set_title(f'{titre} — Lese : {prog_lese:+.1f}%',
@@ -373,15 +383,15 @@ def _graphique_progression_lese(
     ax.set_xlabel('Angle (deg)', fontsize=7.5)
     ax.set_ylabel('Moment Max (N.m)', fontsize=7.5)
     ax.set_ylim(0, ymax)
-    ax.set_xlim(0, max(pe_lese["amplitude"], ps_lese["amplitude"]) + 2)
+    ax.set_xlim(0, 103)
     ax.grid(True, alpha=0.2, linewidth=0.5, color='#aaa')
-    ax.tick_params(labelsize=7)
-    ax.legend(fontsize=7, loc='upper right', framealpha=0.85)
+    ax.tick_params(labelsize=7, colors='#666666')
+    ax.legend(fontsize=6, loc='upper right', framealpha=0.85, ncol=2)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_color('#cccccc')
+    ax.spines['left'].set_color('#dddddd')
     ax.spines['left'].set_linewidth(0.7)
-    ax.spines['bottom'].set_color('#cccccc')
+    ax.spines['bottom'].set_color('#dddddd')
     ax.spines['bottom'].set_linewidth(0.7)
 
     buf = io.BytesIO()
@@ -397,31 +407,35 @@ def generer_graphiques_progression(
 ) -> dict:
     """
     Genere 4 graphiques de progression (Extension 60, Extension 240, Flexion 60, Flexion 240).
-    Chaque graphique montre 2 courbes Lese : entree (#1c3f6e) et sortie (#2176c7).
+    Chaque graphique a 4 courbes : Sain/Lese x Entree/Sortie.
     """
     graphs = {}
 
-    graphs['prog_ext_60'] = _graphique_progression_lese(
+    graphs['prog_ext_60'] = _graphique_progression_4courbes(
         titre="Extension 60deg/s",
+        pe_sain=params_e60['ext']['sain'], ps_sain=params_s60['ext']['sain'],
         pe_lese=params_e60['ext']['lese'], ps_lese=params_s60['ext']['lese'],
     )
 
     if params_e240 and params_s240:
-        graphs['prog_ext_240'] = _graphique_progression_lese(
+        graphs['prog_ext_240'] = _graphique_progression_4courbes(
             titre="Extension 240deg/s",
+            pe_sain=params_e240['ext']['sain'], ps_sain=params_s240['ext']['sain'],
             pe_lese=params_e240['ext']['lese'], ps_lese=params_s240['ext']['lese'],
         )
     else:
         graphs['prog_ext_240'] = graphs['prog_ext_60']
 
-    graphs['prog_flex_60'] = _graphique_progression_lese(
+    graphs['prog_flex_60'] = _graphique_progression_4courbes(
         titre="Flexion 60deg/s",
+        pe_sain=params_e60['flex']['sain'], ps_sain=params_s60['flex']['sain'],
         pe_lese=params_e60['flex']['lese'], ps_lese=params_s60['flex']['lese'],
     )
 
     if params_e240 and params_s240:
-        graphs['prog_flex_240'] = _graphique_progression_lese(
+        graphs['prog_flex_240'] = _graphique_progression_4courbes(
             titre="Flexion 240deg/s",
+            pe_sain=params_e240['flex']['sain'], ps_sain=params_s240['flex']['sain'],
             pe_lese=params_e240['flex']['lese'], ps_lese=params_s240['flex']['lese'],
         )
     else:

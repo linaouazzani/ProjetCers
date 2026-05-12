@@ -40,8 +40,8 @@ import os
 # Amplitude de mouvement ≈ 100° (99-101° selon les tests)
 
 # Couleurs — code couleur entrée/sortie
-COULEUR_ENTREE = "#1c3f6e"  # bleu CERS — tests d'entree
-COULEUR_SORTIE = "#c0392b"  # rouge bordeaux — tests de sortie
+COULEUR_ENTREE = "#1c3f6e"  # bleu fonce CERS — tests d'entree
+COULEUR_SORTIE = "#2176c7"  # bleu moyen vif — tests de sortie
 GRIS_REF       = "#888888"  # gris — ligne de reference
 
 # Alias pour compatibilite
@@ -192,9 +192,12 @@ def generer_graphique(ax, params: dict, show_ylabel: bool = True):
     ax.set_xticks(range(0, 110, 20))
     ax.grid(True, axis='both', alpha=0.25, linewidth=0.5, color='#aaaaaa', linestyle='-')
     ax.set_axisbelow(True)
-    for spine in ax.spines.values():
-        spine.set_linewidth(0.8)
-        spine.set_color('#cccccc')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_color('#cccccc')
+    ax.spines['left'].set_linewidth(0.8)
+    ax.spines['bottom'].set_color('#cccccc')
+    ax.spines['bottom'].set_linewidth(0.8)
     ax.set_facecolor('#ffffff')
 
 
@@ -379,7 +382,7 @@ def _graphique_progression_4courbes(
           f'Lese entree ({pe_lese["moment_max"]:.0f})',
           f'Lese sortie ({ps_lese["moment_max"]:.0f})', plein=False)
 
-    c_prog = '#2a8a36' if prog_lese >= 0 else '#c0392b'
+    c_prog = '#2a8a36' if prog_lese >= 0 else '#1c3f6e'
     full_titre = f'{titre}  (Lese: {prog_lese:+.1f}%)'
     ax.set_title(full_titre, fontsize=8, fontweight='bold', color='#1a1a1a', pad=4)
     ax.set_xlabel('Angle (deg)', fontsize=7.5)
@@ -390,8 +393,12 @@ def _graphique_progression_4courbes(
     ax.grid(True, alpha=0.2, linewidth=0.5, color='#aaa')
     ax.tick_params(labelsize=7)
     ax.legend(fontsize=6, loc='upper right', framealpha=0.8, ncol=2)
-    for sp in ax.spines.values():
-        sp.set_linewidth(0.7); sp.set_color('#cccccc')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_color('#cccccc')
+    ax.spines['left'].set_linewidth(0.7)
+    ax.spines['bottom'].set_color('#cccccc')
+    ax.spines['bottom'].set_linewidth(0.7)
 
     buf = io.BytesIO()
     plt.savefig(buf, format='png', dpi=150, bbox_inches='tight', facecolor='white')

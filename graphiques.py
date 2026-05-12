@@ -391,52 +391,53 @@ def _graphique_progression_2courbes_impl(
 ) -> str:
     import io, base64
 
+    val_e = p_entree["moment_max"] or 1.0
+    val_s = p_sortie["moment_max"] or 1.0
+    peak  = min(p_entree.get("angle", 65), 90)
+    sigma = 25.0
+
     prog = 0.0
-    if p_entree["moment_max"] and p_entree["moment_max"] != 0:
-        prog = ((p_sortie["moment_max"] - p_entree["moment_max"])
-                / abs(p_entree["moment_max"]) * 100)
+    if val_e != 0:
+        prog = ((val_s - val_e) / abs(val_e)) * 100
 
-    ymax = max(p_entree["moment_max"], p_sortie["moment_max"]) * 1.28
+    # Gaussian directe sur x=0..100, clip pour garantir y>=0
+    x = np.linspace(0, 100, 200)
+    y_e = val_e * np.exp(-0.5 * ((x - peak) / sigma) ** 2)
+    y_s = val_s * np.exp(-0.5 * ((x - peak) / sigma) ** 2)
+    y_e = np.clip(y_e, 0, None)
+    y_s = np.clip(y_s, 0, None)
 
-    fig, ax = plt.subplots(figsize=(4.8, 3.2))
+    fig, ax = plt.subplots(figsize=(3.8, 2.2))
     fig.patch.set_facecolor('white')
     ax.set_facecolor('white')
 
     dashes = (5, 3) if linestyle == '--' else (None, None)
-    amp_e = min(p_entree["amplitude"], 100)
-    amp_s = min(p_sortie["amplitude"], 100)
-    ae, me = courbe_biodex(p_entree["moment_max"], p_entree["angle"], amp_e)
-    as_, ms = courbe_biodex(p_sortie["moment_max"], p_sortie["angle"], amp_s)
-
-    # Clipping de securite a x <= 100
-    mask_e = ae <= 100
-    mask_s = as_ <= 100
-    ax.plot(ae[mask_e], me[mask_e], color=COULEUR_ENTREE, linewidth=2.0, linestyle=linestyle,
-            dashes=dashes, label=f'Entree ({p_entree["moment_max"]:.0f} N.m)')
-    ax.plot(as_[mask_s], ms[mask_s], color=COULEUR_SORTIE, linewidth=2.0, linestyle=linestyle,
-            dashes=dashes, label=f'Sortie ({p_sortie["moment_max"]:.0f} N.m)')
-    ax.fill_between(as_[mask_s], 0, ms[mask_s], alpha=0.05, color=COULEUR_SORTIE)
+    ax.plot(x, y_e, color=COULEUR_ENTREE, linewidth=1.8, linestyle=linestyle,
+            dashes=dashes, label=f'Entree ({val_e:.0f} N.m)')
+    ax.plot(x, y_s, color=COULEUR_SORTIE, linewidth=1.8, linestyle=linestyle,
+            dashes=dashes, label=f'Sortie ({val_s:.0f} N.m)')
+    ax.fill_between(x, 0, y_s, alpha=0.05, color=COULEUR_SORTIE)
 
     c_prog = '#1c3f6e' if prog >= 0 else '#555555'
     ax.set_title(f'{titre} : {prog:+.1f}%',
-                 fontsize=7, fontweight='bold', color=c_prog, pad=3)
-    ax.set_xlabel('Angle (deg)', fontsize=7)
-    ax.set_ylabel('Moment (N.m)', fontsize=7)
+                 fontsize=7, fontweight='bold', color=c_prog, pad=2)
+    ax.set_xlabel('Angle (deg)', fontsize=6.5)
+    ax.set_ylabel('Moment (N.m)', fontsize=6.5)
     ax.set_xlim(0, 100)
-    ax.set_ylim(bottom=0)
+    ax.set_ylim(0, max(val_e, val_s) * 1.2)
     ax.grid(True, alpha=0.2, linewidth=0.5, color='#aaa')
-    ax.tick_params(colors='#666666', labelsize=6)
-    ax.legend(fontsize=6, loc='upper left', framealpha=0.8, edgecolor='#dddddd')
+    ax.tick_params(colors='#666666', labelsize=5.5)
+    ax.legend(fontsize=5.5, loc='upper right', framealpha=0.8, edgecolor='#dddddd')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_color('#dddddd')
-    ax.spines['left'].set_linewidth(0.7)
+    ax.spines['left'].set_linewidth(0.6)
     ax.spines['bottom'].set_color('#dddddd')
-    ax.spines['bottom'].set_linewidth(0.7)
+    ax.spines['bottom'].set_linewidth(0.6)
 
-    fig.tight_layout(pad=0.4)
+    fig.tight_layout(pad=0.3)
     buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=90, bbox_inches='tight', facecolor='white')
+    fig.savefig(buf, format='png', dpi=85, bbox_inches='tight', facecolor='white')
     plt.close(fig)
     buf.seek(0)
     return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()

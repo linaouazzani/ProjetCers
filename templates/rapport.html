@@ -883,12 +883,15 @@ body {
     <div style="background:#1c3f6e; color:white; font-size:8px; font-weight:700; padding:3px 10px; text-align:center; margin:8px 0 4px 0; border-radius:3px; flex-shrink:0;">
       REMARQUES MEDICALES FINALES
     </div>
-    <div style="border:1.5px solid #1c3f6e; border-radius:6px; padding:10px 14px; min-height:60px; background:#f8fafd; flex-shrink:0;">
+    <div style="border:1.5px solid #1c3f6e; border-radius:6px; padding:10px 14px; min-height:80px; background:#f8fafd; flex-shrink:0; overflow:hidden; word-wrap:break-word; max-width:100%;">
       {% if remarques_medecin %}
-      <div style="font-size:8.5px; color:#374151; line-height:1.6; white-space:pre-wrap;">{{ remarques_medecin }}</div>
+      <div style="font-size:8.5px; color:#374151; line-height:1.6; word-wrap:break-word; overflow-wrap:break-word; white-space:pre-wrap; max-width:100%;">{{ remarques_medecin }}</div>
       {% else %}
       <div style="font-size:8px; color:#aaa; font-style:italic;">Aucune remarque renseignee.</div>
       {% endif %}
+    </div>
+    <div style="margin-top:8px; font-size:7px; color:#aaa; text-align:center; font-style:italic; flex-shrink:0;">
+      CERS Capbreton — Groupe Ramsay Sante
     </div>
 
     <!-- FOOTER PAGE 3 -->

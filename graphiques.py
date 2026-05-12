@@ -398,30 +398,32 @@ def _graphique_progression_2courbes_impl(
 
     ymax = max(p_entree["moment_max"], p_sortie["moment_max"]) * 1.28
 
-    fig, ax = plt.subplots(figsize=(4.5, 2.8))
+    fig, ax = plt.subplots(figsize=(4.8, 3.2))
     fig.patch.set_facecolor('white')
     ax.set_facecolor('white')
 
     dashes = (5, 3) if linestyle == '--' else (None, None)
-    # Amplitude clampee a 100 pour eviter le depassement de l'axe x
     amp_e = min(p_entree["amplitude"], 100)
     amp_s = min(p_sortie["amplitude"], 100)
     ae, me = courbe_biodex(p_entree["moment_max"], p_entree["angle"], amp_e)
     as_, ms = courbe_biodex(p_sortie["moment_max"], p_sortie["angle"], amp_s)
 
-    ax.plot(ae, me, color=COULEUR_ENTREE, linewidth=2.0, linestyle=linestyle,
+    # Clipping de securite a x <= 100
+    mask_e = ae <= 100
+    mask_s = as_ <= 100
+    ax.plot(ae[mask_e], me[mask_e], color=COULEUR_ENTREE, linewidth=2.0, linestyle=linestyle,
             dashes=dashes, label=f'Entree ({p_entree["moment_max"]:.0f} N.m)')
-    ax.plot(as_, ms, color=COULEUR_SORTIE, linewidth=2.0, linestyle=linestyle,
+    ax.plot(as_[mask_s], ms[mask_s], color=COULEUR_SORTIE, linewidth=2.0, linestyle=linestyle,
             dashes=dashes, label=f'Sortie ({p_sortie["moment_max"]:.0f} N.m)')
-    ax.fill_between(as_, 0, ms, alpha=0.05, color=COULEUR_SORTIE)
+    ax.fill_between(as_[mask_s], 0, ms[mask_s], alpha=0.05, color=COULEUR_SORTIE)
 
     c_prog = '#1c3f6e' if prog >= 0 else '#555555'
     ax.set_title(f'{titre} : {prog:+.1f}%',
-                 fontsize=8, fontweight='bold', color=c_prog, pad=4)
-    ax.set_xlabel('Angle (deg)', fontsize=7.5)
-    ax.set_ylabel('Moment Max (N.m)', fontsize=7.5)
+                 fontsize=7, fontweight='bold', color=c_prog, pad=3)
+    ax.set_xlabel('Angle (deg)', fontsize=7)
+    ax.set_ylabel('Moment (N.m)', fontsize=7)
     ax.set_xlim(0, 100)
-    ax.set_ylim(0, None)
+    ax.set_ylim(bottom=0)
     ax.grid(True, alpha=0.2, linewidth=0.5, color='#aaa')
     ax.tick_params(colors='#666666', labelsize=6)
     ax.legend(fontsize=6, loc='upper left', framealpha=0.8, edgecolor='#dddddd')
@@ -432,7 +434,7 @@ def _graphique_progression_2courbes_impl(
     ax.spines['bottom'].set_color('#dddddd')
     ax.spines['bottom'].set_linewidth(0.7)
 
-    fig.tight_layout(pad=0.5)
+    fig.tight_layout(pad=0.4)
     buf = io.BytesIO()
     fig.savefig(buf, format='png', dpi=90, bbox_inches='tight', facecolor='white')
     plt.close(fig)
@@ -454,13 +456,13 @@ def generer_graphiques_progression(
     graphs = {}
 
     graphs['prog_sain_60'] = _graphique_progression_2courbes(
-        titre="Progression Sain (D) - 60deg/s",
+        titre="Sain (D) - 60deg/s",
         p_entree=params_e60['ext']['sain'],
         p_sortie=params_s60['ext']['sain'],
         linestyle='-',
     )
     graphs['prog_lese_60'] = _graphique_progression_2courbes(
-        titre="Progression Lese (G) - 60deg/s",
+        titre="Lese (G) - 60deg/s",
         p_entree=params_e60['ext']['lese'],
         p_sortie=params_s60['ext']['lese'],
         linestyle='--',
@@ -468,13 +470,13 @@ def generer_graphiques_progression(
 
     if params_e240 and params_s240:
         graphs['prog_sain_240'] = _graphique_progression_2courbes(
-            titre="Progression Sain (D) - 240deg/s",
+            titre="Sain (D) - 240deg/s",
             p_entree=params_e240['ext']['sain'],
             p_sortie=params_s240['ext']['sain'],
             linestyle='-',
         )
         graphs['prog_lese_240'] = _graphique_progression_2courbes(
-            titre="Progression Lese (G) - 240deg/s",
+            titre="Lese (G) - 240deg/s",
             p_entree=params_e240['ext']['lese'],
             p_sortie=params_s240['ext']['lese'],
             linestyle='--',

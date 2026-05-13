@@ -259,7 +259,7 @@ def _parse_page(page_text: str, vitesse: str) -> SerieIso:
     # Travail Total : 2 lignes distinctes par page (Extension puis Flexion)
     # Chaque ligne : "Travail total (J)  <sain_d>  <lese_g>"
     travail_matches = re.findall(
-        r'[Tt]ravail\s*[Tt]otal\s*\(?J\)?\s*([\d,\.]+)\s+([\d,\.]+)',
+        r'[Tt]ravail\s*[Tt]otal?\s*\(?[Jj]\)?\s*([\d][,\d\.]+)\s+([\d][,\d\.]+)',
         page_text
     )
     if len(travail_matches) >= 1:

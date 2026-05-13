@@ -243,13 +243,6 @@ def _parse_page(page_text: str, vitesse: str) -> SerieIso:
             if len(floats) >= 6:
                 serie.flex_travail_max = MetriqueIso(floats[3], floats[4], floats[5])
 
-        # --- TRAVAIL TOTAL ---
-        elif re.search(r'travailtotal\(j\)', line_lower):
-            if len(floats) >= 3:
-                serie.ext_travail_total = MetriqueIso(floats[0], floats[1], floats[2])
-            if len(floats) >= 6:
-                serie.flex_travail_total = MetriqueIso(floats[3], floats[4], floats[5])
-
         # --- PUISSANCE MAXIMALE ---
         elif re.search(r'puissancemaximale\(w\)', line_lower):
             if len(floats) >= 3:
@@ -262,6 +255,30 @@ def _parse_page(page_text: str, vitesse: str) -> SerieIso:
             if len(floats) >= 2:
                 serie.ratio_sain_d = floats[0]
                 serie.ratio_lese_g = floats[1]
+
+    # Travail Total : 2 lignes distinctes par page (Extension puis Flexion)
+    # Chaque ligne : "Travail total (J)  <sain_d>  <lese_g>"
+    travail_matches = re.findall(
+        r'[Tt]ravail\s*[Tt]otal\s*\(?J\)?\s*([\d,\.]+)\s+([\d,\.]+)',
+        page_text
+    )
+    if len(travail_matches) >= 1:
+        try:
+            sd = float(travail_matches[0][0].replace(',', '.'))
+            lg = float(travail_matches[0][1].replace(',', '.'))
+            serie.ext_travail_total = MetriqueIso(sain_d=sd, lese_g=lg)
+        except ValueError:
+            pass
+    if len(travail_matches) >= 2:
+        try:
+            sd = float(travail_matches[1][0].replace(',', '.'))
+            lg = float(travail_matches[1][1].replace(',', '.'))
+            serie.flex_travail_total = MetriqueIso(sain_d=sd, lese_g=lg)
+        except ValueError:
+            pass
+    print(f"  Travail Total ({vitesse} deg/s) — "
+          f"Ext: {serie.ext_travail_total.sain_d}/{serie.ext_travail_total.lese_g}, "
+          f"Flex: {serie.flex_travail_total.sain_d}/{serie.flex_travail_total.lese_g}")
 
     return serie
 

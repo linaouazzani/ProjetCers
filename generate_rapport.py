@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 from jinja2 import Environment, FileSystemLoader
 
-from biodex_parser import parse_biodex_pdf, comparer_tests, couleur_deficit, couleur_progression
+from biodex_parser import parse_biodex_pdf, comparer_tests, couleur_deficit, couleur_progression, parse_excentrique_pdf
 from graphiques import graphique_en_base64, generer_graphiques_progression
 
 
@@ -103,12 +103,12 @@ def format_ratio(value) -> str:
 
 def interpreter_deficit(deficit: Optional[float], mouvement: str) -> str:
     if deficit is None: return "—"
-    a = abs(deficit)
     mv = mouvement.lower()
-    if deficit < 0:  return f"{mv.capitalize()} — récupération complète"
-    elif a <= 10:    return f"{mv.capitalize()} — dans la norme"
-    elif a <= 20:    return f"{mv.capitalize()} — déficit modéré"
-    else:            return f"{mv.capitalize()} — déficit important"
+    if deficit > 0:     return f"{mv.capitalize()} — lesé plus fort"
+    a = abs(deficit)
+    if a <= 10:         return f"{mv.capitalize()} — dans la norme"
+    elif a <= 20:       return f"{mv.capitalize()} — déficit modéré"
+    else:               return f"{mv.capitalize()} — déficit important"
 
 
 def _sanitiser_emojis(texte: str) -> str:
@@ -210,6 +210,7 @@ def construire_contexte(
     cote_opere: str = "",
     acl_rsi_score: Optional[int] = None,
     remarques_medecin: str = "",
+    excentrique_data=None,
 ) -> dict:
 
     poids        = entree.poids_kg or sortie.poids_kg or 101.0
@@ -368,6 +369,7 @@ def construire_contexte(
         if c == "red":    att.append(f"Déficit important — {label_d}")
         elif c == "orange": att.append(f"Déficit modéré — {label_d}")
         elif c == "green" and d is not None: pos.append(f"{label} : {abs(d):.1f}%")
+        elif c == "navy" and d is not None: pos.append(f"{label} — lésé plus fort (+{d:.1f}%)")
         if p is not None and p > 0:
             prog_list.append(f"{row['mouvement']} {row['metrique']} ({row['vitesse']}) : +{p:.1f}%")
     remarques = {
@@ -443,11 +445,36 @@ def construire_contexte(
         except Exception:
             pass
 
+    # Contexte excentrique
+    def _row_exc(m):
+        if not m or m.lese_d is None:
+            return {'lese_d': None, 'sain_g': None, 'deficit_pct': None, 'coul': 'gray'}
+        return {
+            'lese_d':      m.lese_d,
+            'sain_g':      m.sain_g,
+            'deficit_pct': m.deficit_pct,
+            'coul':        couleur_deficit(m.deficit_pct) if m.deficit_pct is not None else 'gray',
+        }
+
+    exc_ctx = None
+    if excentrique_data:
+        exc_ctx = {
+            'ext_moment_max':    _row_exc(excentrique_data.ext_moment_max),
+            'ext_travail_total': _row_exc(excentrique_data.ext_travail_total),
+            'ext_puissance_max': _row_exc(excentrique_data.ext_puissance_max),
+            'flex_moment_max':   _row_exc(excentrique_data.flex_moment_max),
+            'flex_travail_total': _row_exc(excentrique_data.flex_travail_total),
+            'flex_puissance_max': _row_exc(excentrique_data.flex_puissance_max),
+            'ratio_lese_d': excentrique_data.ratio_lese_d,
+            'ratio_sain_g': excentrique_data.ratio_sain_g,
+        }
+
     return {
         "patient": sortie, "entree": entree, "sortie": sortie,
         "s60": s60, "s240": s240,
         "serie60_meta": serie60_meta, "serie240_meta": serie240_meta,
         "remarques": remarques,
+        "excentrique": exc_ctx,
         "graphiques": {
             "entree_ext_60":  graphs_dvsg.get("entree_ext", ""),
             "sortie_ext_60":  graphs_dvsg.get("sortie_ext", ""),
@@ -572,6 +599,7 @@ def generer_rapport_biodex(
     pdf_sortie:          str,
     pdf_comparatif:      Optional[str] = None,
     pdf_comparatif_sain: Optional[str] = None,
+    pdf_excentrique:     Optional[str] = None,
     output_html:         str = "outputs/rapport_biodex.html",
     output_pdf:          str = "outputs/rapport_biodex.pdf",
     template_dir:        str = "templates",
@@ -607,6 +635,11 @@ def generer_rapport_biodex(
         print("\n📋 Parsing comparatif sain...")
         comparatif_sain_data = parse_comparatif_sain(pdf_comparatif_sain)
 
+    excentrique_data = None
+    if pdf_excentrique and os.path.exists(pdf_excentrique):
+        print("\n📋 Parsing test excentrique...")
+        excentrique_data = parse_excentrique_pdf(pdf_excentrique)
+
     print("\n📊 Calcul progressions...")
     df_comp = comparer_tests(entree, sortie)
     print(f"  ✅ {len(df_comp)} métriques calculées")
@@ -626,6 +659,7 @@ def generer_rapport_biodex(
         cote_opere=cote_opere,
         acl_rsi_score=acl_rsi_score,
         remarques_medecin=remarques_medecin,
+        excentrique_data=excentrique_data,
     )
     print("  ✅ Contexte prêt")
 

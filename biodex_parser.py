@@ -231,24 +231,25 @@ def _parse_page(page_text: str, vitesse: str) -> SerieIso:
         # --- MOMENT MAX ---
         if re.search(r'momentmax\(n', line_lower) and 'moy' not in line_lower and 'poids' not in line_lower:
             # floats : [EXT_sain, EXT_lese, EXT_deficit, FLEX_sain, FLEX_lese, FLEX_deficit]
+            # Déficit inversé : (lese - sain)/sain*100 → positif = lésé plus fort
             if len(floats) >= 3:
-                serie.ext_moment_max = MetriqueIso(floats[0], floats[1], floats[2])
+                serie.ext_moment_max = MetriqueIso(floats[0], floats[1], -floats[2])
             if len(floats) >= 6:
-                serie.flex_moment_max = MetriqueIso(floats[3], floats[4], floats[5])
+                serie.flex_moment_max = MetriqueIso(floats[3], floats[4], -floats[5])
 
         # --- TRAVAIL MAX ---
         elif re.search(r'travailmax\(j\)', line_lower):
             if len(floats) >= 3:
-                serie.ext_travail_max = MetriqueIso(floats[0], floats[1], floats[2])
+                serie.ext_travail_max = MetriqueIso(floats[0], floats[1], -floats[2])
             if len(floats) >= 6:
-                serie.flex_travail_max = MetriqueIso(floats[3], floats[4], floats[5])
+                serie.flex_travail_max = MetriqueIso(floats[3], floats[4], -floats[5])
 
         # --- PUISSANCE MAXIMALE ---
         elif re.search(r'puissancemaximale\(w\)', line_lower):
             if len(floats) >= 3:
-                serie.ext_puissance_max = MetriqueIso(floats[0], floats[1], floats[2])
+                serie.ext_puissance_max = MetriqueIso(floats[0], floats[1], -floats[2])
             if len(floats) >= 6:
-                serie.flex_puissance_max = MetriqueIso(floats[3], floats[4], floats[5])
+                serie.flex_puissance_max = MetriqueIso(floats[3], floats[4], -floats[5])
 
         # --- RATIO AGON/ANTAG ---
         elif re.search(r'ratioagon', line_lower):
@@ -399,19 +400,19 @@ def parse_biodex_pdf(pdf_path: str) -> PatientBiodex:
 
 def couleur_deficit(deficit_pct: Optional[float]) -> str:
     """
-    Retourne le code couleur selon la norme Biodex CERS.
-    navy  : déficit négatif (lésé plus fort que sain)
-    green : déficit < 10%
-    orange: déficit 10-20%
-    red   : déficit > 20%
+    Convention : (lese - sain) / sain * 100
+    navy  : > 0    lésé plus fort (bonne nouvelle)
+    green : > -10% dans la norme
+    orange: >= -20% déficit modéré
+    red   : < -20% déficit important
     """
     if deficit_pct is None:
         return "gray"
-    if deficit_pct < 0:
+    if deficit_pct > 0:
         return "navy"
-    if deficit_pct < 10:
+    if deficit_pct > -10:
         return "green"
-    elif deficit_pct <= 20:
+    elif deficit_pct >= -20:
         return "orange"
     else:
         return "red"
@@ -597,20 +598,20 @@ def afficher_comparaison(df: pd.DataFrame):
 
 VALEURS_ATTENDUES = {
     "entree": {
-        "60_ext_moment_max": (316.9, 313.6, 1.0),
-        "60_flex_moment_max": (173.0, 153.9, 11.1),
+        "60_ext_moment_max": (316.9, 313.6, -1.0),
+        "60_flex_moment_max": (173.0, 153.9, -11.1),
         "60_ratio_sain": 54.6,
         "60_ratio_lese": 49.1,
-        "240_ext_moment_max": (225.7, 201.7, 10.6),
-        "240_flex_moment_max": (123.5, 114.6, 7.2),
+        "240_ext_moment_max": (225.7, 201.7, -10.6),
+        "240_flex_moment_max": (123.5, 114.6, -7.2),
     },
     "sortie": {
-        "60_ext_moment_max": (328.0, 333.3, -1.6),
-        "60_flex_moment_max": (195.4, 162.0, 17.1),
+        "60_ext_moment_max": (328.0, 333.3, 1.6),
+        "60_flex_moment_max": (195.4, 162.0, -17.1),
         "60_ratio_sain": 59.6,
         "60_ratio_lese": 48.6,
-        "240_ext_moment_max": (234.1, 216.9, 7.4),
-        "240_flex_moment_max": (139.0, 117.7, 15.3),
+        "240_ext_moment_max": (234.1, 216.9, -7.4),
+        "240_flex_moment_max": (139.0, 117.7, -15.3),
     }
 }
 
@@ -664,7 +665,115 @@ def valider_patient(patient: PatientBiodex, label: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# 9. MAIN — test sur N. Della Schiava
+# 9. Test Excentrique 30°/s (EXC/EXC, BI/PASSIF)
+# ---------------------------------------------------------------------------
+
+@dataclass
+class MetriqueExc:
+    """Une ligne excentrique : colonnes inversées — Lésé(D) / Sain(G) / Déficit(%)"""
+    lese_d: Optional[float] = None
+    sain_g: Optional[float] = None
+    deficit_pct: Optional[float] = None
+
+
+@dataclass
+class SerieExcentrique:
+    """Résultats du test excentrique 30°/s (Extension + Flexion, Lésé D / Sain G)."""
+    vitesse: str = "30"
+    ext_moment_max:    MetriqueExc = field(default_factory=MetriqueExc)
+    ext_travail_total: MetriqueExc = field(default_factory=MetriqueExc)
+    ext_puissance_max: MetriqueExc = field(default_factory=MetriqueExc)
+    flex_moment_max:    MetriqueExc = field(default_factory=MetriqueExc)
+    flex_travail_total: MetriqueExc = field(default_factory=MetriqueExc)
+    flex_puissance_max: MetriqueExc = field(default_factory=MetriqueExc)
+    ratio_lese_d: Optional[float] = None
+    ratio_sain_g: Optional[float] = None
+
+
+def _parse_page_exc(page_text: str) -> SerieExcentrique:
+    """Parse la page d'un test excentrique (colonnes : Lésé D | Sain G | Déficit)."""
+    serie = SerieExcentrique()
+    lines = page_text.split('\n')
+
+    for line in lines:
+        line_stripped = line.strip()
+        if not line_stripped:
+            continue
+        line_clean = re.sub(r'\(Rep\s*\d+\)', '', line_stripped)
+        nums = re.findall(r'-?\d+[,.]?\d*', line_clean)
+        floats = []
+        for n in nums:
+            v = _parse_float(n)
+            if v is not None:
+                floats.append(v)
+        if len(floats) < 3:
+            continue
+        line_lower = line_stripped.lower().replace(' ', '')
+
+        if re.search(r'momentmax\(n', line_lower) and 'moy' not in line_lower:
+            if len(floats) >= 3:
+                serie.ext_moment_max = MetriqueExc(floats[0], floats[1], -floats[2])
+            if len(floats) >= 6:
+                serie.flex_moment_max = MetriqueExc(floats[3], floats[4], -floats[5])
+        elif re.search(r'puissancemaximale\(w\)', line_lower):
+            if len(floats) >= 3:
+                serie.ext_puissance_max = MetriqueExc(floats[0], floats[1], -floats[2])
+            if len(floats) >= 6:
+                serie.flex_puissance_max = MetriqueExc(floats[3], floats[4], -floats[5])
+        elif re.search(r'ratioagon', line_lower):
+            if len(floats) >= 2:
+                serie.ratio_lese_d = floats[0]
+                serie.ratio_sain_g = floats[1]
+
+    # Travail Total : 2 occurrences (Extension puis Flexion)
+    travail_matches = re.findall(
+        r'[Tt]ravail\s*[Tt]otal?\s*\(?[Jj]\)?\s*([\d][,\d\.]+)\s+([\d][,\d\.]+)',
+        page_text
+    )
+    if len(travail_matches) >= 1:
+        try:
+            ld = float(travail_matches[0][0].replace(',', '.'))
+            sg = float(travail_matches[0][1].replace(',', '.'))
+            serie.ext_travail_total = MetriqueExc(lese_d=ld, sain_g=sg)
+        except ValueError:
+            pass
+    if len(travail_matches) >= 2:
+        try:
+            ld = float(travail_matches[1][0].replace(',', '.'))
+            sg = float(travail_matches[1][1].replace(',', '.'))
+            serie.flex_travail_total = MetriqueExc(lese_d=ld, sain_g=sg)
+        except ValueError:
+            pass
+
+    return serie
+
+
+def parse_excentrique_pdf(pdf_path: str) -> Optional[SerieExcentrique]:
+    """
+    Parse un PDF de test excentrique Biodex (30°/s, EXC/EXC ou BI/PASSIF).
+    Retourne None si le format n'est pas reconnu ou en cas d'erreur.
+    """
+    try:
+        with pdfplumber.open(pdf_path) as pdf:
+            if len(pdf.pages) < 1:
+                return None
+            page_text = pdf.pages[0].extract_text()
+            if not page_text:
+                return None
+            text_check = page_text.lower().replace(' ', '')
+            if 'exc/exc' not in text_check and 'bi/passif' not in text_check:
+                print("  ⚠️  parse_excentrique_pdf : EXC/EXC ou BI/PASSIF non trouvé dans le PDF")
+                return None
+            serie = _parse_page_exc(page_text)
+            print(f"  ✅ Excentrique 30°/s — Ext MM={serie.ext_moment_max.lese_d}/{serie.ext_moment_max.sain_g}")
+            return serie
+    except Exception as e:
+        print(f"  ⚠️  parse_excentrique_pdf erreur : {e}")
+        return None
+
+
+# ---------------------------------------------------------------------------
+# 10. MAIN — test sur N. Della Schiava
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":

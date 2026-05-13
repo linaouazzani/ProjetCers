@@ -118,16 +118,18 @@ with col_left:
 
     # 1. PDFs Biodex
     st.markdown('<div class="card"><div class="card-title">📄 Fichiers Biodex</div>', unsafe_allow_html=True)
-    pdf_entree    = st.file_uploader("Test d'ENTRÉE (début de séjour)",  type=["pdf"], key="up_entree")
-    pdf_sortie    = st.file_uploader("Test de SORTIE (fin de séjour)",   type=["pdf"], key="up_sortie")
-    pdf_comp      = st.file_uploader("Comparatif Lésé (optionnel)",      type=["pdf"], key="up_comp")
-    pdf_comp_sain = st.file_uploader("Comparatif Sain (optionnel)",      type=["pdf"], key="up_comp_sain")
+    pdf_entree    = st.file_uploader("Test d'ENTRÉE (début de séjour)",      type=["pdf"], key="up_entree")
+    pdf_sortie    = st.file_uploader("Test de SORTIE (fin de séjour)",       type=["pdf"], key="up_sortie")
+    pdf_comp      = st.file_uploader("Comparatif Lésé (optionnel)",          type=["pdf"], key="up_comp")
+    pdf_comp_sain = st.file_uploader("Comparatif Sain (optionnel)",          type=["pdf"], key="up_comp_sain")
+    pdf_exc       = st.file_uploader("Test Excentrique 30°/s (optionnel)",   type=["pdf"], key="up_exc")
 
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, c4, c5 = st.columns(5)
     with c1: st.markdown(f'<span class="badge {"badge-ok" if pdf_entree else "badge-wait"}">{"✅ Entrée" if pdf_entree else "⏳ Entrée"}</span>', unsafe_allow_html=True)
     with c2: st.markdown(f'<span class="badge {"badge-ok" if pdf_sortie else "badge-wait"}">{"✅ Sortie" if pdf_sortie else "⏳ Sortie"}</span>', unsafe_allow_html=True)
     with c3: st.markdown(f'<span class="badge {"badge-ok" if pdf_comp else "badge-opt"}">{"✅ Comp. Lésé" if pdf_comp else "Comp. Lésé"}</span>', unsafe_allow_html=True)
     with c4: st.markdown(f'<span class="badge {"badge-ok" if pdf_comp_sain else "badge-opt"}">{"✅ Comp. Sain" if pdf_comp_sain else "Comp. Sain"}</span>', unsafe_allow_html=True)
+    with c5: st.markdown(f'<span class="badge {"badge-ok" if pdf_exc else "badge-opt"}">{"✅ Excentrique" if pdf_exc else "Excentrique"}</span>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     # 2. Informations patient
@@ -417,6 +419,11 @@ with col_right:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(pdf_comp_sain.getvalue()); path_comp_sain = f.name
 
+            path_exc = None
+            if pdf_exc:
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(pdf_exc.getvalue()); path_exc = f.name
+
             progress.progress(30, text="🔍 Parsing des PDFs Biodex...")
 
             # Dossier de sortie FIXE (obligatoire pour pdfkit sur Windows)
@@ -432,6 +439,7 @@ with col_right:
                 pdf_sortie           = path_s,
                 pdf_comparatif       = path_comp,
                 pdf_comparatif_sain  = path_comp_sain,
+                pdf_excentrique      = path_exc,
                 output_html          = out_html,
                 output_pdf           = out_pdf,
                 template_dir         = os.path.join(_APP_DIR, "templates"),
@@ -466,7 +474,7 @@ with col_right:
             st.session_state.rapport_ext   = ext_out
 
             # Nettoyer fichiers temporaires
-            for p in [path_e, path_s, path_comp, path_comp_sain, path_photo, path_logo_club]:
+            for p in [path_e, path_s, path_comp, path_comp_sain, path_exc, path_photo, path_logo_club]:
                 if p and os.path.exists(p):
                     try: os.unlink(p)
                     except: pass

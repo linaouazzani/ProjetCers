@@ -55,11 +55,13 @@ class SerieIso:
     # Extension
     ext_moment_max: MetriqueIso = field(default_factory=MetriqueIso)
     ext_travail_max: MetriqueIso = field(default_factory=MetriqueIso)
+    ext_travail_total: MetriqueIso = field(default_factory=MetriqueIso)
     ext_puissance_max: MetriqueIso = field(default_factory=MetriqueIso)
 
     # Flexion
     flex_moment_max: MetriqueIso = field(default_factory=MetriqueIso)
     flex_travail_max: MetriqueIso = field(default_factory=MetriqueIso)
+    flex_travail_total: MetriqueIso = field(default_factory=MetriqueIso)
     flex_puissance_max: MetriqueIso = field(default_factory=MetriqueIso)
 
     # Ratio I/Q (Flexion/Extension = Ratio AGON/ANTAG)
@@ -241,6 +243,13 @@ def _parse_page(page_text: str, vitesse: str) -> SerieIso:
             if len(floats) >= 6:
                 serie.flex_travail_max = MetriqueIso(floats[3], floats[4], floats[5])
 
+        # --- TRAVAIL TOTAL ---
+        elif re.search(r'travailtotal\(j\)', line_lower):
+            if len(floats) >= 3:
+                serie.ext_travail_total = MetriqueIso(floats[0], floats[1], floats[2])
+            if len(floats) >= 6:
+                serie.flex_travail_total = MetriqueIso(floats[3], floats[4], floats[5])
+
         # --- PUISSANCE MAXIMALE ---
         elif re.search(r'puissancemaximale\(w\)', line_lower):
             if len(floats) >= 3:
@@ -374,16 +383,18 @@ def parse_biodex_pdf(pdf_path: str) -> PatientBiodex:
 def couleur_deficit(deficit_pct: Optional[float]) -> str:
     """
     Retourne le code couleur selon la norme Biodex CERS.
-    🟢 vert  : déficit < 10%
-    🟠 orange: déficit 10-20%
-    🔴 rouge : déficit > 20%
+    navy  : déficit négatif (lésé plus fort que sain)
+    green : déficit < 10%
+    orange: déficit 10-20%
+    red   : déficit > 20%
     """
     if deficit_pct is None:
         return "gray"
-    abs_d = abs(deficit_pct)
-    if abs_d < 10:
+    if deficit_pct < 0:
+        return "navy"
+    if deficit_pct < 10:
         return "green"
-    elif abs_d <= 20:
+    elif deficit_pct <= 20:
         return "orange"
     else:
         return "red"

@@ -268,11 +268,21 @@ def construire_contexte(
             interpretation="Moment normalisé au poids",
         )
 
-    def make_ligne_travail_total(comp: dict, comp_sain: dict, cle: str, mouvement: str) -> LigneMetrique:
+    def make_ligne_travail_total(comp: dict, comp_sain: dict, cle: str, mouvement: str, serie_e=None, serie_s=None) -> LigneMetrique:
+        attr = f"{cle}_travail_total"
         e_lese = comp.get(f"{cle}_travail_total_entree")
         s_lese = comp.get(f"{cle}_travail_total_sortie")
         e_sain = comp_sain.get(f"{cle}_travail_total_entree") if comp_sain else None
         s_sain = comp_sain.get(f"{cle}_travail_total_sortie") if comp_sain else None
+        # Fallback depuis les PDFs individuels si comparatif absent
+        if serie_e:
+            m = getattr(serie_e, attr, None)
+            if m and m.lese_g is not None and e_lese is None: e_lese = m.lese_g
+            if m and m.sain_d is not None and e_sain is None: e_sain = m.sain_d
+        if serie_s:
+            m = getattr(serie_s, attr, None)
+            if m and m.lese_g is not None and s_lese is None: s_lese = m.lese_g
+            if m and m.sain_d is not None and s_sain is None: s_sain = m.sain_d
         pl = calc_prog(e_lese, s_lese)
         ps = calc_prog(e_sain, s_sain)
         return LigneMetrique(
@@ -310,23 +320,23 @@ def construire_contexte(
     s60 = SerieTemplate(
         ext_moment_max    = make_ligne("60°/s", "Extension", "Moment Max"),
         ext_moment_poids  = make_ligne_moment_poids_sain(e60, s60p, "Extension"),
-        ext_travail_total = make_ligne_travail_total(comp60, comp60_sain, "ext", "Extension"),
+        ext_travail_total = make_ligne_travail_total(comp60, comp60_sain, "ext", "Extension", e60, s60p),
         ext_puissance_max = make_ligne("60°/s", "Extension", "Puissance Max"),
         ext_ratio_poids   = make_ratio_poids(e60, s60p, "Extension"),
         flex_moment_max    = make_ligne("60°/s", "Flexion", "Moment Max"),
         flex_moment_poids  = make_ligne_moment_poids_sain(e60, s60p, "Flexion"),
-        flex_travail_total = make_ligne_travail_total(comp60, comp60_sain, "flex", "Flexion"),
+        flex_travail_total = make_ligne_travail_total(comp60, comp60_sain, "flex", "Flexion", e60, s60p),
         flex_puissance_max = make_ligne("60°/s", "Flexion", "Puissance Max"),
     )
     s240 = SerieTemplate(
         ext_moment_max    = make_ligne("240°/s", "Extension", "Moment Max"),
         ext_moment_poids  = make_ligne_moment_poids_sain(e240, s240p, "Extension"),
-        ext_travail_total = make_ligne_travail_total(comp240, comp240_sain, "ext", "Extension"),
+        ext_travail_total = make_ligne_travail_total(comp240, comp240_sain, "ext", "Extension", e240, s240p),
         ext_puissance_max = make_ligne("240°/s", "Extension", "Puissance Max"),
         ext_ratio_poids   = make_ratio_poids(e240, s240p, "Extension"),
         flex_moment_max    = make_ligne("240°/s", "Flexion", "Moment Max"),
         flex_moment_poids  = make_ligne_moment_poids_sain(e240, s240p, "Flexion"),
-        flex_travail_total = make_ligne_travail_total(comp240, comp240_sain, "flex", "Flexion"),
+        flex_travail_total = make_ligne_travail_total(comp240, comp240_sain, "flex", "Flexion", e240, s240p),
         flex_puissance_max = make_ligne("240°/s", "Flexion", "Puissance Max"),
     )
 

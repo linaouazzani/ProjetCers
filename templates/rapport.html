@@ -256,6 +256,7 @@ body {
 .do { background: #e07b00 !important; color: #ffffff !important; font-weight: 700; }
 .dr { background: #c0392b !important; color: #ffffff !important; font-weight: 700; }
 .dw { background: #999999 !important; color: #ffffff !important; font-weight: 700; }
+.dn { background: #1c3f6e !important; color: #ffffff !important; font-weight: 700; }
 
 /* Progressions */
 .pg { color: #2a8a36; font-weight: 700; }
@@ -495,7 +496,10 @@ body {
     <div class="bilan-title">BILAN ISOCINETIQUE — Genou {{ entree.lese }}</div>
 
     <!-- MACRO TABLEAU -->
-    {% macro tableau(s, meta, titre, date_e, date_s) %}
+    {% macro tableau(s, meta, titre, date_e, date_s, vitesse_num=60) %}
+    {% set norm_ext_rp = 3.0 if vitesse_num == 60 else 2.2 %}
+    {% set norm_flex_rp = 1.8 if vitesse_num == 60 else 1.5 %}
+    {% set norme_iq = "0,50–0,70" if vitesse_num == 60 else "0,70–0,90" %}
     <div style="background:#1c3f6e; color:white; font-size:8.5px; font-weight:700; text-align:center; padding:2.5px 0; border-radius:2px 2px 0 0; margin-bottom:0;">{{ titre }}</div>
     <table class="mt">
       <thead>
@@ -520,10 +524,10 @@ body {
           <td class="cm">Moment Max<span class="sl">N.m</span></td>
           <td>{{ s.ext_moment_max.entree_sain_d | fmt }}</td>
           <td>{{ s.ext_moment_max.entree_lese_g | fmt }}</td>
-          <td class="d{{ s.ext_moment_max.couleur_deficit_entree[0] }}">{% if s.ext_moment_max.entree_deficit_pct is not none %}{{ "%.1f"|format(s.ext_moment_max.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
+          <td class="d{{ s.ext_moment_max.couleur_deficit_entree[0] }}">{% if s.ext_moment_max.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_moment_max.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td>{{ s.ext_moment_max.sortie_sain_d | fmt }}</td>
           <td>{{ s.ext_moment_max.sortie_lese_g | fmt }}</td>
-          <td class="d{{ s.ext_moment_max.couleur_deficit[0] }}">{% if s.ext_moment_max.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.ext_moment_max.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
+          <td class="d{{ s.ext_moment_max.couleur_deficit[0] }}">{% if s.ext_moment_max.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_moment_max.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.ext_moment_max.couleur_prog_sain[0] }}">{% if s.ext_moment_max.progression_sain is not none %}{{ "%+.1f"|format(s.ext_moment_max.progression_sain) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.ext_moment_max.couleur_prog[0] }}">{% if s.ext_moment_max.progression_pct is not none %}{{ "%+.1f"|format(s.ext_moment_max.progression_pct) }}%{% else %}—{% endif %}</td>
           <td class="interp">{{ s.ext_moment_max.interpretation }}</td>
@@ -543,42 +547,42 @@ body {
         </tr>
 
         <tr>
+          <td class="cm">Ratio/Poids Quadri<span class="sl">N.m/kg</span></td>
+          <td {% if s.ext_ratio_poids.entree_sain_d is not none %}class="{{ 'dg' if s.ext_ratio_poids.entree_sain_d >= norm_ext_rp else 'do' }}"{% endif %}>{{ s.ext_ratio_poids.entree_sain_d | fmt(2) }}</td>
+          <td {% if s.ext_ratio_poids.entree_lese_g is not none %}class="{{ 'dg' if s.ext_ratio_poids.entree_lese_g >= norm_ext_rp else 'do' }}"{% endif %}>{{ s.ext_ratio_poids.entree_lese_g | fmt(2) }}</td>
+          <td class="dw">—</td>
+          <td {% if s.ext_ratio_poids.sortie_sain_d is not none %}class="{{ 'dg' if s.ext_ratio_poids.sortie_sain_d >= norm_ext_rp else 'do' }}"{% endif %}>{{ s.ext_ratio_poids.sortie_sain_d | fmt(2) }}</td>
+          <td {% if s.ext_ratio_poids.sortie_lese_g is not none %}class="{{ 'dg' if s.ext_ratio_poids.sortie_lese_g >= norm_ext_rp else 'do' }}"{% endif %}>{{ s.ext_ratio_poids.sortie_lese_g | fmt(2) }}</td>
+          <td class="dw">—</td>
+          <td class="p{{ s.ext_ratio_poids.couleur_prog_sain[0] }}">{% if s.ext_ratio_poids.progression_sain is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.progression_sain) }}%{% else %}—{% endif %}</td>
+          <td class="p{{ s.ext_ratio_poids.couleur_prog[0] }}">{% if s.ext_ratio_poids.progression_pct is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.progression_pct) }}%{% else %}—{% endif %}</td>
+          <td class="interp">Norme ≥ {{ "3,0" if vitesse_num == 60 else "2,2" }} N·m/kg</td>
+        </tr>
+
+        <tr class="alt">
           <td class="cm">Travail Total<span class="sl">J</span></td>
           <td>{{ s.ext_travail_total.entree_sain_d | fmt }}</td>
           <td>{{ s.ext_travail_total.entree_lese_g | fmt }}</td>
-          <td class="d{{ s.ext_travail_total.couleur_deficit_entree[0] }}">{% if s.ext_travail_total.entree_deficit_pct is not none %}{{ "%.1f"|format(s.ext_travail_total.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
+          <td class="d{{ s.ext_travail_total.couleur_deficit_entree[0] }}">{% if s.ext_travail_total.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_travail_total.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td>{{ s.ext_travail_total.sortie_sain_d | fmt }}</td>
           <td>{{ s.ext_travail_total.sortie_lese_g | fmt }}</td>
-          <td class="d{{ s.ext_travail_total.couleur_deficit[0] }}">{% if s.ext_travail_total.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.ext_travail_total.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
+          <td class="d{{ s.ext_travail_total.couleur_deficit[0] }}">{% if s.ext_travail_total.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_travail_total.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.ext_travail_total.couleur_prog_sain[0] }}">{% if s.ext_travail_total.progression_sain is not none %}{{ "%+.1f"|format(s.ext_travail_total.progression_sain) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.ext_travail_total.couleur_prog[0] }}">{% if s.ext_travail_total.progression_pct is not none %}{{ "%+.1f"|format(s.ext_travail_total.progression_pct) }}%{% else %}—{% endif %}</td>
           <td class="interp">{{ s.ext_travail_total.interpretation }}</td>
         </tr>
 
-        <tr class="alt">
+        <tr>
           <td class="cm">Puissance Max<span class="sl">W</span></td>
           <td>{{ s.ext_puissance_max.entree_sain_d | fmt }}</td>
           <td>{{ s.ext_puissance_max.entree_lese_g | fmt }}</td>
-          <td class="d{{ s.ext_puissance_max.couleur_deficit_entree[0] }}">{% if s.ext_puissance_max.entree_deficit_pct is not none %}{{ "%.1f"|format(s.ext_puissance_max.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
+          <td class="d{{ s.ext_puissance_max.couleur_deficit_entree[0] }}">{% if s.ext_puissance_max.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_puissance_max.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td>{{ s.ext_puissance_max.sortie_sain_d | fmt }}</td>
           <td>{{ s.ext_puissance_max.sortie_lese_g | fmt }}</td>
-          <td class="d{{ s.ext_puissance_max.couleur_deficit[0] }}">{% if s.ext_puissance_max.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.ext_puissance_max.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
+          <td class="d{{ s.ext_puissance_max.couleur_deficit[0] }}">{% if s.ext_puissance_max.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_puissance_max.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.ext_puissance_max.couleur_prog_sain[0] }}">{% if s.ext_puissance_max.progression_sain is not none %}{{ "%+.1f"|format(s.ext_puissance_max.progression_sain) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.ext_puissance_max.couleur_prog[0] }}">{% if s.ext_puissance_max.progression_pct is not none %}{{ "%+.1f"|format(s.ext_puissance_max.progression_pct) }}%{% else %}—{% endif %}</td>
           <td class="interp">{{ s.ext_puissance_max.interpretation }}</td>
-        </tr>
-
-        <tr>
-          <td class="cm">Ratio/Poids Quadri<span class="sl">N.m/kg</span></td>
-          <td>{{ s.ext_ratio_poids.entree_sain_d | fmt(2) }}</td>
-          <td>{{ s.ext_ratio_poids.entree_lese_g | fmt(2) }}</td>
-          <td class="dw">—</td>
-          <td>{{ s.ext_ratio_poids.sortie_sain_d | fmt(2) }}</td>
-          <td>{{ s.ext_ratio_poids.sortie_lese_g | fmt(2) }}</td>
-          <td class="dw">—</td>
-          <td class="p{{ s.ext_ratio_poids.couleur_prog_sain[0] }}">{% if s.ext_ratio_poids.progression_sain is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.progression_sain) }}%{% else %}—{% endif %}</td>
-          <td class="p{{ s.ext_ratio_poids.couleur_prog[0] }}">{% if s.ext_ratio_poids.progression_pct is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.progression_pct) }}%{% else %}—{% endif %}</td>
-          <td class="interp">Quadriceps / poids (N.m/kg)</td>
         </tr>
 
         <tr class="grp"><td colspan="10">&#9658;&nbsp;FLEXION</td></tr>
@@ -587,10 +591,10 @@ body {
           <td class="cm">Moment Max<span class="sl">N.m</span></td>
           <td>{{ s.flex_moment_max.entree_sain_d | fmt }}</td>
           <td>{{ s.flex_moment_max.entree_lese_g | fmt }}</td>
-          <td class="d{{ s.flex_moment_max.couleur_deficit_entree[0] }}">{% if s.flex_moment_max.entree_deficit_pct is not none %}{{ "%.1f"|format(s.flex_moment_max.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
+          <td class="d{{ s.flex_moment_max.couleur_deficit_entree[0] }}">{% if s.flex_moment_max.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_moment_max.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td>{{ s.flex_moment_max.sortie_sain_d | fmt }}</td>
           <td>{{ s.flex_moment_max.sortie_lese_g | fmt }}</td>
-          <td class="d{{ s.flex_moment_max.couleur_deficit[0] }}">{% if s.flex_moment_max.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.flex_moment_max.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
+          <td class="d{{ s.flex_moment_max.couleur_deficit[0] }}">{% if s.flex_moment_max.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_moment_max.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.flex_moment_max.couleur_prog_sain[0] }}">{% if s.flex_moment_max.progression_sain is not none %}{{ "%+.1f"|format(s.flex_moment_max.progression_sain) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.flex_moment_max.couleur_prog[0] }}">{% if s.flex_moment_max.progression_pct is not none %}{{ "%+.1f"|format(s.flex_moment_max.progression_pct) }}%{% else %}—{% endif %}</td>
           <td class="interp">{{ s.flex_moment_max.interpretation }}</td>
@@ -609,46 +613,50 @@ body {
           <td class="interp">Moment normalise au poids</td>
         </tr>
 
+        {% set _e_si = s.flex_moment_poids.entree_sain_d / 100 if s.flex_moment_poids.entree_sain_d is not none else none %}
+        {% set _e_li = s.flex_moment_poids.entree_lese_g / 100 if s.flex_moment_poids.entree_lese_g is not none else none %}
+        {% set _s_si = s.flex_moment_poids.sortie_sain_d / 100 if s.flex_moment_poids.sortie_sain_d is not none else none %}
+        {% set _s_li = s.flex_moment_poids.sortie_lese_g / 100 if s.flex_moment_poids.sortie_lese_g is not none else none %}
         <tr>
+          <td class="cm">Ratio/Poids Ischio<span class="sl">N.m/kg</span></td>
+          <td {% if _e_si is not none %}class="{{ 'dg' if _e_si >= norm_flex_rp else 'do' }}"{% endif %}>{{ "%.2f"|format(_e_si) if _e_si is not none else "—" }}</td>
+          <td {% if _e_li is not none %}class="{{ 'dg' if _e_li >= norm_flex_rp else 'do' }}"{% endif %}>{{ "%.2f"|format(_e_li) if _e_li is not none else "—" }}</td>
+          <td class="dw">—</td>
+          <td {% if _s_si is not none %}class="{{ 'dg' if _s_si >= norm_flex_rp else 'do' }}"{% endif %}>{{ "%.2f"|format(_s_si) if _s_si is not none else "—" }}</td>
+          <td {% if _s_li is not none %}class="{{ 'dg' if _s_li >= norm_flex_rp else 'do' }}"{% endif %}>{{ "%.2f"|format(_s_li) if _s_li is not none else "—" }}</td>
+          <td class="dw">—</td>
+          <td class="p{{ s.flex_moment_poids.couleur_prog_sain[0] }}">{% if s.flex_moment_poids.progression_sain is not none %}{{ "%+.1f"|format(s.flex_moment_poids.progression_sain) }}%{% else %}—{% endif %}</td>
+          <td class="p{{ s.flex_moment_poids.couleur_prog[0] }}">{% if s.flex_moment_poids.progression_pct is not none %}{{ "%+.1f"|format(s.flex_moment_poids.progression_pct) }}%{% else %}—{% endif %}</td>
+          <td class="interp">Norme ≥ {{ "1,8" if vitesse_num == 60 else "1,5" }} N·m/kg</td>
+        </tr>
+
+        <tr class="alt">
           <td class="cm">Travail Total<span class="sl">J</span></td>
           <td>{{ s.flex_travail_total.entree_sain_d | fmt }}</td>
           <td>{{ s.flex_travail_total.entree_lese_g | fmt }}</td>
-          <td class="d{{ s.flex_travail_total.couleur_deficit_entree[0] }}">{% if s.flex_travail_total.entree_deficit_pct is not none %}{{ "%.1f"|format(s.flex_travail_total.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
+          <td class="d{{ s.flex_travail_total.couleur_deficit_entree[0] }}">{% if s.flex_travail_total.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_travail_total.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td>{{ s.flex_travail_total.sortie_sain_d | fmt }}</td>
           <td>{{ s.flex_travail_total.sortie_lese_g | fmt }}</td>
-          <td class="d{{ s.flex_travail_total.couleur_deficit[0] }}">{% if s.flex_travail_total.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.flex_travail_total.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
+          <td class="d{{ s.flex_travail_total.couleur_deficit[0] }}">{% if s.flex_travail_total.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_travail_total.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.flex_travail_total.couleur_prog_sain[0] }}">{% if s.flex_travail_total.progression_sain is not none %}{{ "%+.1f"|format(s.flex_travail_total.progression_sain) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.flex_travail_total.couleur_prog[0] }}">{% if s.flex_travail_total.progression_pct is not none %}{{ "%+.1f"|format(s.flex_travail_total.progression_pct) }}%{% else %}—{% endif %}</td>
           <td class="interp">{{ s.flex_travail_total.interpretation }}</td>
         </tr>
 
-        <tr class="alt">
+        <tr>
           <td class="cm">Puissance Max<span class="sl">W</span></td>
           <td>{{ s.flex_puissance_max.entree_sain_d | fmt }}</td>
           <td>{{ s.flex_puissance_max.entree_lese_g | fmt }}</td>
-          <td class="d{{ s.flex_puissance_max.couleur_deficit_entree[0] }}">{% if s.flex_puissance_max.entree_deficit_pct is not none %}{{ "%.1f"|format(s.flex_puissance_max.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
+          <td class="d{{ s.flex_puissance_max.couleur_deficit_entree[0] }}">{% if s.flex_puissance_max.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_puissance_max.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td>{{ s.flex_puissance_max.sortie_sain_d | fmt }}</td>
           <td>{{ s.flex_puissance_max.sortie_lese_g | fmt }}</td>
-          <td class="d{{ s.flex_puissance_max.couleur_deficit[0] }}">{% if s.flex_puissance_max.sortie_deficit_pct is not none %}{{ "%.1f"|format(s.flex_puissance_max.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
+          <td class="d{{ s.flex_puissance_max.couleur_deficit[0] }}">{% if s.flex_puissance_max.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_puissance_max.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.flex_puissance_max.couleur_prog_sain[0] }}">{% if s.flex_puissance_max.progression_sain is not none %}{{ "%+.1f"|format(s.flex_puissance_max.progression_sain) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.flex_puissance_max.couleur_prog[0] }}">{% if s.flex_puissance_max.progression_pct is not none %}{{ "%+.1f"|format(s.flex_puissance_max.progression_pct) }}%{% else %}—{% endif %}</td>
           <td class="interp">{{ s.flex_puissance_max.interpretation }}</td>
         </tr>
 
-        <tr>
-          <td class="cm">Ratio/Poids Ischio<span class="sl">N.m/kg</span></td>
-          <td>{{ "%.2f"|format(s.flex_moment_poids.entree_sain_d / 100) if s.flex_moment_poids.entree_sain_d is not none else "—" }}</td>
-          <td>{{ "%.2f"|format(s.flex_moment_poids.entree_lese_g / 100) if s.flex_moment_poids.entree_lese_g is not none else "—" }}</td>
-          <td class="dw">—</td>
-          <td>{{ "%.2f"|format(s.flex_moment_poids.sortie_sain_d / 100) if s.flex_moment_poids.sortie_sain_d is not none else "—" }}</td>
-          <td>{{ "%.2f"|format(s.flex_moment_poids.sortie_lese_g / 100) if s.flex_moment_poids.sortie_lese_g is not none else "—" }}</td>
-          <td class="dw">—</td>
-          <td class="p{{ s.flex_moment_poids.couleur_prog_sain[0] }}">{% if s.flex_moment_poids.progression_sain is not none %}{{ "%+.1f"|format(s.flex_moment_poids.progression_sain) }}%{% else %}—{% endif %}</td>
-          <td class="p{{ s.flex_moment_poids.couleur_prog[0] }}">{% if s.flex_moment_poids.progression_pct is not none %}{{ "%+.1f"|format(s.flex_moment_poids.progression_pct) }}%{% else %}—{% endif %}</td>
-          <td class="interp">Ischio / poids (N.m/kg)</td>
-        </tr>
-
-        <tr class="grp"><td colspan="10">&#9658;&nbsp;RATIO I/Q — Norme : 0,50-0,70</td></tr>
+        <tr class="grp"><td colspan="10">&#9658;&nbsp;RATIO I/Q — Norme : {{ norme_iq }}</td></tr>
 
         <tr>
           <td class="cm">Ratio I/Q<span class="sl">Ischio/Quadri</span></td>
@@ -667,8 +675,8 @@ body {
     </table>
     {% endmacro %}
 
-    {{ tableau(s60,  serie60_meta,  "Vitesse 60deg/s — Force (Isocinetique Lent)",      entree.date_test, sortie.date_test) }}
-    {{ tableau(s240, serie240_meta, "Vitesse 240deg/s — Puissance (Isocinetique Rapide)", entree.date_test, sortie.date_test) }}
+    {{ tableau(s60,  serie60_meta,  "Vitesse 60deg/s — Force (Isocinetique Lent)",       entree.date_test, sortie.date_test, 60) }}
+    {{ tableau(s240, serie240_meta, "Vitesse 240deg/s — Puissance (Isocinetique Rapide)", entree.date_test, sortie.date_test, 240) }}
 
     <!-- LEGENDE -->
     <div class="legende">

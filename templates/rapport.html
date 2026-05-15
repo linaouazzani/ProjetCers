@@ -537,10 +537,10 @@ body {
           <td class="cm">Moment/Poids<span class="sl">%</span></td>
           <td>{{ s.ext_moment_poids.entree_sain_d | fmt }}</td>
           <td>{{ s.ext_moment_poids.entree_lese_g | fmt }}</td>
-          <td class="dw">—</td>
+          <td class="d{{ s.ext_moment_poids.couleur_deficit_entree[0] }}">{% if s.ext_moment_poids.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_moment_poids.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td>{{ s.ext_moment_poids.sortie_sain_d | fmt }}</td>
           <td>{{ s.ext_moment_poids.sortie_lese_g | fmt }}</td>
-          <td class="dw">—</td>
+          <td class="d{{ s.ext_moment_poids.couleur_deficit[0] }}">{% if s.ext_moment_poids.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_moment_poids.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.ext_moment_poids.couleur_prog_sain[0] }}">{% if s.ext_moment_poids.progression_sain is not none %}{{ "%+.1f"|format(s.ext_moment_poids.progression_sain) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.ext_moment_poids.couleur_prog[0] }}">{% if s.ext_moment_poids.progression_pct is not none %}{{ "%+.1f"|format(s.ext_moment_poids.progression_pct) }}%{% else %}—{% endif %}</td>
           <td class="interp">Moment normalise au poids</td>
@@ -550,10 +550,10 @@ body {
           <td class="cm">Ratio/Poids Quadri<span class="sl">N.m/kg</span></td>
           <td {% if s.ext_ratio_poids.entree_sain_d is not none %}class="{{ 'dg' if s.ext_ratio_poids.entree_sain_d >= norm_ext_rp else 'do' }}"{% endif %}>{{ s.ext_ratio_poids.entree_sain_d | fmt(2) }}</td>
           <td {% if s.ext_ratio_poids.entree_lese_g is not none %}class="{{ 'dg' if s.ext_ratio_poids.entree_lese_g >= norm_ext_rp else 'do' }}"{% endif %}>{{ s.ext_ratio_poids.entree_lese_g | fmt(2) }}</td>
-          <td class="dw">—</td>
+          <td class="d{{ s.ext_ratio_poids.couleur_deficit_entree[0] }}">{% if s.ext_ratio_poids.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td {% if s.ext_ratio_poids.sortie_sain_d is not none %}class="{{ 'dg' if s.ext_ratio_poids.sortie_sain_d >= norm_ext_rp else 'do' }}"{% endif %}>{{ s.ext_ratio_poids.sortie_sain_d | fmt(2) }}</td>
           <td {% if s.ext_ratio_poids.sortie_lese_g is not none %}class="{{ 'dg' if s.ext_ratio_poids.sortie_lese_g >= norm_ext_rp else 'do' }}"{% endif %}>{{ s.ext_ratio_poids.sortie_lese_g | fmt(2) }}</td>
-          <td class="dw">—</td>
+          <td class="d{{ s.ext_ratio_poids.couleur_deficit[0] }}">{% if s.ext_ratio_poids.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.ext_ratio_poids.couleur_prog_sain[0] }}">{% if s.ext_ratio_poids.progression_sain is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.progression_sain) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.ext_ratio_poids.couleur_prog[0] }}">{% if s.ext_ratio_poids.progression_pct is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.progression_pct) }}%{% else %}—{% endif %}</td>
           <td class="interp">Norme ≥ {{ "3,0" if vitesse_num == 60 else "2,2" }} N·m/kg</td>
@@ -604,10 +604,10 @@ body {
           <td class="cm">Moment/Poids<span class="sl">%</span></td>
           <td>{{ s.flex_moment_poids.entree_sain_d | fmt }}</td>
           <td>{{ s.flex_moment_poids.entree_lese_g | fmt }}</td>
-          <td class="dw">—</td>
+          <td class="d{{ s.flex_moment_poids.couleur_deficit_entree[0] }}">{% if s.flex_moment_poids.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_moment_poids.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td>{{ s.flex_moment_poids.sortie_sain_d | fmt }}</td>
           <td>{{ s.flex_moment_poids.sortie_lese_g | fmt }}</td>
-          <td class="dw">—</td>
+          <td class="d{{ s.flex_moment_poids.couleur_deficit[0] }}">{% if s.flex_moment_poids.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_moment_poids.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.flex_moment_poids.couleur_prog_sain[0] }}">{% if s.flex_moment_poids.progression_sain is not none %}{{ "%+.1f"|format(s.flex_moment_poids.progression_sain) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.flex_moment_poids.couleur_prog[0] }}">{% if s.flex_moment_poids.progression_pct is not none %}{{ "%+.1f"|format(s.flex_moment_poids.progression_pct) }}%{% else %}—{% endif %}</td>
           <td class="interp">Moment normalise au poids</td>
@@ -621,10 +621,10 @@ body {
           <td class="cm">Ratio/Poids Ischio<span class="sl">N.m/kg</span></td>
           <td {% if _e_si is not none %}class="{{ 'dg' if _e_si >= norm_flex_rp else 'do' }}"{% endif %}>{{ "%.2f"|format(_e_si) if _e_si is not none else "—" }}</td>
           <td {% if _e_li is not none %}class="{{ 'dg' if _e_li >= norm_flex_rp else 'do' }}"{% endif %}>{{ "%.2f"|format(_e_li) if _e_li is not none else "—" }}</td>
-          <td class="dw">—</td>
+          <td class="d{{ s.flex_moment_poids.couleur_deficit_entree[0] }}">{% if s.flex_moment_poids.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_moment_poids.entree_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td {% if _s_si is not none %}class="{{ 'dg' if _s_si >= norm_flex_rp else 'do' }}"{% endif %}>{{ "%.2f"|format(_s_si) if _s_si is not none else "—" }}</td>
           <td {% if _s_li is not none %}class="{{ 'dg' if _s_li >= norm_flex_rp else 'do' }}"{% endif %}>{{ "%.2f"|format(_s_li) if _s_li is not none else "—" }}</td>
-          <td class="dw">—</td>
+          <td class="d{{ s.flex_moment_poids.couleur_deficit[0] }}">{% if s.flex_moment_poids.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_moment_poids.sortie_deficit_pct) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.flex_moment_poids.couleur_prog_sain[0] }}">{% if s.flex_moment_poids.progression_sain is not none %}{{ "%+.1f"|format(s.flex_moment_poids.progression_sain) }}%{% else %}—{% endif %}</td>
           <td class="p{{ s.flex_moment_poids.couleur_prog[0] }}">{% if s.flex_moment_poids.progression_pct is not none %}{{ "%+.1f"|format(s.flex_moment_poids.progression_pct) }}%{% else %}—{% endif %}</td>
           <td class="interp">Norme ≥ {{ "1,8" if vitesse_num == 60 else "1,5" }} N·m/kg</td>
@@ -967,6 +967,23 @@ body {
         </div>
       </div>
     </div>
+
+    <!-- COURBES EXCENTRIQUES (optionnel) -->
+    {% if graphiques.exc_ext %}
+    <div style="background:#5a6472;color:white;font-size:7px;font-weight:700;padding:2px 8px;text-align:center;margin:3px 0 2px 0;border-radius:2px;flex-shrink:0;">
+      COURBES EXCENTRIQUES 30&#176;/s &#8212; L&#233;s&#233; (pointill&#233;) vs Sain (plein)
+    </div>
+    <div style="display:table;width:100%;border-collapse:collapse;margin-bottom:4px;flex-shrink:0;">
+      <div style="display:table-row;">
+        <div style="display:table-cell;width:50%;padding:0 1px 0 0;vertical-align:top;">
+          <img src="{{ graphiques.exc_ext }}" style="width:100%;height:auto;display:block;">
+        </div>
+        <div style="display:table-cell;width:50%;padding:0 0 0 1px;vertical-align:top;">
+          <img src="{{ graphiques.exc_flex }}" style="width:100%;height:auto;display:block;">
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
     <!-- REMARQUES MEDICALES FINALES -->
     <div style="background:#1c3f6e; color:white; font-size:8px; font-weight:700; padding:3px 10px; text-align:center; margin-bottom:4px; border-radius:3px; flex-shrink:0;">

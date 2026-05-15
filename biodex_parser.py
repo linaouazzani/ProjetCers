@@ -277,25 +277,43 @@ def _parse_page(page_text: str, vitesse: str) -> SerieIso:
                 serie.ratio_sain_d = floats[i_s]
                 serie.ratio_lese_g = floats[i_l]
 
-    # Travail Total : 2 occurrences par page (Extension puis Flexion) — pattern strict
-    travail_matches = re.findall(
-        r'[Tt]ravail\s*[Tt]otal?\s*\(?[Jj]\)?\s*([\d]+[,\.][\d]+)\s+([\d]+[,\.][\d]+)',
-        page_text
-    )
-    if len(travail_matches) >= 1:
-        try:
-            sd = float(travail_matches[0][i_s].replace(',', '.'))
-            lg = float(travail_matches[0][i_l].replace(',', '.'))
-            serie.ext_travail_total = MetriqueIso(sain_d=sd, lese_g=lg)
-        except ValueError:
-            pass
-    if len(travail_matches) >= 2:
-        try:
-            sd = float(travail_matches[1][i_s].replace(',', '.'))
-            lg = float(travail_matches[1][i_l].replace(',', '.'))
-            serie.flex_travail_total = MetriqueIso(sain_d=sd, lese_g=lg)
-        except ValueError:
-            pass
+    # Travail Total : ligne-par-ligne, 1ere occurrence = Extension, 2eme = Flexion
+    # Gère 2 valeurs/ligne, 3 valeurs/ligne (avec déficit), ou 6 valeurs/ligne (tout-en-un)
+    _tt_lines = []
+    for _l in page_text.split('\n'):
+        _ls = _l.strip()
+        if not _ls:
+            continue
+        if not re.search(r'[Tt]ravail\s*[Tt]otal?\s*\(?[Jj]\)?', _ls):
+            continue
+        _lc = re.sub(r'\(Rep\s*\d+\)', '', _ls)
+        _raw = re.findall(r'-?[\d]+[,\.][\d]+', _lc)
+        _nums = []
+        for _n in _raw:
+            try: _nums.append(float(_n.replace(',', '.')))
+            except: pass
+        if _nums:
+            _tt_lines.append(_nums)
+
+    if len(_tt_lines) >= 2:
+        # 2 lignes distinctes : 1ère = Extension, 2ème = Flexion
+        _l0, _l1 = _tt_lines[0], _tt_lines[1]
+        if len(_l0) >= 2:
+            serie.ext_travail_total = MetriqueIso(sain_d=_l0[i_s], lese_g=_l0[i_l])
+        if len(_l1) >= 2:
+            serie.flex_travail_total = MetriqueIso(sain_d=_l1[i_s], lese_g=_l1[i_l])
+    elif len(_tt_lines) == 1:
+        # 1 seule ligne : tout-en-un (4 ou 6 valeurs) ou Extension seulement
+        _l0 = _tt_lines[0]
+        if len(_l0) >= 2:
+            serie.ext_travail_total = MetriqueIso(sain_d=_l0[i_s], lese_g=_l0[i_l])
+        if len(_l0) >= 6:
+            # ext_sain ext_lese ext_def flex_sain flex_lese flex_def
+            serie.flex_travail_total = MetriqueIso(sain_d=_l0[3+i_s], lese_g=_l0[3+i_l])
+        elif len(_l0) >= 4:
+            # ext_sain ext_lese flex_sain flex_lese (pas de déficit)
+            serie.flex_travail_total = MetriqueIso(sain_d=_l0[2+i_s], lese_g=_l0[2+i_l])
+
     print(f"  Travail Total ({vitesse} deg/s) col_sain={i_s} — "
           f"Ext: {serie.ext_travail_total.sain_d}/{serie.ext_travail_total.lese_g}, "
           f"Flex: {serie.flex_travail_total.sain_d}/{serie.flex_travail_total.lese_g}")

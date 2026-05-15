@@ -28,7 +28,7 @@ from typing import Optional
 from jinja2 import Environment, FileSystemLoader
 
 from biodex_parser import parse_biodex_pdf, comparer_tests, couleur_deficit, couleur_progression, parse_excentrique_pdf
-from graphiques import graphique_en_base64, generer_graphiques_progression
+from graphiques import graphique_en_base64, generer_graphiques_progression, generer_graphiques_excentrique
 
 
 # ════════════════════════════════════════════════════════════════
@@ -214,6 +214,13 @@ def construire_contexte(
 ) -> dict:
 
     poids        = entree.poids_kg or sortie.poids_kg or 101.0
+
+    def _calc_def(sain, lese):
+        """Calcule le déficit (lese-sain)/sain*100 si les deux valeurs sont disponibles."""
+        if sain and lese and sain != 0:
+            return round((lese - sain) / sain * 100, 1)
+        return None
+
     comp60       = (comparatif_data      or {}).get("60",  {})
     comp240      = (comparatif_data      or {}).get("240", {})
     comp60_sain  = (comparatif_sain_data or {}).get("60",  {})
@@ -259,11 +266,15 @@ def construire_contexte(
         s_lese_p = round(s_lese / poids * 100, 1) if s_lese else None
         ps = calc_prog(e_sain_p, s_sain_p)
         pl = calc_prog(e_lese_p, s_lese_p)
+        e_def = _calc_def(e_sain_p, e_lese_p)
+        s_def = _calc_def(s_sain_p, s_lese_p)
         return LigneMetrique(
             entree_sain_d=e_sain_p, entree_lese_g=e_lese_p,
             sortie_sain_d=s_sain_p, sortie_lese_g=s_lese_p,
+            entree_deficit_pct=e_def, sortie_deficit_pct=s_def,
             progression_sain=ps, progression_pct=pl,
-            couleur_deficit_entree="gray", couleur_deficit="gray",
+            couleur_deficit_entree=couleur_deficit(e_def),
+            couleur_deficit=couleur_deficit(s_def),
             couleur_prog_sain=couleur_progression(ps),
             couleur_prog=couleur_progression(pl),
             interpretation="Moment normalisé au poids",
@@ -286,14 +297,18 @@ def construire_contexte(
             if m and m.sain_d is not None and s_sain is None: s_sain = m.sain_d
         pl = calc_prog(e_lese, s_lese)
         ps = calc_prog(e_sain, s_sain)
+        e_def = _calc_def(e_sain, e_lese)
+        s_def = _calc_def(s_sain, s_lese)
         return LigneMetrique(
             entree_sain_d=e_sain, sortie_sain_d=s_sain,
             entree_lese_g=e_lese, sortie_lese_g=s_lese,
+            entree_deficit_pct=e_def, sortie_deficit_pct=s_def,
             progression_sain=ps, progression_pct=pl,
-            couleur_deficit_entree="gray", couleur_deficit="gray",
+            couleur_deficit_entree=couleur_deficit(e_def),
+            couleur_deficit=couleur_deficit(s_def),
             couleur_prog_sain=couleur_progression(ps),
             couleur_prog=couleur_progression(pl),
-            interpretation=interpreter_deficit(None, mouvement),
+            interpretation=interpreter_deficit(s_def, mouvement),
         )
 
     def make_ratio_poids(serie_e, serie_s, mouvement: str) -> LigneMetrique:
@@ -305,11 +320,15 @@ def construire_contexte(
         to_r = lambda v: round(v / poids, 2) if v else None
         e_sr = to_r(es); s_sr = to_r(ss); e_lr = to_r(el); s_lr = to_r(sl)
         ps = calc_prog(e_sr, s_sr); pl = calc_prog(e_lr, s_lr)
+        e_def = _calc_def(e_sr, e_lr)
+        s_def = _calc_def(s_sr, s_lr)
         return LigneMetrique(
             entree_sain_d=e_sr, entree_lese_g=e_lr,
             sortie_sain_d=s_sr, sortie_lese_g=s_lr,
+            entree_deficit_pct=e_def, sortie_deficit_pct=s_def,
             progression_sain=ps, progression_pct=pl,
-            couleur_deficit_entree="gray", couleur_deficit="gray",
+            couleur_deficit_entree=couleur_deficit(e_def),
+            couleur_deficit=couleur_deficit(s_def),
             couleur_prog_sain=couleur_progression(ps),
             couleur_prog=couleur_progression(pl),
             interpretation="Moment max / poids (N·m/kg)",
@@ -423,7 +442,8 @@ def construire_contexte(
                  'lese': {'moment_max': _v(s240p, 'flex_moment_max', 'lese_g', 120.0), 'angle': 27, 'amplitude': 92}},
     }
     graphs_prog = generer_graphiques_progression(params_e60, params_s60, params_e240, params_s240)
-    print(f"  ✅ {len(graphs_dvsg) + len(graphs_prog)} graphiques generés")
+    graphs_exc  = generer_graphiques_excentrique(exc_ctx) if exc_ctx else {}
+    print(f"  ✅ {len(graphs_dvsg) + len(graphs_prog) + len(graphs_exc)} graphiques generés")
     print("  Cles graphiques:", sorted(list(graphs_dvsg.keys()) + list(graphs_prog.keys())))
 
     # Logos
@@ -498,6 +518,8 @@ def construire_contexte(
             "prog_lese_60":  graphs_prog.get("prog_lese_60", ""),
             "prog_sain_240": graphs_prog.get("prog_sain_240", ""),
             "prog_lese_240": graphs_prog.get("prog_lese_240", ""),
+            "exc_ext":  graphs_exc.get("exc_ext", ""),
+            "exc_flex": graphs_exc.get("exc_flex", ""),
         },
         "logo_cers_b64":    logo_cers,
         "logo_club_b64":    logo_club,

@@ -452,6 +452,63 @@ def _graphique_progression_2courbes_impl(
     return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()
 
 
+def generer_graphiques_excentrique(exc_ctx: dict) -> dict:
+    """
+    Génère 2 graphiques pour le test excentrique 30°/s :
+      exc_ext  : Extension — Lésé (pointillé) vs Sain (plein)
+      exc_flex : Flexion  — Lésé (pointillé) vs Sain (plein)
+    """
+    import io, base64
+
+    def _make(titre, lese_val, sain_val):
+        if lese_val is None and sain_val is None:
+            return ""
+        lese_val = lese_val or 100.0
+        sain_val = sain_val or 100.0
+        x = np.linspace(0, 100, 200)
+        sigma, peak = 25.0, 65
+        y_l = np.clip(lese_val * np.exp(-0.5 * ((x - peak) / sigma) ** 2), 0, None)
+        y_s = np.clip(sain_val * np.exp(-0.5 * ((x - peak) / sigma) ** 2), 0, None)
+
+        fig, ax = plt.subplots(figsize=(4.5, 3.0))
+        fig.patch.set_facecolor('white')
+        ax.set_facecolor('white')
+        ax.plot(x, y_l, color='#1c3f6e', linewidth=2.2, linestyle='--', dashes=(6, 3),
+                label=f'Lese ({lese_val:.0f} N.m)', zorder=3)
+        ax.plot(x, y_s, color='#2176c7', linewidth=2.2, linestyle='-',
+                label=f'Sain ({sain_val:.0f} N.m)', zorder=3)
+        ax.set_title(titre, fontsize=8, fontweight='bold', pad=4, color='#1a1a1a')
+        ax.set_xlabel('Angle (deg)', fontsize=7)
+        ax.set_ylabel('Moment (N.m)', fontsize=7)
+        ax.set_xlim(0, 100)
+        ax.set_ylim(0, max(lese_val, sain_val) * 1.2)
+        ax.legend(fontsize=6.5, loc='upper right', framealpha=0.9, edgecolor='#dddddd')
+        ax.grid(True, alpha=0.2, linewidth=0.5, color='#aaa')
+        ax.tick_params(colors='#666666', labelsize=6)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_color('#dddddd')
+        ax.spines['bottom'].set_color('#dddddd')
+        fig.tight_layout(pad=0.3)
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', dpi=150, bbox_inches='tight', facecolor='white')
+        plt.close(fig)
+        buf.seek(0)
+        return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()
+
+    if not exc_ctx:
+        return {}
+
+    ext_d = exc_ctx.get('ext_moment_max', {})
+    flex_d = exc_ctx.get('flex_moment_max', {})
+    return {
+        'exc_ext':  _make('Excentrique Extension 30deg/s',
+                          ext_d.get('lese_d'), ext_d.get('sain_g')),
+        'exc_flex': _make('Excentrique Flexion 30deg/s',
+                          flex_d.get('lese_d'), flex_d.get('sain_g')),
+    }
+
+
 def generer_graphiques_progression(
     params_e60: dict, params_s60: dict,
     params_e240: dict = None, params_s240: dict = None,

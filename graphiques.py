@@ -452,25 +452,27 @@ def _graphique_progression_2courbes_impl(
     return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()
 
 
-def generer_graphiques_excentrique(exc_ctx: dict) -> dict:
+def generer_graphiques_excentrique(exc: dict) -> dict:
     """
-    Génère 2 graphiques pour le test excentrique 30°/s :
-      exc_ext  : Extension — Lésé (pointillé) vs Sain (plein)
-      exc_flex : Flexion  — Lésé (pointillé) vs Sain (plein)
+    Génère 2 graphiques pour le test excentrique 30°/s (dict plat).
+      exc_ext  : Extension — Lésé (#1c3f6e pointillé) vs Sain (#2176c7 plein)
+      exc_flex : Flexion   — idem, peak plus précoce
     """
     import io, base64
 
-    def _make(titre, lese_val, sain_val):
+    if not exc:
+        return {}
+
+    def _make(titre, lese_val, sain_val, peak=30, sigma=20):
         if lese_val is None and sain_val is None:
             return ""
         lese_val = lese_val or 100.0
         sain_val = sain_val or 100.0
         x = np.linspace(0, 100, 200)
-        sigma, peak = 25.0, 65
         y_l = np.clip(lese_val * np.exp(-0.5 * ((x - peak) / sigma) ** 2), 0, None)
         y_s = np.clip(sain_val * np.exp(-0.5 * ((x - peak) / sigma) ** 2), 0, None)
 
-        fig, ax = plt.subplots(figsize=(4.5, 3.0))
+        fig, ax = plt.subplots(figsize=(4.2, 2.6))
         fig.patch.set_facecolor('white')
         ax.set_facecolor('white')
         ax.plot(x, y_l, color='#1c3f6e', linewidth=2.2, linestyle='--', dashes=(6, 3),
@@ -496,16 +498,11 @@ def generer_graphiques_excentrique(exc_ctx: dict) -> dict:
         buf.seek(0)
         return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()
 
-    if not exc_ctx:
-        return {}
-
-    ext_d = exc_ctx.get('ext_moment_max', {})
-    flex_d = exc_ctx.get('flex_moment_max', {})
     return {
         'exc_ext':  _make('Excentrique Extension 30deg/s',
-                          ext_d.get('lese_d'), ext_d.get('sain_g')),
+                          exc.get('ext_lese'), exc.get('ext_sain'), peak=30, sigma=20),
         'exc_flex': _make('Excentrique Flexion 30deg/s',
-                          flex_d.get('lese_d'), flex_d.get('sain_g')),
+                          exc.get('flex_lese'), exc.get('flex_sain'), peak=20, sigma=20),
     }
 
 

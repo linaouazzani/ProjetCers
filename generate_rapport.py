@@ -398,36 +398,26 @@ def construire_contexte(
     }
 
     # Contexte excentrique (doit être construit AVANT la génération des graphiques)
-    def _row_exc(m):
-        if not m or m.lese_d is None:
-            return {'lese_d': None, 'sain_g': None, 'deficit_pct': None, 'coul': 'gray'}
-        return {
-            'lese_d':      m.lese_d,
-            'sain_g':      m.sain_g,
-            'deficit_pct': m.deficit_pct,
-            'coul':        couleur_deficit(m.deficit_pct) if m.deficit_pct is not None else 'gray',
-        }
-
+    # excentrique_data est maintenant un dict plat retourné par parse_excentrique_pdf()
     exc_ctx = None
     ratio_mixte = None
     if excentrique_data:
-        exc_ctx = {
-            'ext_moment_max':    _row_exc(excentrique_data.ext_moment_max),
-            'ext_travail_total': _row_exc(excentrique_data.ext_travail_total),
-            'ext_puissance_max': _row_exc(excentrique_data.ext_puissance_max),
-            'flex_moment_max':   _row_exc(excentrique_data.flex_moment_max),
-            'flex_travail_total': _row_exc(excentrique_data.flex_travail_total),
-            'flex_puissance_max': _row_exc(excentrique_data.flex_puissance_max),
-            'ratio_lese_d': excentrique_data.ratio_lese_d,
-            'ratio_sain_g': excentrique_data.ratio_sain_g,
-        }
+        exc_ctx = dict(excentrique_data)
+        # Ajouter les couleurs pré-calculées pour le template
+        for _fld in ['ext_deficit', 'flex_deficit',
+                     'ext_travail_deficit', 'flex_travail_deficit',
+                     'ext_puissance_deficit', 'flex_puissance_deficit']:
+            exc_ctx[_fld + '_coul'] = couleur_deficit(exc_ctx.get(_fld))
+        # Ratio mixte : Exc Flex Lésé / Conc Ext Lésé 240°/s (sortie)
         try:
-            exc_fl = excentrique_data.flex_moment_max.lese_d
+            exc_fl = exc_ctx.get('flex_lese')
             con_el = s240p.ext_moment_max.lese_g if s240p else None
             if exc_fl and con_el and con_el != 0:
                 ratio_mixte = round(exc_fl / con_el, 2)
         except Exception:
             pass
+    print("DEBUG exc_ctx:", exc_ctx)
+    print("DEBUG ratio_mixte:", ratio_mixte)
 
     # Graphiques
     print("  🖼️  Génération des 12 graphiques...")

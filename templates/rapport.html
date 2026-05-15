@@ -686,7 +686,7 @@ body {
     </div>
 
     <!-- TEST EXCENTRIQUE (optionnel) -->
-    {% if excentrique %}
+    {% if excentrique and excentrique.ext_lese %}
     <div style="background:#5a6472;color:white;font-size:7px;font-weight:700;padding:2px 8px;text-align:center;margin:3px 0 2px 0;border-radius:2px;flex-shrink:0;">
       TEST EXCENTRIQUE 30&#176;/s &#8212; EXC/EXC
     </div>
@@ -704,58 +704,58 @@ body {
         <tr class="grp"><td colspan="5">&#9658;&nbsp;EXTENSION (30&#176;/s)</td></tr>
         <tr>
           <td class="cm">Moment Max<span class="sl">N.m</span></td>
-          <td>{{ excentrique.ext_moment_max.lese_d | fmt }}</td>
-          <td>{{ excentrique.ext_moment_max.sain_g | fmt }}</td>
-          <td class="d{{ excentrique.ext_moment_max.coul[0] }}">{% if excentrique.ext_moment_max.deficit_pct is not none %}{{ "%+.1f"|format(excentrique.ext_moment_max.deficit_pct) }}%{% else %}&#8212;{% endif %}</td>
+          <td>{{ excentrique.ext_lese | fmt }}</td>
+          <td>{{ excentrique.ext_sain | fmt }}</td>
+          <td class="d{{ excentrique.ext_deficit_coul[0] }}">{% if excentrique.ext_deficit is not none %}{{ "%+.1f"|format(excentrique.ext_deficit) }}%{% else %}&#8212;{% endif %}</td>
           <td class="interp">&#8212;</td>
         </tr>
         <tr class="alt">
           <td class="cm">Travail Total<span class="sl">J</span></td>
-          <td>{{ excentrique.ext_travail_total.lese_d | fmt }}</td>
-          <td>{{ excentrique.ext_travail_total.sain_g | fmt }}</td>
-          <td class="d{{ excentrique.ext_travail_total.coul[0] }}">{% if excentrique.ext_travail_total.deficit_pct is not none %}{{ "%+.1f"|format(excentrique.ext_travail_total.deficit_pct) }}%{% else %}&#8212;{% endif %}</td>
+          <td>{{ excentrique.ext_travail_lese | fmt }}</td>
+          <td>{{ excentrique.ext_travail_sain | fmt }}</td>
+          <td class="d{{ excentrique.ext_travail_deficit_coul[0] }}">{% if excentrique.ext_travail_deficit is not none %}{{ "%+.1f"|format(excentrique.ext_travail_deficit) }}%{% else %}&#8212;{% endif %}</td>
           <td class="interp">&#8212;</td>
         </tr>
         <tr>
           <td class="cm">Puissance Max<span class="sl">W</span></td>
-          <td>{{ excentrique.ext_puissance_max.lese_d | fmt }}</td>
-          <td>{{ excentrique.ext_puissance_max.sain_g | fmt }}</td>
-          <td class="d{{ excentrique.ext_puissance_max.coul[0] }}">{% if excentrique.ext_puissance_max.deficit_pct is not none %}{{ "%+.1f"|format(excentrique.ext_puissance_max.deficit_pct) }}%{% else %}&#8212;{% endif %}</td>
+          <td>{{ excentrique.ext_puissance_lese | fmt }}</td>
+          <td>{{ excentrique.ext_puissance_sain | fmt }}</td>
+          <td class="d{{ excentrique.ext_puissance_deficit_coul[0] }}">{% if excentrique.ext_puissance_deficit is not none %}{{ "%+.1f"|format(excentrique.ext_puissance_deficit) }}%{% else %}&#8212;{% endif %}</td>
           <td class="interp">&#8212;</td>
         </tr>
         <tr class="grp"><td colspan="5">&#9658;&nbsp;FLEXION (30&#176;/s)</td></tr>
         <tr>
           <td class="cm">Moment Max<span class="sl">N.m</span></td>
-          <td>{{ excentrique.flex_moment_max.lese_d | fmt }}</td>
-          <td>{{ excentrique.flex_moment_max.sain_g | fmt }}</td>
-          <td class="d{{ excentrique.flex_moment_max.coul[0] }}">{% if excentrique.flex_moment_max.deficit_pct is not none %}{{ "%+.1f"|format(excentrique.flex_moment_max.deficit_pct) }}%{% else %}&#8212;{% endif %}</td>
+          <td>{{ excentrique.flex_lese | fmt }}</td>
+          <td>{{ excentrique.flex_sain | fmt }}</td>
+          <td class="d{{ excentrique.flex_deficit_coul[0] }}">{% if excentrique.flex_deficit is not none %}{{ "%+.1f"|format(excentrique.flex_deficit) }}%{% else %}&#8212;{% endif %}</td>
           <td class="interp">&#8212;</td>
         </tr>
         <tr class="alt">
           <td class="cm">Travail Total<span class="sl">J</span></td>
-          <td>{{ excentrique.flex_travail_total.lese_d | fmt }}</td>
-          <td>{{ excentrique.flex_travail_total.sain_g | fmt }}</td>
-          <td class="d{{ excentrique.flex_travail_total.coul[0] }}">{% if excentrique.flex_travail_total.deficit_pct is not none %}{{ "%+.1f"|format(excentrique.flex_travail_total.deficit_pct) }}%{% else %}&#8212;{% endif %}</td>
+          <td>{{ excentrique.flex_travail_lese | fmt }}</td>
+          <td>{{ excentrique.flex_travail_sain | fmt }}</td>
+          <td class="d{{ excentrique.flex_travail_deficit_coul[0] }}">{% if excentrique.flex_travail_deficit is not none %}{{ "%+.1f"|format(excentrique.flex_travail_deficit) }}%{% else %}&#8212;{% endif %}</td>
           <td class="interp">&#8212;</td>
         </tr>
         <tr>
           <td class="cm">Puissance Max<span class="sl">W</span></td>
-          <td>{{ excentrique.flex_puissance_max.lese_d | fmt }}</td>
-          <td>{{ excentrique.flex_puissance_max.sain_g | fmt }}</td>
-          <td class="d{{ excentrique.flex_puissance_max.coul[0] }}">{% if excentrique.flex_puissance_max.deficit_pct is not none %}{{ "%+.1f"|format(excentrique.flex_puissance_max.deficit_pct) }}%{% else %}&#8212;{% endif %}</td>
+          <td>{{ excentrique.flex_puissance_lese | fmt }}</td>
+          <td>{{ excentrique.flex_puissance_sain | fmt }}</td>
+          <td class="d{{ excentrique.flex_puissance_deficit_coul[0] }}">{% if excentrique.flex_puissance_deficit is not none %}{{ "%+.1f"|format(excentrique.flex_puissance_deficit) }}%{% else %}&#8212;{% endif %}</td>
           <td class="interp">&#8212;</td>
         </tr>
         <tr class="grp"><td colspan="5">&#9658;&nbsp;RATIO AGON/ANTAG</td></tr>
         <tr>
-          <td class="cm">Ratio Flex/Ext<span class="sl">%</span></td>
-          <td>{% if excentrique.ratio_lese_d is not none %}{{ "%.1f"|format(excentrique.ratio_lese_d) }}%{% else %}&#8212;{% endif %}</td>
-          <td>{% if excentrique.ratio_sain_g is not none %}{{ "%.1f"|format(excentrique.ratio_sain_g) }}%{% else %}&#8212;{% endif %}</td>
+          <td class="cm">Ratio AGON/ANTAG<span class="sl">%</span></td>
+          <td>{% if excentrique.ratio_agon_antag_lese is not none %}{{ "%.1f"|format(excentrique.ratio_agon_antag_lese) }}%{% else %}&#8212;{% endif %}</td>
+          <td>{% if excentrique.ratio_agon_antag_sain is not none %}{{ "%.1f"|format(excentrique.ratio_agon_antag_sain) }}%{% else %}&#8212;{% endif %}</td>
           <td class="dw">&#8212;</td>
-          <td class="interp">Norme 0,70-1,00</td>
+          <td class="interp">Norme 0,70&#8211;1,00</td>
         </tr>
         {% if ratio_mixte %}
         <tr class="alt">
-          <td class="cm">Ratio Mixte<span class="sl">Exc IJ / Conc Q240</span></td>
+          <td class="cm">Ratio Mixte<span class="sl">Exc Flex / Conc Q 240°/s</span></td>
           <td style="font-weight:700;text-align:center;">{{ "%.2f"|format(ratio_mixte) }}</td>
           <td>&#8212;</td>
           <td class="dw">&#8212;</td>
@@ -970,16 +970,16 @@ body {
 
     <!-- COURBES EXCENTRIQUES (optionnel) -->
     {% if graphiques.exc_ext %}
-    <div style="background:#5a6472;color:white;font-size:7px;font-weight:700;padding:2px 8px;text-align:center;margin:3px 0 2px 0;border-radius:2px;flex-shrink:0;">
+    <div style="background:#5a6472;color:white;font-size:7px;font-weight:700;padding:2px 8px;text-align:center;margin:4px 0 2px 0;border-radius:2px;flex-shrink:0;">
       COURBES EXCENTRIQUES 30&#176;/s &#8212; L&#233;s&#233; (pointill&#233;) vs Sain (plein)
     </div>
-    <div style="display:table;width:100%;border-collapse:collapse;margin-bottom:4px;flex-shrink:0;">
+    <div style="display:table;width:100%;table-layout:fixed;margin-bottom:4px;flex-shrink:0;">
       <div style="display:table-row;">
         <div style="display:table-cell;width:50%;padding:0 1px 0 0;vertical-align:top;">
-          <img src="{{ graphiques.exc_ext }}" style="width:100%;height:auto;display:block;">
+          <img src="{{ graphiques.exc_ext }}" style="width:100%;height:auto;display:block;max-height:120px;">
         </div>
         <div style="display:table-cell;width:50%;padding:0 0 0 1px;vertical-align:top;">
-          <img src="{{ graphiques.exc_flex }}" style="width:100%;height:auto;display:block;">
+          <img src="{{ graphiques.exc_flex }}" style="width:100%;height:auto;display:block;max-height:120px;">
         </div>
       </div>
     </div>

@@ -785,25 +785,78 @@ def _parse_page_exc(page_text: str) -> SerieExcentrique:
     return serie
 
 
-def parse_excentrique_pdf(pdf_path: str) -> Optional[SerieExcentrique]:
+def parse_excentrique_pdf(pdf_path: str) -> Optional[dict]:
     """
     Parse un PDF de test excentrique Biodex (30°/s, EXC/EXC ou BI/PASSIF).
-    Retourne None si le format n'est pas reconnu ou en cas d'erreur.
+    Colonnes PDF : Lésé (D) | Sain (G) | Déficit (%)
+    Retourne un dict plat ou None si format non reconnu.
+    Convention signe : (lese-sain)/sain*100 — positif = lésé plus fort.
     """
     try:
         with pdfplumber.open(pdf_path) as pdf:
             if len(pdf.pages) < 1:
                 return None
-            page_text = pdf.pages[0].extract_text()
-            if not page_text:
-                return None
-            text_check = page_text.lower().replace(' ', '')
-            if 'exc/exc' not in text_check and 'bi/passif' not in text_check:
-                print("  ⚠️  parse_excentrique_pdf : EXC/EXC ou BI/PASSIF non trouvé dans le PDF")
-                return None
-            serie = _parse_page_exc(page_text)
-            print(f"  ✅ Excentrique 30°/s — Ext MM={serie.ext_moment_max.lese_d}/{serie.ext_moment_max.sain_g}")
-            return serie
+            texte = pdf.pages[0].extract_text() or ""
+
+        print("DEBUG EXC texte brut:")
+        print(texte[:600])
+        print("---")
+
+        if "EXC" not in texte.upper() and "PASSIF" not in texte.upper():
+            print("  ⚠️  parse_excentrique_pdf : EXC/PASSIF non trouvé")
+            return None
+
+        def to_f(s):
+            if not s: return None
+            try: return float(s.replace(',', '.'))
+            except: return None
+
+        moments = re.findall(
+            r'Moment\s*max\s*\(N[^\)]*\)\s*(-?[\d]+[,\.][\d]+)\s+(-?[\d]+[,\.][\d]+)\s+(-?[\d]+[,\.][\d]+)',
+            texte, re.IGNORECASE
+        )
+        travaux = re.findall(
+            r'Travail\s*[Tt]otal?\s*\(J\)\s*(-?[\d]+[,\.][\d]+)\s+(-?[\d]+[,\.][\d]+)\s+(-?[\d]+[,\.][\d]+)',
+            texte, re.IGNORECASE
+        )
+        puissances = re.findall(
+            r'Puissance\s*maximale\s*\(W\)\s*(-?[\d]+[,\.][\d]+)\s+(-?[\d]+[,\.][\d]+)\s+(-?[\d]+[,\.][\d]+)',
+            texte, re.IGNORECASE
+        )
+        ratios = re.findall(
+            r'Ratio\s*AGON/ANTAG\s*\(%\)\s*([\d]+[,\.][\d]+)\s+([\d]+[,\.][\d]+)',
+            texte, re.IGNORECASE
+        )
+
+        def neg(s):
+            v = to_f(s)
+            return -v if v is not None else None
+
+        result = {
+            "ext_lese":    to_f(moments[0][0]) if len(moments) > 0 else None,
+            "ext_sain":    to_f(moments[0][1]) if len(moments) > 0 else None,
+            "ext_deficit": neg(moments[0][2])  if len(moments) > 0 else None,
+            "ext_travail_lese":    to_f(travaux[0][0]) if len(travaux) > 0 else None,
+            "ext_travail_sain":    to_f(travaux[0][1]) if len(travaux) > 0 else None,
+            "ext_travail_deficit": neg(travaux[0][2])  if len(travaux) > 0 else None,
+            "ext_puissance_lese":    to_f(puissances[0][0]) if len(puissances) > 0 else None,
+            "ext_puissance_sain":    to_f(puissances[0][1]) if len(puissances) > 0 else None,
+            "ext_puissance_deficit": neg(puissances[0][2])  if len(puissances) > 0 else None,
+            "flex_lese":    to_f(moments[1][0]) if len(moments) > 1 else None,
+            "flex_sain":    to_f(moments[1][1]) if len(moments) > 1 else None,
+            "flex_deficit": neg(moments[1][2])  if len(moments) > 1 else None,
+            "flex_travail_lese":    to_f(travaux[1][0]) if len(travaux) > 1 else None,
+            "flex_travail_sain":    to_f(travaux[1][1]) if len(travaux) > 1 else None,
+            "flex_travail_deficit": neg(travaux[1][2])  if len(travaux) > 1 else None,
+            "flex_puissance_lese":    to_f(puissances[1][0]) if len(puissances) > 1 else None,
+            "flex_puissance_sain":    to_f(puissances[1][1]) if len(puissances) > 1 else None,
+            "flex_puissance_deficit": neg(puissances[1][2])  if len(puissances) > 1 else None,
+            "ratio_agon_antag_lese": to_f(ratios[0][0]) if len(ratios) > 0 else None,
+            "ratio_agon_antag_sain": to_f(ratios[0][1]) if len(ratios) > 0 else None,
+        }
+        print("DEBUG EXC parsed:", result)
+        return result
+
     except Exception as e:
         print(f"  ⚠️  parse_excentrique_pdf erreur : {e}")
         return None

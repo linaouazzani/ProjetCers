@@ -397,6 +397,38 @@ def construire_contexte(
         "progression":      [_sanitiser_emojis(p) for p in prog_list[:5]],
     }
 
+    # Contexte excentrique (doit être construit AVANT la génération des graphiques)
+    def _row_exc(m):
+        if not m or m.lese_d is None:
+            return {'lese_d': None, 'sain_g': None, 'deficit_pct': None, 'coul': 'gray'}
+        return {
+            'lese_d':      m.lese_d,
+            'sain_g':      m.sain_g,
+            'deficit_pct': m.deficit_pct,
+            'coul':        couleur_deficit(m.deficit_pct) if m.deficit_pct is not None else 'gray',
+        }
+
+    exc_ctx = None
+    ratio_mixte = None
+    if excentrique_data:
+        exc_ctx = {
+            'ext_moment_max':    _row_exc(excentrique_data.ext_moment_max),
+            'ext_travail_total': _row_exc(excentrique_data.ext_travail_total),
+            'ext_puissance_max': _row_exc(excentrique_data.ext_puissance_max),
+            'flex_moment_max':   _row_exc(excentrique_data.flex_moment_max),
+            'flex_travail_total': _row_exc(excentrique_data.flex_travail_total),
+            'flex_puissance_max': _row_exc(excentrique_data.flex_puissance_max),
+            'ratio_lese_d': excentrique_data.ratio_lese_d,
+            'ratio_sain_g': excentrique_data.ratio_sain_g,
+        }
+        try:
+            exc_fl = excentrique_data.flex_moment_max.lese_d
+            con_el = s240p.ext_moment_max.lese_g if s240p else None
+            if exc_fl and con_el and con_el != 0:
+                ratio_mixte = round(exc_fl / con_el, 2)
+        except Exception:
+            pass
+
     # Graphiques
     print("  🖼️  Génération des 12 graphiques...")
     graphs_dvsg = {
@@ -462,39 +494,6 @@ def construire_contexte(
             delta = (d_test - d_op).days
             if delta >= 0:
                 delai_post_op = f"{delta} jours"
-        except Exception:
-            pass
-
-    # Contexte excentrique
-    def _row_exc(m):
-        if not m or m.lese_d is None:
-            return {'lese_d': None, 'sain_g': None, 'deficit_pct': None, 'coul': 'gray'}
-        return {
-            'lese_d':      m.lese_d,
-            'sain_g':      m.sain_g,
-            'deficit_pct': m.deficit_pct,
-            'coul':        couleur_deficit(m.deficit_pct) if m.deficit_pct is not None else 'gray',
-        }
-
-    exc_ctx = None
-    ratio_mixte = None
-    if excentrique_data:
-        exc_ctx = {
-            'ext_moment_max':    _row_exc(excentrique_data.ext_moment_max),
-            'ext_travail_total': _row_exc(excentrique_data.ext_travail_total),
-            'ext_puissance_max': _row_exc(excentrique_data.ext_puissance_max),
-            'flex_moment_max':   _row_exc(excentrique_data.flex_moment_max),
-            'flex_travail_total': _row_exc(excentrique_data.flex_travail_total),
-            'flex_puissance_max': _row_exc(excentrique_data.flex_puissance_max),
-            'ratio_lese_d': excentrique_data.ratio_lese_d,
-            'ratio_sain_g': excentrique_data.ratio_sain_g,
-        }
-        # Ratio mixte : Exc Flex Lésé / Conc Ext Lésé 240°/s (sortie)
-        try:
-            exc_fl = excentrique_data.flex_moment_max.lese_d
-            con_el = s240p.ext_moment_max.lese_g if s240p else None
-            if exc_fl and con_el and con_el != 0:
-                ratio_mixte = round(exc_fl / con_el, 2)
         except Exception:
             pass
 

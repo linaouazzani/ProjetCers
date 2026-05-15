@@ -457,6 +457,7 @@ def construire_contexte(
         }
 
     exc_ctx = None
+    ratio_mixte = None
     if excentrique_data:
         exc_ctx = {
             'ext_moment_max':    _row_exc(excentrique_data.ext_moment_max),
@@ -468,6 +469,14 @@ def construire_contexte(
             'ratio_lese_d': excentrique_data.ratio_lese_d,
             'ratio_sain_g': excentrique_data.ratio_sain_g,
         }
+        # Ratio mixte : Exc Flex Lésé / Conc Ext Lésé 240°/s (sortie)
+        try:
+            exc_fl = excentrique_data.flex_moment_max.lese_d
+            con_el = s240p.ext_moment_max.lese_g if s240p else None
+            if exc_fl and con_el and con_el != 0:
+                ratio_mixte = round(exc_fl / con_el, 2)
+        except Exception:
+            pass
 
     return {
         "patient": sortie, "entree": entree, "sortie": sortie,
@@ -475,6 +484,7 @@ def construire_contexte(
         "serie60_meta": serie60_meta, "serie240_meta": serie240_meta,
         "remarques": remarques,
         "excentrique": exc_ctx,
+        "ratio_mixte": ratio_mixte,
         "graphiques": {
             "entree_ext_60":  graphs_dvsg.get("entree_ext", ""),
             "sortie_ext_60":  graphs_dvsg.get("sortie_ext", ""),

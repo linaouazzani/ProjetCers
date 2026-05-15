@@ -322,14 +322,14 @@ def graphique_en_base64(cle: str, biodex_data=None, mouvement: str = "ext") -> s
         except Exception:
             pass
 
-    fig, ax = plt.subplots(1, 1, figsize=(4, 2.2))
+    fig, ax = plt.subplots(1, 1, figsize=(4.5, 3.0))
     fig.patch.set_facecolor('#ffffff')
     plt.subplots_adjust(left=0.12, right=0.96, top=0.88, bottom=0.16)
 
     generer_graphique(ax, p, show_ylabel=True)
 
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=90, bbox_inches='tight',
+    plt.savefig(buf, format='png', dpi=150, bbox_inches='tight',
                 facecolor='white', edgecolor='none')
     plt.close()
     buf.seek(0)
@@ -408,7 +408,7 @@ def _graphique_progression_2courbes_impl(
     y_e = np.clip(y_e, 0, None)
     y_s = np.clip(y_s, 0, None)
 
-    fig, ax = plt.subplots(figsize=(4, 2.2))
+    fig, ax = plt.subplots(figsize=(4.2, 2.8))
     fig.patch.set_facecolor('white')
     ax.set_facecolor('white')
 
@@ -446,7 +446,7 @@ def _graphique_progression_2courbes_impl(
 
     fig.tight_layout(pad=0.3)
     buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=90, bbox_inches='tight', facecolor='white')
+    fig.savefig(buf, format='png', dpi=150, bbox_inches='tight', facecolor='white')
     plt.close(fig)
     buf.seek(0)
     return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()

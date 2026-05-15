@@ -688,63 +688,78 @@ body {
     <!-- TEST EXCENTRIQUE (optionnel) -->
     {% if excentrique %}
     <div style="background:#5a6472;color:white;font-size:7px;font-weight:700;padding:2px 8px;text-align:center;margin:3px 0 2px 0;border-radius:2px;flex-shrink:0;">
-      TEST EXCENTRIQUE 30&#176;/s &#8212; EXC/EXC (L&#233;s&#233; D / Sain G)
+      TEST EXCENTRIQUE 30&#176;/s &#8212; EXC/EXC
     </div>
     <table class="mt" style="margin-bottom:3px;">
       <thead>
         <tr>
           <th class="hm">Metrique</th>
-          <th class="h-entree">Lese (D)</th>
-          <th class="h-sortie">Sain (G)</th>
-          <th class="h-interp">Deficit</th>
+          <th style="background:#374151;color:white;font-size:6.5px;text-align:center;border:1px solid #99aac4;padding:2px;font-weight:700;">L&#201;S&#201; ({{ sortie.lese[0] }})</th>
+          <th style="background:#374151;color:white;font-size:6.5px;text-align:center;border:1px solid #99aac4;padding:2px;font-weight:700;">Sain</th>
+          <th style="background:#374151;color:white;font-size:6.5px;text-align:center;border:1px solid #99aac4;padding:2px;font-weight:700;">D&#233;ficit</th>
+          <th style="background:#374151;color:white;font-size:6.5px;text-align:center;border:1px solid #99aac4;padding:2px;font-weight:700;">Norme</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="grp"><td colspan="4">&#9658;&nbsp;EXTENSION (30&#176;/s)</td></tr>
+        <tr class="grp"><td colspan="5">&#9658;&nbsp;EXTENSION (30&#176;/s)</td></tr>
         <tr>
           <td class="cm">Moment Max<span class="sl">N.m</span></td>
           <td>{{ excentrique.ext_moment_max.lese_d | fmt }}</td>
           <td>{{ excentrique.ext_moment_max.sain_g | fmt }}</td>
           <td class="d{{ excentrique.ext_moment_max.coul[0] }}">{% if excentrique.ext_moment_max.deficit_pct is not none %}{{ "%+.1f"|format(excentrique.ext_moment_max.deficit_pct) }}%{% else %}&#8212;{% endif %}</td>
+          <td class="interp">&#8212;</td>
         </tr>
         <tr class="alt">
           <td class="cm">Travail Total<span class="sl">J</span></td>
           <td>{{ excentrique.ext_travail_total.lese_d | fmt }}</td>
           <td>{{ excentrique.ext_travail_total.sain_g | fmt }}</td>
           <td class="d{{ excentrique.ext_travail_total.coul[0] }}">{% if excentrique.ext_travail_total.deficit_pct is not none %}{{ "%+.1f"|format(excentrique.ext_travail_total.deficit_pct) }}%{% else %}&#8212;{% endif %}</td>
+          <td class="interp">&#8212;</td>
         </tr>
         <tr>
           <td class="cm">Puissance Max<span class="sl">W</span></td>
           <td>{{ excentrique.ext_puissance_max.lese_d | fmt }}</td>
           <td>{{ excentrique.ext_puissance_max.sain_g | fmt }}</td>
           <td class="d{{ excentrique.ext_puissance_max.coul[0] }}">{% if excentrique.ext_puissance_max.deficit_pct is not none %}{{ "%+.1f"|format(excentrique.ext_puissance_max.deficit_pct) }}%{% else %}&#8212;{% endif %}</td>
+          <td class="interp">&#8212;</td>
         </tr>
-        <tr class="grp"><td colspan="4">&#9658;&nbsp;FLEXION (30&#176;/s)</td></tr>
+        <tr class="grp"><td colspan="5">&#9658;&nbsp;FLEXION (30&#176;/s)</td></tr>
         <tr>
           <td class="cm">Moment Max<span class="sl">N.m</span></td>
           <td>{{ excentrique.flex_moment_max.lese_d | fmt }}</td>
           <td>{{ excentrique.flex_moment_max.sain_g | fmt }}</td>
           <td class="d{{ excentrique.flex_moment_max.coul[0] }}">{% if excentrique.flex_moment_max.deficit_pct is not none %}{{ "%+.1f"|format(excentrique.flex_moment_max.deficit_pct) }}%{% else %}&#8212;{% endif %}</td>
+          <td class="interp">&#8212;</td>
         </tr>
         <tr class="alt">
           <td class="cm">Travail Total<span class="sl">J</span></td>
           <td>{{ excentrique.flex_travail_total.lese_d | fmt }}</td>
           <td>{{ excentrique.flex_travail_total.sain_g | fmt }}</td>
           <td class="d{{ excentrique.flex_travail_total.coul[0] }}">{% if excentrique.flex_travail_total.deficit_pct is not none %}{{ "%+.1f"|format(excentrique.flex_travail_total.deficit_pct) }}%{% else %}&#8212;{% endif %}</td>
+          <td class="interp">&#8212;</td>
         </tr>
         <tr>
           <td class="cm">Puissance Max<span class="sl">W</span></td>
           <td>{{ excentrique.flex_puissance_max.lese_d | fmt }}</td>
           <td>{{ excentrique.flex_puissance_max.sain_g | fmt }}</td>
           <td class="d{{ excentrique.flex_puissance_max.coul[0] }}">{% if excentrique.flex_puissance_max.deficit_pct is not none %}{{ "%+.1f"|format(excentrique.flex_puissance_max.deficit_pct) }}%{% else %}&#8212;{% endif %}</td>
+          <td class="interp">&#8212;</td>
         </tr>
-        {% if excentrique.ratio_lese_d is not none %}
-        <tr class="grp"><td colspan="4">&#9658;&nbsp;RATIO AGON/ANTAG</td></tr>
+        <tr class="grp"><td colspan="5">&#9658;&nbsp;RATIO AGON/ANTAG</td></tr>
         <tr>
-          <td class="cm">Ratio I/Q<span class="sl">%</span></td>
-          <td>{{ "%.1f"|format(excentrique.ratio_lese_d) }}%</td>
+          <td class="cm">Ratio Flex/Ext<span class="sl">%</span></td>
+          <td>{% if excentrique.ratio_lese_d is not none %}{{ "%.1f"|format(excentrique.ratio_lese_d) }}%{% else %}&#8212;{% endif %}</td>
           <td>{% if excentrique.ratio_sain_g is not none %}{{ "%.1f"|format(excentrique.ratio_sain_g) }}%{% else %}&#8212;{% endif %}</td>
           <td class="dw">&#8212;</td>
+          <td class="interp">Norme 0,70-1,00</td>
+        </tr>
+        {% if ratio_mixte %}
+        <tr class="alt">
+          <td class="cm">Ratio Mixte<span class="sl">Exc IJ / Conc Q240</span></td>
+          <td style="font-weight:700;text-align:center;">{{ "%.2f"|format(ratio_mixte) }}</td>
+          <td>&#8212;</td>
+          <td class="dw">&#8212;</td>
+          <td class="interp">Norme &gt; 1,0</td>
         </tr>
         {% endif %}
       </tbody>

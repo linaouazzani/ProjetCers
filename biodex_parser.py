@@ -194,14 +194,41 @@ def _extract_metric_from_line(line: str) -> tuple[Optional[float], Optional[floa
 # 3. Parser d'une page PDF Biodex
 # ---------------------------------------------------------------------------
 
+def _detect_col_order(page_text: str) -> tuple:
+    """
+    Détecte l'ordre des colonnes Sain/Lésé en cherchant leurs positions dans le texte.
+    Retourne (i_sain, i_lese) où 0 = première colonne, 1 = deuxième.
+    Par défaut (0, 1) — Sain en première position (lésé Gauche).
+    Pour un patient lésé Droit, le PDF affiche Lésé(D) en premier → (1, 0).
+    """
+    text_flat = page_text.lower().replace(' ', '')
+
+    pos_sain = -1
+    for pat in ['sain(d)', 'sain(g)']:
+        p = text_flat.find(pat)
+        if p >= 0:
+            pos_sain = p
+            break
+
+    pos_lese = -1
+    for pat in ['lésé(d)', 'lésé(g)', 'lesé(d)', 'lesé(g)', 'lese(d)', 'lese(g)']:
+        p = text_flat.find(pat)
+        if p >= 0:
+            pos_lese = p
+            break
+
+    if pos_sain >= 0 and pos_lese >= 0:
+        return (0, 1) if pos_sain < pos_lese else (1, 0)
+    return (0, 1)  # défaut : Sain en col 0
+
+
 def _parse_page(page_text: str, vitesse: str) -> SerieIso:
     """
     Parse une page PDF Biodex et retourne une SerieIso.
-    Chaque page contient Extension ET Flexion côte à côte.
-
-    Structure de la ligne :
-    [LABEL] [EXT_sain] [EXT_lese] [EXT_deficit] [FLEX_sain] [FLEX_lese] [FLEX_deficit]
+    L'ordre Sain/Lésé est détecté dynamiquement depuis les en-têtes du PDF.
+    Structure ligne : [LABEL] [col0] [col1] [deficit] [col0_flex] [col1_flex] [deficit_flex]
     """
+    i_s, i_l = _detect_col_order(page_text)
     serie = SerieIso(vitesse=vitesse)
     lines = page_text.split('\n')
 
@@ -210,10 +237,7 @@ def _parse_page(page_text: str, vitesse: str) -> SerieIso:
         if not line_stripped:
             continue
 
-        # Nettoyer les "(Rep N)" pour faciliter l'extraction des nombres
         line_clean = re.sub(r'\(Rep\s*\d+\)', '', line_stripped)
-
-        # Trouver tous les nombres dans la ligne
         nums = re.findall(r'-?\d+[,.]?\d*', line_clean)
         floats = []
         for n in nums:
@@ -221,63 +245,58 @@ def _parse_page(page_text: str, vitesse: str) -> SerieIso:
             if v is not None:
                 floats.append(v)
 
-        # Si on a moins de 3 valeurs, pas assez pour une métrique
         if len(floats) < 3:
             continue
 
-        # Détecte le type de ligne par mots-clés (flexibles : avec ou sans espaces)
         line_lower = line_stripped.lower().replace(' ', '')
 
         # --- MOMENT MAX ---
         if re.search(r'momentmax\(n', line_lower) and 'moy' not in line_lower and 'poids' not in line_lower:
-            # floats : [EXT_sain, EXT_lese, EXT_deficit, FLEX_sain, FLEX_lese, FLEX_deficit]
-            # Déficit inversé : (lese - sain)/sain*100 → positif = lésé plus fort
             if len(floats) >= 3:
-                serie.ext_moment_max = MetriqueIso(floats[0], floats[1], -floats[2])
+                serie.ext_moment_max = MetriqueIso(floats[i_s], floats[i_l], -floats[2])
             if len(floats) >= 6:
-                serie.flex_moment_max = MetriqueIso(floats[3], floats[4], -floats[5])
+                serie.flex_moment_max = MetriqueIso(floats[3+i_s], floats[3+i_l], -floats[5])
 
         # --- TRAVAIL MAX ---
         elif re.search(r'travailmax\(j\)', line_lower):
             if len(floats) >= 3:
-                serie.ext_travail_max = MetriqueIso(floats[0], floats[1], -floats[2])
+                serie.ext_travail_max = MetriqueIso(floats[i_s], floats[i_l], -floats[2])
             if len(floats) >= 6:
-                serie.flex_travail_max = MetriqueIso(floats[3], floats[4], -floats[5])
+                serie.flex_travail_max = MetriqueIso(floats[3+i_s], floats[3+i_l], -floats[5])
 
         # --- PUISSANCE MAXIMALE ---
         elif re.search(r'puissancemaximale\(w\)', line_lower):
             if len(floats) >= 3:
-                serie.ext_puissance_max = MetriqueIso(floats[0], floats[1], -floats[2])
+                serie.ext_puissance_max = MetriqueIso(floats[i_s], floats[i_l], -floats[2])
             if len(floats) >= 6:
-                serie.flex_puissance_max = MetriqueIso(floats[3], floats[4], -floats[5])
+                serie.flex_puissance_max = MetriqueIso(floats[3+i_s], floats[3+i_l], -floats[5])
 
         # --- RATIO AGON/ANTAG ---
         elif re.search(r'ratioagon', line_lower):
             if len(floats) >= 2:
-                serie.ratio_sain_d = floats[0]
-                serie.ratio_lese_g = floats[1]
+                serie.ratio_sain_d = floats[i_s]
+                serie.ratio_lese_g = floats[i_l]
 
-    # Travail Total : 2 lignes distinctes par page (Extension puis Flexion)
-    # Chaque ligne : "Travail total (J)  <sain_d>  <lese_g>"
+    # Travail Total : 2 occurrences par page (Extension puis Flexion) — pattern strict
     travail_matches = re.findall(
-        r'[Tt]ravail\s*[Tt]otal?\s*\(?[Jj]\)?\s*([\d][,\d\.]+)\s+([\d][,\d\.]+)',
+        r'[Tt]ravail\s*[Tt]otal?\s*\(?[Jj]\)?\s*([\d]+[,\.][\d]+)\s+([\d]+[,\.][\d]+)',
         page_text
     )
     if len(travail_matches) >= 1:
         try:
-            sd = float(travail_matches[0][0].replace(',', '.'))
-            lg = float(travail_matches[0][1].replace(',', '.'))
+            sd = float(travail_matches[0][i_s].replace(',', '.'))
+            lg = float(travail_matches[0][i_l].replace(',', '.'))
             serie.ext_travail_total = MetriqueIso(sain_d=sd, lese_g=lg)
         except ValueError:
             pass
     if len(travail_matches) >= 2:
         try:
-            sd = float(travail_matches[1][0].replace(',', '.'))
-            lg = float(travail_matches[1][1].replace(',', '.'))
+            sd = float(travail_matches[1][i_s].replace(',', '.'))
+            lg = float(travail_matches[1][i_l].replace(',', '.'))
             serie.flex_travail_total = MetriqueIso(sain_d=sd, lese_g=lg)
         except ValueError:
             pass
-    print(f"  Travail Total ({vitesse} deg/s) — "
+    print(f"  Travail Total ({vitesse} deg/s) col_sain={i_s} — "
           f"Ext: {serie.ext_travail_total.sain_d}/{serie.ext_travail_total.lese_g}, "
           f"Flex: {serie.flex_travail_total.sain_d}/{serie.flex_travail_total.lese_g}")
 

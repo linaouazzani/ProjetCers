@@ -308,10 +308,9 @@ with col_right:
                 from biodex_parser import parse_biodex_pdf
 
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                    f.write(pdf_entree.read()); path_e_prev = f.name
+                    f.write(pdf_entree.getvalue()); path_e_prev = f.name
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                    f.write(pdf_sortie.read()); path_s_prev = f.name
-                pdf_entree.seek(0); pdf_sortie.seek(0)
+                    f.write(pdf_sortie.getvalue()); path_s_prev = f.name
 
                 entree_data = parse_biodex_pdf(path_e_prev)
                 sortie_data = parse_biodex_pdf(path_s_prev)

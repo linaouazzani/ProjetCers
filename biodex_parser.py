@@ -438,18 +438,15 @@ def parse_biodex_pdf(pdf_path: str) -> PatientBiodex:
 def couleur_deficit(deficit_pct: Optional[float]) -> str:
     """
     Convention : (lese - sain) / sain * 100
-    navy  : > 0    lésé plus fort (bonne nouvelle)
-    green : > -10% dans la norme
-    orange: >= -20% déficit modéré
-    red   : < -20% déficit important
+    green  : > -10%  (lésé quasi-égal ou plus fort)
+    orange : > -20%  (déficit modéré)
+    red    : <= -20% (déficit important)
     """
     if deficit_pct is None:
         return "gray"
-    if deficit_pct > 0:
-        return "navy"
     if deficit_pct > -10:
         return "green"
-    elif deficit_pct >= -20:
+    elif deficit_pct > -20:
         return "orange"
     else:
         return "red"

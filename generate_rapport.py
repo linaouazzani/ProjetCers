@@ -487,6 +487,7 @@ def construire_contexte(
         except Exception:
             pass
 
+    print("DEBUG ctx excentrique:", exc_ctx)
     return {
         "patient": sortie, "entree": entree, "sortie": sortie,
         "s60": s60, "s240": s240,
@@ -656,10 +657,17 @@ def generer_rapport_biodex(
         print("\n📋 Parsing comparatif sain...")
         comparatif_sain_data = parse_comparatif_sain(pdf_comparatif_sain)
 
+    print("DEBUG pdf_excentrique recu:", pdf_excentrique)
+    if pdf_excentrique:
+        print("DEBUG fichier existe:", os.path.exists(pdf_excentrique))
+        if os.path.exists(pdf_excentrique):
+            print("DEBUG taille:", os.path.getsize(pdf_excentrique))
+
     excentrique_data = None
     if pdf_excentrique and os.path.exists(pdf_excentrique):
         print("\n📋 Parsing test excentrique...")
         excentrique_data = parse_excentrique_pdf(pdf_excentrique)
+    print("DEBUG excentrique_data:", excentrique_data)
 
     print("\n📊 Calcul progressions...")
     df_comp = comparer_tests(entree, sortie)

@@ -132,6 +132,31 @@ with col_left:
     with c5: st.markdown(f'<span class="badge {"badge-ok" if pdf_exc else "badge-opt"}">{"✅ Excentrique" if pdf_exc else "Excentrique"}</span>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # 1b. VALD ForceDecks (optionnel)
+    st.markdown('<div class="card"><div class="card-title">📊 VALD ForceDecks (optionnel)</div>', unsafe_allow_html=True)
+    col_vald1, col_vald2, col_vald3, col_vald4 = st.columns(4)
+    with col_vald1:
+        pdf_slj_entree = st.file_uploader("SLJ Entrée", type="pdf", key="slj_entree")
+    with col_vald2:
+        pdf_slj_sortie = st.file_uploader("SLJ Sortie", type="pdf", key="slj_sortie")
+    with col_vald3:
+        pdf_cmj_entree = st.file_uploader("CMJ Entrée", type="pdf", key="cmj_entree")
+    with col_vald4:
+        pdf_cmj_sortie = st.file_uploader("CMJ Sortie", type="pdf", key="cmj_sortie")
+
+    col_rsi1, col_rsi2 = st.columns(2)
+    with col_rsi1:
+        cmj_rsi_entree_manuel = st.number_input(
+            "CMJ RSI Entrée (m/s) — si absent du PDF",
+            min_value=0.0, max_value=5.0, value=0.0, step=0.01, key="cmj_rsi_e"
+        )
+    with col_rsi2:
+        cmj_rsi_sortie_manuel = st.number_input(
+            "CMJ RSI Sortie (m/s) — si absent du PDF",
+            min_value=0.0, max_value=5.0, value=0.0, step=0.01, key="cmj_rsi_s"
+        )
+    st.markdown('</div>', unsafe_allow_html=True)
+
     # 2. Informations patient
     st.markdown('<div class="card"><div class="card-title">👤 Informations Patient</div>', unsafe_allow_html=True)
 
@@ -423,6 +448,26 @@ with col_right:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(pdf_exc.getvalue()); path_exc = f.name
 
+            path_slj_e = None
+            if pdf_slj_entree:
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(pdf_slj_entree.getvalue()); path_slj_e = f.name
+
+            path_slj_s = None
+            if pdf_slj_sortie:
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(pdf_slj_sortie.getvalue()); path_slj_s = f.name
+
+            path_cmj_e = None
+            if pdf_cmj_entree:
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(pdf_cmj_entree.getvalue()); path_cmj_e = f.name
+
+            path_cmj_s = None
+            if pdf_cmj_sortie:
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(pdf_cmj_sortie.getvalue()); path_cmj_s = f.name
+
             progress.progress(30, text="🔍 Parsing des PDFs Biodex...")
 
             # Dossier de sortie FIXE (obligatoire pour pdfkit sur Windows)
@@ -434,24 +479,30 @@ with col_right:
             progress.progress(60, text="📊 Calcul + graphiques en cours...")
 
             chemin = generer_rapport_biodex(
-                pdf_entree           = path_e,
-                pdf_sortie           = path_s,
-                pdf_comparatif       = path_comp,
-                pdf_comparatif_sain  = path_comp_sain,
-                pdf_excentrique      = path_exc,
-                output_html          = out_html,
-                output_pdf           = out_pdf,
-                template_dir         = os.path.join(_APP_DIR, "templates"),
-                nom_club             = nom_club,
-                logo_club_path       = path_logo_club,
-                photo_patient_path   = path_photo,
-                sport                = sport if sport != "— Sélectionner —" else "",
-                date_naissance       = str(date_naissance) if date_naissance else "",
-                date_operation       = str(date_operation) if date_operation else "",
-                type_blessure        = type_blessure,
-                cote_opere           = cote_opere if cote_opere != "— Sélectionner —" else "",
-                acl_rsi_score        = acl_rsi_score if acl_rsi_score > 0 else None,
-                remarques_medecin    = remarques_medecin,
+                pdf_entree              = path_e,
+                pdf_sortie              = path_s,
+                pdf_comparatif          = path_comp,
+                pdf_comparatif_sain     = path_comp_sain,
+                pdf_excentrique         = path_exc,
+                pdf_slj_entree          = path_slj_e,
+                pdf_slj_sortie          = path_slj_s,
+                pdf_cmj_entree          = path_cmj_e,
+                pdf_cmj_sortie          = path_cmj_s,
+                cmj_rsi_entree_manuel   = cmj_rsi_entree_manuel,
+                cmj_rsi_sortie_manuel   = cmj_rsi_sortie_manuel,
+                output_html             = out_html,
+                output_pdf              = out_pdf,
+                template_dir            = os.path.join(_APP_DIR, "templates"),
+                nom_club                = nom_club,
+                logo_club_path          = path_logo_club,
+                photo_patient_path      = path_photo,
+                sport                   = sport if sport != "— Sélectionner —" else "",
+                date_naissance          = str(date_naissance) if date_naissance else "",
+                date_operation          = str(date_operation) if date_operation else "",
+                type_blessure           = type_blessure,
+                cote_opere              = cote_opere if cote_opere != "— Sélectionner —" else "",
+                acl_rsi_score           = acl_rsi_score if acl_rsi_score > 0 else None,
+                remarques_medecin       = remarques_medecin,
             )
 
             progress.progress(90, text="📄 Lecture du fichier généré...")
@@ -473,7 +524,9 @@ with col_right:
             st.session_state.rapport_ext   = ext_out
 
             # Nettoyer fichiers temporaires
-            for p in [path_e, path_s, path_comp, path_comp_sain, path_exc, path_photo, path_logo_club]:
+            for p in [path_e, path_s, path_comp, path_comp_sain, path_exc,
+                      path_slj_e, path_slj_s, path_cmj_e, path_cmj_s,
+                      path_photo, path_logo_club]:
                 if p and os.path.exists(p):
                     try: os.unlink(p)
                     except: pass

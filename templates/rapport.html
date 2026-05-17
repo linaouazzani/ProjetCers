@@ -1009,14 +1009,14 @@ body {
         {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
       </div>
       <div class="footer-mention">*Seuls les resultats cles sont affiches. Les rapports originaux detailles ont ete envoyes separement.</div>
-      <div class="footer-page">Page 3 / {% if has_vald %}4{% else %}3{% endif %}</div>
+      <div class="footer-page">Page 3 / {% if vald and vald.has_data %}4{% else %}3{% endif %}</div>
     </div>
 
   </div><!-- fin page-content -->
 </div><!-- fin page 3 -->
 
 
-{% if has_vald %}
+{% if vald and vald.has_data %}
 <!-- ══════════════════════════════════════════════════
      PAGE 4 — BILAN VALD FORCEDECKS
      ══════════════════════════════════════════════════ -->
@@ -1040,133 +1040,132 @@ body {
   <div class="page-content">
 
     <!-- TITRE SECTION -->
-    <div style="background:#5a6472;color:#ffffff;text-align:center;font-weight:bold;font-size:9pt;padding:4px;margin-bottom:6px;border-radius:2px;flex-shrink:0;">
+    <div style="background:#1c3f6e;color:#ffffff;text-align:center;font-weight:bold;font-size:11pt;padding:5px;margin-bottom:8px;flex-shrink:0;">
       BILAN SAUTS &#8212; VALD FORCEDECKS
     </div>
 
+    <!-- EXPLICATION LECTURE -->
+    <div style="font-size:7.5pt;color:#444;margin-bottom:8px;padding:4px 6px;border-left:3px solid #1c3f6e;background:#f0f4f8;flex-shrink:0;">
+      G&#160;=&#160;Gauche (l&#233;s&#233;) &#160;&#183;&#160; D&#160;=&#160;Droite (sain) &#160;&#183;&#160;
+      D&#233;ficit&#160;=&#160;|D&#8722;G|&#160;/&#160;max(D,G)&#160;&#215;&#160;100 &#160;&#183;&#160;
+      PROG&#160;=&#160;&#233;volution entr&#233;e&#8594;sortie
+    </div>
+
     <!-- TABLEAU 1 : SLJ Hauteur -->
-    {% if vald.slj_e_g is not none or vald.slj_e_d is not none or vald.slj_s_g is not none %}
-    <div style="font-weight:bold;margin:4px 0 2px 0;color:#1c3f6e;font-size:8.5pt;flex-shrink:0;">
-      Single Leg Jump &#8212; Hauteur (Imp-Mom) [cm]
+    {% if vald.slj_eg is not none or vald.slj_ed is not none or vald.slj_sg is not none %}
+    <div style="font-weight:bold;margin:4px 0 3px 0;color:#1c3f6e;font-size:9.5pt;flex-shrink:0;">
+      &#187; Single Leg Jump &#8212; Hauteur de saut (Imp-Mom) [cm]
     </div>
-    <table style="width:100%;border-collapse:collapse;font-size:7.5pt;flex-shrink:0;">
+    <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:10px;flex-shrink:0;">
       <tr style="background:#dde3ea;font-weight:bold;text-align:center;">
-        <td style="border:1px solid #aaa;padding:3px;width:16%;">M&#201;TRIQUE</td>
-        <td style="border:1px solid #aaa;padding:3px;">ENT.D</td>
-        <td style="border:1px solid #aaa;padding:3px;">ENT.G</td>
-        <td style="border:1px solid #aaa;padding:3px;">D&#201;F.ENTR&#201;E</td>
-        <td style="border:1px solid #aaa;padding:3px;">SORT.D</td>
-        <td style="border:1px solid #aaa;padding:3px;">SORT.G</td>
-        <td style="border:1px solid #aaa;padding:3px;">D&#201;F.SORTIE</td>
-        <td style="border:1px solid #aaa;padding:3px;">PROG D</td>
-        <td style="border:1px solid #aaa;padding:3px;">PROG G</td>
+        <td style="border:1px solid #999;padding:4px 6px;width:15%;text-align:left;">M&#201;TRIQUE</td>
+        <td style="border:1px solid #999;padding:4px 6px;">ENT.D</td>
+        <td style="border:1px solid #999;padding:4px 6px;">ENT.G</td>
+        <td style="border:1px solid #999;padding:4px 6px;">D&#201;F.ENTR&#201;E</td>
+        <td style="border:1px solid #999;padding:4px 6px;">SORT.D</td>
+        <td style="border:1px solid #999;padding:4px 6px;">SORT.G</td>
+        <td style="border:1px solid #999;padding:4px 6px;">D&#201;F.SORTIE</td>
+        <td style="border:1px solid #999;padding:4px 6px;">PROG D</td>
+        <td style="border:1px solid #999;padding:4px 6px;">PROG G</td>
       </tr>
       <tr style="text-align:center;">
-        <td style="border:1px solid #aaa;padding:3px;font-weight:bold;text-align:left;">Hauteur (cm)</td>
-        <td style="border:1px solid #aaa;padding:3px;">{{ vald.slj_e_d|fmt(1) }}</td>
-        <td style="border:1px solid #aaa;padding:3px;">{{ vald.slj_e_g|fmt(1) }}</td>
-        <td class="{{ vald.cls_slj_e }}" style="border:1px solid #aaa;padding:3px;">
-          {% if vald.def_slj_e is not none %}{{ vald.def_slj_e|fmt(1) }}%{% else %}&#8212;{% endif %}
+        <td style="border:1px solid #999;padding:4px 6px;font-weight:bold;text-align:left;">Hauteur (cm)</td>
+        <td style="border:1px solid #999;padding:4px 6px;">{{ vald.slj_ed if vald.slj_ed is not none else "&#8212;" }}</td>
+        <td style="border:1px solid #999;padding:4px 6px;">{{ vald.slj_eg if vald.slj_eg is not none else "&#8212;" }}</td>
+        <td class="{{ vald.col_slj_e }}" style="border:1px solid #999;padding:4px 6px;">
+          {% if vald.def_slj_e is not none %}{{ vald.def_slj_e }}%{% else %}&#8212;{% endif %}
         </td>
-        <td style="border:1px solid #aaa;padding:3px;">{{ vald.slj_s_d|fmt(1) }}</td>
-        <td style="border:1px solid #aaa;padding:3px;">{{ vald.slj_s_g|fmt(1) }}</td>
-        <td class="{{ vald.cls_slj_s }}" style="border:1px solid #aaa;padding:3px;">
-          {% if vald.def_slj_s is not none %}{{ vald.def_slj_s|fmt(1) }}%{% else %}&#8212;{% endif %}
+        <td style="border:1px solid #999;padding:4px 6px;">{{ vald.slj_sd if vald.slj_sd is not none else "&#8212;" }}</td>
+        <td style="border:1px solid #999;padding:4px 6px;">{{ vald.slj_sg if vald.slj_sg is not none else "&#8212;" }}</td>
+        <td class="{{ vald.col_slj_s }}" style="border:1px solid #999;padding:4px 6px;">
+          {% if vald.def_slj_s is not none %}{{ vald.def_slj_s }}%{% else %}&#8212;{% endif %}
         </td>
-        <td style="border:1px solid #aaa;padding:3px;">
-          {% if vald.prog_slj_d is not none %}{{ vald.prog_slj_d|fmt(1) }}%{% else %}&#8212;{% endif %}
+        <td style="border:1px solid #999;padding:4px 6px;">
+          {% if vald.prog_slj_d is not none %}{{ vald.prog_slj_d }}%{% else %}&#8212;{% endif %}
         </td>
-        <td style="border:1px solid #aaa;padding:3px;">
-          {% if vald.prog_slj_g is not none %}{{ vald.prog_slj_g|fmt(1) }}%{% else %}&#8212;{% endif %}
+        <td style="border:1px solid #999;padding:4px 6px;">
+          {% if vald.prog_slj_g is not none %}{{ vald.prog_slj_g }}%{% else %}&#8212;{% endif %}
         </td>
       </tr>
     </table>
     {% endif %}
 
-    <!-- TABLEAU 2 : RSI-modified SLJ -->
-    {% if vald.rsi_e_g is not none or vald.rsi_e_d is not none or vald.rsi_s_g is not none %}
-    <div style="font-weight:bold;margin:8px 0 2px 0;color:#1c3f6e;font-size:8.5pt;flex-shrink:0;">
-      Single Leg Jump &#8212; RSI-modified (Imp-Mom) [m/s]
+    <!-- TABLEAU 2 : RSI SLJ -->
+    {% if vald.rsi_eg is not none or vald.rsi_ed is not none or vald.rsi_sg is not none %}
+    <div style="font-weight:bold;margin:4px 0 3px 0;color:#1c3f6e;font-size:9.5pt;flex-shrink:0;">
+      &#187; Single Leg Jump &#8212; R&#233;activit&#233; (RSI-modified Imp-Mom) [m/s]
     </div>
-    <table style="width:100%;border-collapse:collapse;font-size:7.5pt;flex-shrink:0;">
+    <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:10px;flex-shrink:0;">
       <tr style="background:#dde3ea;font-weight:bold;text-align:center;">
-        <td style="border:1px solid #aaa;padding:3px;width:16%;">M&#201;TRIQUE</td>
-        <td style="border:1px solid #aaa;padding:3px;">ENT.D</td>
-        <td style="border:1px solid #aaa;padding:3px;">ENT.G</td>
-        <td style="border:1px solid #aaa;padding:3px;">D&#201;F.ENTR&#201;E</td>
-        <td style="border:1px solid #aaa;padding:3px;">SORT.D</td>
-        <td style="border:1px solid #aaa;padding:3px;">SORT.G</td>
-        <td style="border:1px solid #aaa;padding:3px;">D&#201;F.SORTIE</td>
-        <td style="border:1px solid #aaa;padding:3px;">PROG D</td>
-        <td style="border:1px solid #aaa;padding:3px;">PROG G</td>
+        <td style="border:1px solid #999;padding:4px 6px;width:15%;text-align:left;">M&#201;TRIQUE</td>
+        <td style="border:1px solid #999;padding:4px 6px;">ENT.D</td>
+        <td style="border:1px solid #999;padding:4px 6px;">ENT.G</td>
+        <td style="border:1px solid #999;padding:4px 6px;">D&#201;F.ENTR&#201;E</td>
+        <td style="border:1px solid #999;padding:4px 6px;">SORT.D</td>
+        <td style="border:1px solid #999;padding:4px 6px;">SORT.G</td>
+        <td style="border:1px solid #999;padding:4px 6px;">D&#201;F.SORTIE</td>
+        <td style="border:1px solid #999;padding:4px 6px;">PROG D</td>
+        <td style="border:1px solid #999;padding:4px 6px;">PROG G</td>
       </tr>
       <tr style="text-align:center;">
-        <td style="border:1px solid #aaa;padding:3px;font-weight:bold;text-align:left;">RSI (m/s)</td>
-        <td style="border:1px solid #aaa;padding:3px;">{{ vald.rsi_e_d|fmt(2) }}</td>
-        <td style="border:1px solid #aaa;padding:3px;">{{ vald.rsi_e_g|fmt(2) }}</td>
-        <td class="{{ vald.cls_rsi_e }}" style="border:1px solid #aaa;padding:3px;">
-          {% if vald.def_rsi_e is not none %}{{ vald.def_rsi_e|fmt(1) }}%{% else %}&#8212;{% endif %}
+        <td style="border:1px solid #999;padding:4px 6px;font-weight:bold;text-align:left;">RSI (m/s)</td>
+        <td style="border:1px solid #999;padding:4px 6px;">{{ vald.rsi_ed if vald.rsi_ed is not none else "&#8212;" }}</td>
+        <td style="border:1px solid #999;padding:4px 6px;">{{ vald.rsi_eg if vald.rsi_eg is not none else "&#8212;" }}</td>
+        <td class="{{ vald.col_rsi_e }}" style="border:1px solid #999;padding:4px 6px;">
+          {% if vald.def_rsi_e is not none %}{{ vald.def_rsi_e }}%{% else %}&#8212;{% endif %}
         </td>
-        <td style="border:1px solid #aaa;padding:3px;">{{ vald.rsi_s_d|fmt(2) }}</td>
-        <td style="border:1px solid #aaa;padding:3px;">{{ vald.rsi_s_g|fmt(2) }}</td>
-        <td class="{{ vald.cls_rsi_s }}" style="border:1px solid #aaa;padding:3px;">
-          {% if vald.def_rsi_s is not none %}{{ vald.def_rsi_s|fmt(1) }}%{% else %}&#8212;{% endif %}
+        <td style="border:1px solid #999;padding:4px 6px;">{{ vald.rsi_sd if vald.rsi_sd is not none else "&#8212;" }}</td>
+        <td style="border:1px solid #999;padding:4px 6px;">{{ vald.rsi_sg if vald.rsi_sg is not none else "&#8212;" }}</td>
+        <td class="{{ vald.col_rsi_s }}" style="border:1px solid #999;padding:4px 6px;">
+          {% if vald.def_rsi_s is not none %}{{ vald.def_rsi_s }}%{% else %}&#8212;{% endif %}
         </td>
-        <td style="border:1px solid #aaa;padding:3px;">
-          {% if vald.prog_rsi_d is not none %}{{ vald.prog_rsi_d|fmt(1) }}%{% else %}&#8212;{% endif %}
+        <td style="border:1px solid #999;padding:4px 6px;">
+          {% if vald.prog_rsi_d is not none %}{{ vald.prog_rsi_d }}%{% else %}&#8212;{% endif %}
         </td>
-        <td style="border:1px solid #aaa;padding:3px;">
-          {% if vald.prog_rsi_g is not none %}{{ vald.prog_rsi_g|fmt(1) }}%{% else %}&#8212;{% endif %}
+        <td style="border:1px solid #999;padding:4px 6px;">
+          {% if vald.prog_rsi_g is not none %}{{ vald.prog_rsi_g }}%{% else %}&#8212;{% endif %}
         </td>
       </tr>
     </table>
     {% endif %}
 
-    <!-- TABLEAU 3 : CMJ -->
-    {% if vald.cmj_h_e is not none or vald.cmj_h_s is not none %}
-    <div style="font-weight:bold;margin:8px 0 2px 0;color:#1c3f6e;font-size:8.5pt;flex-shrink:0;">
-      Counter Movement Jump &#8212; CMJ (bilat&#233;ral)
+    <!-- TABLEAU 3 : CMJ bilatéral -->
+    {% if vald.cmj_he is not none or vald.cmj_hs is not none %}
+    <div style="font-weight:bold;margin:4px 0 3px 0;color:#1c3f6e;font-size:9.5pt;flex-shrink:0;">
+      &#187; Counter Movement Jump &#8212; Performance bilat&#233;rale (2 jambes)
     </div>
-    <table style="width:55%;border-collapse:collapse;font-size:7.5pt;flex-shrink:0;">
+    <table style="width:55%;border-collapse:collapse;font-size:8.5pt;margin-bottom:10px;flex-shrink:0;">
       <tr style="background:#dde3ea;font-weight:bold;text-align:center;">
-        <td style="border:1px solid #aaa;padding:3px;width:30%;text-align:left;">M&#201;TRIQUE</td>
-        <td style="border:1px solid #aaa;padding:3px;">ENTR&#201;E</td>
-        <td style="border:1px solid #aaa;padding:3px;">SORTIE</td>
-        <td style="border:1px solid #aaa;padding:3px;">PROGRESSION</td>
+        <td style="border:1px solid #999;padding:4px 6px;width:30%;text-align:left;">M&#201;TRIQUE</td>
+        <td style="border:1px solid #999;padding:4px 6px;">ENTR&#201;E</td>
+        <td style="border:1px solid #999;padding:4px 6px;">SORTIE</td>
+        <td style="border:1px solid #999;padding:4px 6px;">PROGRESSION</td>
       </tr>
       <tr style="text-align:center;">
-        <td style="border:1px solid #aaa;padding:3px;font-weight:bold;text-align:left;">Hauteur (cm)</td>
-        <td style="border:1px solid #aaa;padding:3px;">{{ vald.cmj_h_e|fmt(1) }}</td>
-        <td style="border:1px solid #aaa;padding:3px;">{{ vald.cmj_h_s|fmt(1) }}</td>
-        <td style="border:1px solid #aaa;padding:3px;">
-          {% if vald.prog_cmj_h is not none %}{{ vald.prog_cmj_h|fmt(1) }}%{% else %}&#8212;{% endif %}
+        <td style="border:1px solid #999;padding:4px 6px;font-weight:bold;text-align:left;">Hauteur (cm)</td>
+        <td style="border:1px solid #999;padding:4px 6px;">{{ vald.cmj_he if vald.cmj_he is not none else "&#8212;" }}</td>
+        <td style="border:1px solid #999;padding:4px 6px;">{{ vald.cmj_hs if vald.cmj_hs is not none else "&#8212;" }}</td>
+        <td style="border:1px solid #999;padding:4px 6px;">
+          {% if vald.prog_cmj_h is not none %}{{ vald.prog_cmj_h }}%{% else %}&#8212;{% endif %}
         </td>
       </tr>
-      <tr style="text-align:center;background:#f7f9fc;">
-        <td style="border:1px solid #aaa;padding:3px;font-weight:bold;text-align:left;">RSI (m/s)</td>
-        <td style="border:1px solid #aaa;padding:3px;">
-          {% if vald.cmj_rsi_e %}{{ vald.cmj_rsi_e|fmt(2) }}{% else %}&#8212;{% endif %}
-        </td>
-        <td style="border:1px solid #aaa;padding:3px;">
-          {% if vald.cmj_rsi_s %}{{ vald.cmj_rsi_s|fmt(2) }}{% else %}&#8212;{% endif %}
-        </td>
-        <td style="border:1px solid #aaa;padding:3px;">
-          {% if vald.prog_cmj_rsi is not none %}{{ vald.prog_cmj_rsi|fmt(1) }}%{% else %}&#8212;{% endif %}
+      <tr style="text-align:center;background:#f9f9f9;">
+        <td style="border:1px solid #999;padding:4px 6px;font-weight:bold;text-align:left;">RSI (m/s)</td>
+        <td style="border:1px solid #999;padding:4px 6px;">{{ vald.cmj_re if vald.cmj_re is not none else "&#8212;" }}</td>
+        <td style="border:1px solid #999;padding:4px 6px;">{{ vald.cmj_rs if vald.cmj_rs is not none else "&#8212;" }}</td>
+        <td style="border:1px solid #999;padding:4px 6px;">
+          {% if vald.prog_cmj_r is not none %}{{ vald.prog_cmj_r }}%{% else %}&#8212;{% endif %}
         </td>
       </tr>
     </table>
     {% endif %}
 
     <!-- LEGENDE COULEURS -->
-    <div style="margin-top:12px;font-size:7pt;color:#555;flex-shrink:0;">
-      <strong>Seuils LSI :</strong>
-      <span style="color:#2a8a36;font-weight:bold;">&#9679; Vert</span> &lt; 10&#160;%
-      &#160;|&#160;
-      <span style="color:#e07b00;font-weight:bold;">&#9679; Orange</span> 10&#8211;15&#160;%
-      &#160;|&#160;
-      <span style="color:#c0392b;font-weight:bold;">&#9679; Rouge</span> &gt; 15&#160;%
-      &#160;&#160;&#160;
-      D&#233;ficit&#160;=&#160;|D&#8722;G|&#160;/&#160;max(D,G)&#160;&#215;&#160;100
+    <div style="margin-top:12px;padding:6px 8px;border:1px solid #ddd;background:#f9f9f9;font-size:7.5pt;color:#444;flex-shrink:0;">
+      <strong>Seuils d&#233;ficit (LSI) :</strong>
+      <span style="color:#2a8a36;font-weight:bold;">&#9679; Vert</span> &lt;10% &#8212; sym&#233;trie normale &#160;|&#160;
+      <span style="color:#e07b00;font-weight:bold;">&#9679; Orange</span> 10&#8211;15% &#8212; d&#233;ficit mod&#233;r&#233; &#160;|&#160;
+      <span style="color:#c0392b;font-weight:bold;">&#9679; Rouge</span> &gt;15% &#8212; d&#233;ficit important
     </div>
 
     <!-- FOOTER PAGE 4 -->

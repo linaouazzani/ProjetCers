@@ -29,7 +29,6 @@ from jinja2 import Environment, FileSystemLoader
 
 from biodex_parser import parse_biodex_pdf, comparer_tests, couleur_deficit, couleur_progression, parse_excentrique_pdf
 from graphiques import graphique_en_base64, generer_graphiques_progression, generer_graphiques_excentrique
-from vald_parser import parse_vald_slj, parse_vald_cmj
 
 
 # ════════════════════════════════════════════════════════════════
@@ -216,8 +215,6 @@ def construire_contexte(
     slj_sortie_data=None,
     cmj_entree_data=None,
     cmj_sortie_data=None,
-    cmj_rsi_entree_manuel: float = 0.0,
-    cmj_rsi_sortie_manuel: float = 0.0,
 ) -> dict:
 
     poids        = entree.poids_kg or sortie.poids_kg or 101.0
@@ -504,11 +501,6 @@ def construire_contexte(
                 return round((s - e) / abs(e) * 100, 1)
         return None
 
-    def _prog_manual(val_e, val_s):
-        if val_e and val_s and val_e != 0:
-            return round((val_s - val_e) / abs(val_e) * 100, 1)
-        return None
-
     slj_e = slj_entree_data
     slj_s = slj_sortie_data
     cmj_e = cmj_entree_data
@@ -527,36 +519,39 @@ def construire_contexte(
         _def_rsi_e = slj_e["deficit_rsi"] if slj_e else None
         _def_rsi_s = slj_s["deficit_rsi"] if slj_s else None
         vald_ctx = {
-            "slj_e_g":    slj_e["slj_hauteur_g"] if slj_e else None,
-            "slj_e_d":    slj_e["slj_hauteur_d"] if slj_e else None,
-            "slj_s_g":    slj_s["slj_hauteur_g"] if slj_s else None,
-            "slj_s_d":    slj_s["slj_hauteur_d"] if slj_s else None,
+            # SLJ Hauteur
+            "slj_eg":     slj_e["slj_hauteur_g"] if slj_e else None,
+            "slj_ed":     slj_e["slj_hauteur_d"] if slj_e else None,
+            "slj_sg":     slj_s["slj_hauteur_g"] if slj_s else None,
+            "slj_sd":     slj_s["slj_hauteur_d"] if slj_s else None,
             "def_slj_e":  _def_slj_e,
             "def_slj_s":  _def_slj_s,
-            "cls_slj_e":  _vald_cls(_def_slj_e),
-            "cls_slj_s":  _vald_cls(_def_slj_s),
+            "col_slj_e":  _vald_cls(_def_slj_e),
+            "col_slj_s":  _vald_cls(_def_slj_s),
             "prog_slj_g": _prog_vald(slj_e, slj_s, "slj_hauteur_g"),
             "prog_slj_d": _prog_vald(slj_e, slj_s, "slj_hauteur_d"),
-            "rsi_e_g":    slj_e["rsi_g"] if slj_e else None,
-            "rsi_e_d":    slj_e["rsi_d"] if slj_e else None,
-            "rsi_s_g":    slj_s["rsi_g"] if slj_s else None,
-            "rsi_s_d":    slj_s["rsi_d"] if slj_s else None,
+            # RSI SLJ
+            "rsi_eg":     slj_e["rsi_g"] if slj_e else None,
+            "rsi_ed":     slj_e["rsi_d"] if slj_e else None,
+            "rsi_sg":     slj_s["rsi_g"] if slj_s else None,
+            "rsi_sd":     slj_s["rsi_d"] if slj_s else None,
             "def_rsi_e":  _def_rsi_e,
             "def_rsi_s":  _def_rsi_s,
-            "cls_rsi_e":  _vald_cls(_def_rsi_e),
-            "cls_rsi_s":  _vald_cls(_def_rsi_s),
+            "col_rsi_e":  _vald_cls(_def_rsi_e),
+            "col_rsi_s":  _vald_cls(_def_rsi_s),
             "prog_rsi_g": _prog_vald(slj_e, slj_s, "rsi_g"),
             "prog_rsi_d": _prog_vald(slj_e, slj_s, "rsi_d"),
-            "cmj_h_e":    cmj_e["cmj_hauteur"] if cmj_e else None,
-            "cmj_h_s":    cmj_s["cmj_hauteur"] if cmj_s else None,
-            "cmj_rsi_e":  (cmj_e["cmj_rsi"] if cmj_e and cmj_e.get("cmj_rsi") else (cmj_rsi_entree_manuel or None)),
-            "cmj_rsi_s":  (cmj_s["cmj_rsi"] if cmj_s and cmj_s.get("cmj_rsi") else (cmj_rsi_sortie_manuel or None)),
-            "prog_cmj_h":   _prog_vald(cmj_e, cmj_s, "cmj_hauteur"),
-            "prog_cmj_rsi": _prog_manual(cmj_rsi_entree_manuel, cmj_rsi_sortie_manuel),
+            # CMJ bilatéral
+            "cmj_he":     cmj_e["cmj_hauteur"] if cmj_e else None,
+            "cmj_hs":     cmj_s["cmj_hauteur"] if cmj_s else None,
+            "cmj_re":     cmj_e["cmj_rsi"] if cmj_e else None,
+            "cmj_rs":     cmj_s["cmj_rsi"] if cmj_s else None,
+            "prog_cmj_h": _prog_vald(cmj_e, cmj_s, "cmj_hauteur"),
+            "prog_cmj_r": _prog_vald(cmj_e, cmj_s, "cmj_rsi"),
+            "has_data":   True,
         }
 
-    has_vald = bool(vald_ctx and (vald_ctx.get("slj_e_g") or vald_ctx.get("slj_e_d")
-                                   or vald_ctx.get("cmj_h_e") or vald_ctx.get("cmj_h_s")))
+    has_vald = bool(vald_ctx)
 
     return {
         "patient": sortie, "entree": entree, "sortie": sortie,
@@ -689,18 +684,16 @@ def _fallback_html(html: str, output_path: str) -> str:
 # ════════════════════════════════════════════════════════════════
 
 def generer_rapport_biodex(
-    pdf_entree:              str,
-    pdf_sortie:              str,
-    pdf_comparatif:          Optional[str] = None,
-    pdf_comparatif_sain:     Optional[str] = None,
-    pdf_excentrique:         Optional[str] = None,
-    pdf_slj_entree:          Optional[str] = None,
-    pdf_slj_sortie:          Optional[str] = None,
-    pdf_cmj_entree:          Optional[str] = None,
-    pdf_cmj_sortie:          Optional[str] = None,
-    cmj_rsi_entree_manuel:   float = 0.0,
-    cmj_rsi_sortie_manuel:   float = 0.0,
-    output_html:             str = "outputs/rapport_biodex.html",
+    pdf_entree:          str,
+    pdf_sortie:          str,
+    pdf_comparatif:      Optional[str] = None,
+    pdf_comparatif_sain: Optional[str] = None,
+    pdf_excentrique:     Optional[str] = None,
+    vald_slj_entree:     Optional[dict] = None,
+    vald_slj_sortie:     Optional[dict] = None,
+    vald_cmj_entree:     Optional[dict] = None,
+    vald_cmj_sortie:     Optional[dict] = None,
+    output_html:         str = "outputs/rapport_biodex.html",
     output_pdf:              str = "outputs/rapport_biodex.pdf",
     template_dir:            str = "templates",
     nom_club:                str = "—",
@@ -747,26 +740,6 @@ def generer_rapport_biodex(
         excentrique_data = parse_excentrique_pdf(pdf_excentrique)
     print("DEBUG excentrique_data:", excentrique_data)
 
-    slj_entree_data = None
-    if pdf_slj_entree and os.path.exists(pdf_slj_entree):
-        print("\n📋 Parsing SLJ Entrée...")
-        slj_entree_data = parse_vald_slj(pdf_slj_entree)
-
-    slj_sortie_data = None
-    if pdf_slj_sortie and os.path.exists(pdf_slj_sortie):
-        print("\n📋 Parsing SLJ Sortie...")
-        slj_sortie_data = parse_vald_slj(pdf_slj_sortie)
-
-    cmj_entree_data = None
-    if pdf_cmj_entree and os.path.exists(pdf_cmj_entree):
-        print("\n📋 Parsing CMJ Entrée...")
-        cmj_entree_data = parse_vald_cmj(pdf_cmj_entree)
-
-    cmj_sortie_data = None
-    if pdf_cmj_sortie and os.path.exists(pdf_cmj_sortie):
-        print("\n📋 Parsing CMJ Sortie...")
-        cmj_sortie_data = parse_vald_cmj(pdf_cmj_sortie)
-
     print("\n📊 Calcul progressions...")
     df_comp = comparer_tests(entree, sortie)
     print(f"  ✅ {len(df_comp)} métriques calculées")
@@ -787,12 +760,10 @@ def generer_rapport_biodex(
         acl_rsi_score=acl_rsi_score,
         remarques_medecin=remarques_medecin,
         excentrique_data=excentrique_data,
-        slj_entree_data=slj_entree_data,
-        slj_sortie_data=slj_sortie_data,
-        cmj_entree_data=cmj_entree_data,
-        cmj_sortie_data=cmj_sortie_data,
-        cmj_rsi_entree_manuel=cmj_rsi_entree_manuel,
-        cmj_rsi_sortie_manuel=cmj_rsi_sortie_manuel,
+        slj_entree_data=vald_slj_entree,
+        slj_sortie_data=vald_slj_sortie,
+        cmj_entree_data=vald_cmj_entree,
+        cmj_sortie_data=vald_cmj_sortie,
     )
     print("  ✅ Contexte prêt")
 

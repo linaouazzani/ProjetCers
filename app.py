@@ -133,29 +133,58 @@ with col_left:
     st.markdown('</div>', unsafe_allow_html=True)
 
     # 1b. VALD ForceDecks (optionnel)
-    st.markdown('<div class="card"><div class="card-title">📊 VALD ForceDecks (optionnel)</div>', unsafe_allow_html=True)
-    col_vald1, col_vald2, col_vald3, col_vald4 = st.columns(4)
-    with col_vald1:
-        pdf_slj_entree = st.file_uploader("SLJ Entrée", type="pdf", key="slj_entree")
-    with col_vald2:
-        pdf_slj_sortie = st.file_uploader("SLJ Sortie", type="pdf", key="slj_sortie")
-    with col_vald3:
-        pdf_cmj_entree = st.file_uploader("CMJ Entrée", type="pdf", key="cmj_entree")
-    with col_vald4:
-        pdf_cmj_sortie = st.file_uploader("CMJ Sortie", type="pdf", key="cmj_sortie")
+    import io
+    from vald_parser import parse_vald_slj, parse_vald_cmj
 
-    col_rsi1, col_rsi2 = st.columns(2)
-    with col_rsi1:
-        cmj_rsi_entree_manuel = st.number_input(
-            "CMJ RSI Entrée (m/s) — si absent du PDF",
-            min_value=0.0, max_value=5.0, value=0.0, step=0.01, key="cmj_rsi_e"
-        )
-    with col_rsi2:
-        cmj_rsi_sortie_manuel = st.number_input(
-            "CMJ RSI Sortie (m/s) — si absent du PDF",
-            min_value=0.0, max_value=5.0, value=0.0, step=0.01, key="cmj_rsi_s"
-        )
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("**📊 VALD ForceDecks — Sauts (optionnel)**")
+    st.caption("PDFs exportés depuis VALD Hub → Firefox → Imprimer → Enregistrer en PDF")
+
+    col_v1, col_v2, col_v3, col_v4 = st.columns(4)
+    with col_v1:
+        pdf_slj_e_up = st.file_uploader("SLJ Entrée", type="pdf", key="vald_slj_e",
+                                         help="PDF Single Leg Jump séance d'entrée")
+    with col_v2:
+        pdf_slj_s_up = st.file_uploader("SLJ Sortie", type="pdf", key="vald_slj_s",
+                                         help="PDF Single Leg Jump séance de sortie")
+    with col_v3:
+        pdf_cmj_e_up = st.file_uploader("CMJ Entrée", type="pdf", key="vald_cmj_e",
+                                         help="PDF CMJ entrée (avec RSI-modified visible)")
+    with col_v4:
+        pdf_cmj_s_up = st.file_uploader("CMJ Sortie", type="pdf", key="vald_cmj_s",
+                                         help="PDF CMJ sortie (avec RSI-modified visible)")
+
+    vald_slj_e, vald_slj_s, vald_cmj_e, vald_cmj_s = None, None, None, None
+
+    if pdf_slj_e_up:
+        try:
+            vald_slj_e = parse_vald_slj(io.BytesIO(pdf_slj_e_up.getvalue()))
+            st.success(f"SLJ Entrée : G={vald_slj_e['slj_hauteur_g']} cm / D={vald_slj_e['slj_hauteur_d']} cm")
+        except Exception as _e:
+            st.error(f"Erreur SLJ Entrée : {_e}")
+
+    if pdf_slj_s_up:
+        try:
+            vald_slj_s = parse_vald_slj(io.BytesIO(pdf_slj_s_up.getvalue()))
+            st.success(f"SLJ Sortie : G={vald_slj_s['slj_hauteur_g']} cm / D={vald_slj_s['slj_hauteur_d']} cm")
+        except Exception as _e:
+            st.error(f"Erreur SLJ Sortie : {_e}")
+
+    if pdf_cmj_e_up:
+        try:
+            vald_cmj_e = parse_vald_cmj(io.BytesIO(pdf_cmj_e_up.getvalue()))
+            rsi_txt = f"RSI={vald_cmj_e['cmj_rsi']} m/s" if vald_cmj_e['cmj_rsi'] else "RSI absent du PDF"
+            st.success(f"CMJ Entrée : H={vald_cmj_e['cmj_hauteur']} cm · {rsi_txt}")
+        except Exception as _e:
+            st.error(f"Erreur CMJ Entrée : {_e}")
+
+    if pdf_cmj_s_up:
+        try:
+            vald_cmj_s = parse_vald_cmj(io.BytesIO(pdf_cmj_s_up.getvalue()))
+            rsi_txt = f"RSI={vald_cmj_s['cmj_rsi']} m/s" if vald_cmj_s['cmj_rsi'] else "RSI absent du PDF"
+            st.success(f"CMJ Sortie : H={vald_cmj_s['cmj_hauteur']} cm · {rsi_txt}")
+        except Exception as _e:
+            st.error(f"Erreur CMJ Sortie : {_e}")
 
     # 2. Informations patient
     st.markdown('<div class="card"><div class="card-title">👤 Informations Patient</div>', unsafe_allow_html=True)
@@ -448,26 +477,6 @@ with col_right:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(pdf_exc.getvalue()); path_exc = f.name
 
-            path_slj_e = None
-            if pdf_slj_entree:
-                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                    f.write(pdf_slj_entree.getvalue()); path_slj_e = f.name
-
-            path_slj_s = None
-            if pdf_slj_sortie:
-                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                    f.write(pdf_slj_sortie.getvalue()); path_slj_s = f.name
-
-            path_cmj_e = None
-            if pdf_cmj_entree:
-                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                    f.write(pdf_cmj_entree.getvalue()); path_cmj_e = f.name
-
-            path_cmj_s = None
-            if pdf_cmj_sortie:
-                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                    f.write(pdf_cmj_sortie.getvalue()); path_cmj_s = f.name
-
             progress.progress(30, text="🔍 Parsing des PDFs Biodex...")
 
             # Dossier de sortie FIXE (obligatoire pour pdfkit sur Windows)
@@ -484,12 +493,10 @@ with col_right:
                 pdf_comparatif          = path_comp,
                 pdf_comparatif_sain     = path_comp_sain,
                 pdf_excentrique         = path_exc,
-                pdf_slj_entree          = path_slj_e,
-                pdf_slj_sortie          = path_slj_s,
-                pdf_cmj_entree          = path_cmj_e,
-                pdf_cmj_sortie          = path_cmj_s,
-                cmj_rsi_entree_manuel   = cmj_rsi_entree_manuel,
-                cmj_rsi_sortie_manuel   = cmj_rsi_sortie_manuel,
+                vald_slj_entree         = vald_slj_e,
+                vald_slj_sortie         = vald_slj_s,
+                vald_cmj_entree         = vald_cmj_e,
+                vald_cmj_sortie         = vald_cmj_s,
                 output_html             = out_html,
                 output_pdf              = out_pdf,
                 template_dir            = os.path.join(_APP_DIR, "templates"),
@@ -525,7 +532,6 @@ with col_right:
 
             # Nettoyer fichiers temporaires
             for p in [path_e, path_s, path_comp, path_comp_sain, path_exc,
-                      path_slj_e, path_slj_s, path_cmj_e, path_cmj_s,
                       path_photo, path_logo_club]:
                 if p and os.path.exists(p):
                     try: os.unlink(p)

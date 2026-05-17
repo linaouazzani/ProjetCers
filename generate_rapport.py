@@ -1,5 +1,5 @@
 """
-generate_rapport.py — v6
+generate_rapport.py — v7
 ========================
 Rapport Isocinétique CERS Capbreton
 

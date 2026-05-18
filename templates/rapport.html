@@ -14,14 +14,21 @@
    Bordure          : #cccccc
 ====================================================== */
 
-@page { size: A4; margin: 0; }
+@page { size: A4; margin: 8mm 8mm 8mm 8mm; }
+
+@media print {
+  body { margin: 0 !important; padding: 0 !important; }
+  .page { page-break-after: always; overflow: hidden; }
+  img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 9px;
-  color: #1a1a1a;
+  color: #1c3f6e;
   background: #ffffff;
   overflow: hidden;
 }
@@ -29,7 +36,7 @@ body {
 /* ====== PAGES ====== */
 .page {
   width: 210mm;
-  min-height: 297mm;
+  height: 277mm;
   padding: 0;
   background: #ffffff;
   position: relative;
@@ -176,8 +183,10 @@ body {
 
 /* ====== BARRE TITRE BILAN ====== */
 .bilan-title {
-  background: #5a6472;
-  color: white;
+  background: #1c3f6e;
+  color: #ffffff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
   font-size: 10px;
   font-weight: 700;
   padding: 5px 12px;
@@ -239,7 +248,7 @@ body {
   display: block;
   margin-top: 1px;
 }
-.mt tr.alt td { background: #f7f9fc; }
+.mt tr.alt td { background: #eef3fa; }
 .mt tr.alt td.cm { background: #dae3ee; }
 
 .mt tr.grp td {
@@ -268,7 +277,7 @@ body {
 .pr { color: #c0392b; font-weight: 700; }
 .pn { color: #888888; }
 
-.interp { font-size: 6.5px; color: #333333; text-align: left !important; line-height: 1.2; overflow: hidden; }
+.interp { font-size: 6.5px; color: #1c3f6e; text-align: left !important; line-height: 1.2; overflow: hidden; }
 
 /* ====== LEGENDE ====== */
 .legende {
@@ -426,27 +435,33 @@ body {
      ══════════════════════════════════════════════════ -->
 <div class="page">
 
-  <!-- EN-TETE — B1 -->
-  <div style="display:table;width:100%;margin-bottom:4px;border-bottom:3px solid #1c3f6e;padding-bottom:6px;flex-shrink:0;">
-    <div style="display:table-cell;width:20%;vertical-align:middle;">
+  <!-- EN-TETE — 3A -->
+  <div style="display:table;width:100%;margin-bottom:0;background:#1c3f6e;border-radius:0;page-break-inside:avoid;flex-shrink:0;">
+    <div style="display:table-cell;width:22%;vertical-align:middle;padding:8px 10px;">
       {% if logo_cers_b64 %}
-      <img src="{{ logo_cers_b64 }}" style="height:45px;" alt="CERS Capbreton">
+      <img src="{{ logo_cers_b64 }}" style="height:42px;display:block;" alt="CERS Capbreton">
       {% else %}
-      <div style="font-size:11pt;font-weight:bold;color:#1c3f6e;">CERS<br>Capbreton</div>
+      <div style="color:#ffffff;font-size:12pt;font-weight:bold;line-height:1.2;">CERS<br>Capbreton</div>
       {% endif %}
     </div>
-    <div style="display:table-cell;width:60%;vertical-align:middle;text-align:center;">
-      <div style="font-size:16pt;font-weight:bold;color:#1c3f6e;letter-spacing:0.5px;">CERS Capbreton</div>
-      <div style="font-size:10pt;color:#555;margin-top:1px;">Bilan complet du patient &#8212; G&#233;n&#233;ration automatique &#183; Suivi de progression</div>
-      <div style="font-size:8pt;color:#888;margin-top:1px;">Isocin&#233;tique Biodex &nbsp;&#183;&nbsp; Sauts VALD ForceDecks &nbsp;&#183;&nbsp; GPS Catapult</div>
+    <div style="display:table-cell;width:56%;vertical-align:middle;text-align:center;padding:8px 10px;">
+      <div style="color:#ffffff;font-size:13pt;font-weight:bold;letter-spacing:0.3px;line-height:1.3;">
+        CERS Capbreton &nbsp;&#8212;&nbsp; Bilan Complet Patient
+      </div>
+      <div style="color:#a8c4e0;font-size:8pt;margin-top:2px;">
+        {{ patient.nom }} &nbsp;&#183;&nbsp;
+        Entr&#233;e {{ entree.date_test }} &nbsp;&#183;&nbsp;
+        Sortie {{ sortie.date_test }}
+      </div>
     </div>
-    <div style="display:table-cell;width:20%;vertical-align:middle;text-align:right;">
+    <div style="display:table-cell;width:22%;vertical-align:middle;text-align:right;padding:8px 10px;">
       {% if logo_club_b64 %}
-      <img src="{{ logo_club_b64 }}" style="height:45px;" alt="{{ nom_club }}">
+      <img src="{{ logo_club_b64 }}" style="height:38px;display:inline-block;vertical-align:middle;" alt="{{ nom_club }}">
       {% endif %}
-      <div style="font-size:9pt;font-weight:bold;color:#1c3f6e;">{{ nom_club }}</div>
+      <div style="color:#ffffff;font-size:9pt;font-weight:bold;margin-top:2px;line-height:1.2;">{{ nom_club }}</div>
     </div>
   </div>
+  <div style="height:3px;background:#2176c7;margin-bottom:8px;flex-shrink:0;"></div>
 
   <div class="page-content">
 
@@ -697,7 +712,7 @@ body {
 
     <!-- TEST EXCENTRIQUE (optionnel) -->
     {% if excentrique and excentrique.ext_lese %}
-    <div style="background:#5a6472;color:white;font-size:7px;font-weight:700;padding:2px 8px;text-align:center;margin:3px 0 2px 0;border-radius:2px;flex-shrink:0;">
+    <div style="background:#1c3f6e;color:#ffffff;font-size:7px;font-weight:700;padding:2px 8px;text-align:center;margin:3px 0 2px 0;border-radius:2px;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       TEST EXCENTRIQUE 30&#176;/s &#8212; EXC/EXC
     </div>
     <table class="mt" style="margin-bottom:3px;">
@@ -843,32 +858,38 @@ body {
      ══════════════════════════════════════════════════ -->
 <div class="page">
 
-  <!-- EN-TETE — B1 -->
-  <div style="display:table;width:100%;margin-bottom:4px;border-bottom:3px solid #1c3f6e;padding-bottom:6px;flex-shrink:0;">
-    <div style="display:table-cell;width:20%;vertical-align:middle;">
+  <!-- EN-TETE — 3A -->
+  <div style="display:table;width:100%;margin-bottom:0;background:#1c3f6e;border-radius:0;page-break-inside:avoid;flex-shrink:0;">
+    <div style="display:table-cell;width:22%;vertical-align:middle;padding:8px 10px;">
       {% if logo_cers_b64 %}
-      <img src="{{ logo_cers_b64 }}" style="height:45px;" alt="CERS Capbreton">
+      <img src="{{ logo_cers_b64 }}" style="height:42px;display:block;" alt="CERS Capbreton">
       {% else %}
-      <div style="font-size:11pt;font-weight:bold;color:#1c3f6e;">CERS<br>Capbreton</div>
+      <div style="color:#ffffff;font-size:12pt;font-weight:bold;line-height:1.2;">CERS<br>Capbreton</div>
       {% endif %}
     </div>
-    <div style="display:table-cell;width:60%;vertical-align:middle;text-align:center;">
-      <div style="font-size:16pt;font-weight:bold;color:#1c3f6e;letter-spacing:0.5px;">CERS Capbreton</div>
-      <div style="font-size:10pt;color:#555;margin-top:1px;">Bilan complet du patient &#8212; G&#233;n&#233;ration automatique &#183; Suivi de progression</div>
-      <div style="font-size:8pt;color:#888;margin-top:1px;">Isocin&#233;tique Biodex &nbsp;&#183;&nbsp; Sauts VALD ForceDecks &nbsp;&#183;&nbsp; GPS Catapult</div>
+    <div style="display:table-cell;width:56%;vertical-align:middle;text-align:center;padding:8px 10px;">
+      <div style="color:#ffffff;font-size:13pt;font-weight:bold;letter-spacing:0.3px;line-height:1.3;">
+        CERS Capbreton &nbsp;&#8212;&nbsp; Bilan Complet Patient
+      </div>
+      <div style="color:#a8c4e0;font-size:8pt;margin-top:2px;">
+        {{ patient.nom }} &nbsp;&#183;&nbsp;
+        Entr&#233;e {{ entree.date_test }} &nbsp;&#183;&nbsp;
+        Sortie {{ sortie.date_test }}
+      </div>
     </div>
-    <div style="display:table-cell;width:20%;vertical-align:middle;text-align:right;">
+    <div style="display:table-cell;width:22%;vertical-align:middle;text-align:right;padding:8px 10px;">
       {% if logo_club_b64 %}
-      <img src="{{ logo_club_b64 }}" style="height:45px;" alt="{{ nom_club }}">
+      <img src="{{ logo_club_b64 }}" style="height:38px;display:inline-block;vertical-align:middle;" alt="{{ nom_club }}">
       {% endif %}
-      <div style="font-size:9pt;font-weight:bold;color:#1c3f6e;">{{ nom_club }}</div>
+      <div style="color:#ffffff;font-size:9pt;font-weight:bold;margin-top:2px;line-height:1.2;">{{ nom_club }}</div>
     </div>
   </div>
+  <div style="height:3px;background:#2176c7;margin-bottom:8px;flex-shrink:0;"></div>
 
   <div class="page-content">
 
     <!-- SECTION A : Courbes 60 deg/s -->
-    <div style="background:#5a6472; color:white; font-size:7px; font-weight:700; padding:2px 10px; border-radius:3px; margin:3px 0 2px 0; text-align:center; flex-shrink:0;">
+    <div style="background:#1c3f6e; color:#ffffff; font-size:7px; font-weight:700; padding:2px 10px; border-radius:3px; margin:3px 0 2px 0; text-align:center; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
       COURBES ISOCINETIQUES 60 deg/s — Sain D (plein) vs Lese G (pointille)
     </div>
     <div style="display:table; width:100%; border-collapse:collapse; margin-bottom:3px; flex-shrink:0;">
@@ -891,7 +912,7 @@ body {
     </div>
 
     <!-- SECTION B : Courbes 240 deg/s -->
-    <div style="background:#5a6472; color:white; font-size:7px; font-weight:700; padding:2px 10px; border-radius:3px; margin:3px 0 2px 0; text-align:center; flex-shrink:0;">
+    <div style="background:#1c3f6e; color:#ffffff; font-size:7px; font-weight:700; padding:2px 10px; border-radius:3px; margin:3px 0 2px 0; text-align:center; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
       COURBES ISOCINETIQUES 240 deg/s — Sain D (plein) vs Lese G (pointille)
     </div>
     <div style="display:table; width:100%; border-collapse:collapse; margin-bottom:3px; flex-shrink:0;">
@@ -932,32 +953,38 @@ body {
      ══════════════════════════════════════════════════ -->
 <div class="page">
 
-  <!-- EN-TETE — B1 -->
-  <div style="display:table;width:100%;margin-bottom:4px;border-bottom:3px solid #1c3f6e;padding-bottom:6px;flex-shrink:0;">
-    <div style="display:table-cell;width:20%;vertical-align:middle;">
+  <!-- EN-TETE — 3A -->
+  <div style="display:table;width:100%;margin-bottom:0;background:#1c3f6e;border-radius:0;page-break-inside:avoid;flex-shrink:0;">
+    <div style="display:table-cell;width:22%;vertical-align:middle;padding:8px 10px;">
       {% if logo_cers_b64 %}
-      <img src="{{ logo_cers_b64 }}" style="height:45px;" alt="CERS Capbreton">
+      <img src="{{ logo_cers_b64 }}" style="height:42px;display:block;" alt="CERS Capbreton">
       {% else %}
-      <div style="font-size:11pt;font-weight:bold;color:#1c3f6e;">CERS<br>Capbreton</div>
+      <div style="color:#ffffff;font-size:12pt;font-weight:bold;line-height:1.2;">CERS<br>Capbreton</div>
       {% endif %}
     </div>
-    <div style="display:table-cell;width:60%;vertical-align:middle;text-align:center;">
-      <div style="font-size:16pt;font-weight:bold;color:#1c3f6e;letter-spacing:0.5px;">CERS Capbreton</div>
-      <div style="font-size:10pt;color:#555;margin-top:1px;">Bilan complet du patient &#8212; G&#233;n&#233;ration automatique &#183; Suivi de progression</div>
-      <div style="font-size:8pt;color:#888;margin-top:1px;">Isocin&#233;tique Biodex &nbsp;&#183;&nbsp; Sauts VALD ForceDecks &nbsp;&#183;&nbsp; GPS Catapult</div>
+    <div style="display:table-cell;width:56%;vertical-align:middle;text-align:center;padding:8px 10px;">
+      <div style="color:#ffffff;font-size:13pt;font-weight:bold;letter-spacing:0.3px;line-height:1.3;">
+        CERS Capbreton &nbsp;&#8212;&nbsp; Bilan Complet Patient
+      </div>
+      <div style="color:#a8c4e0;font-size:8pt;margin-top:2px;">
+        {{ patient.nom }} &nbsp;&#183;&nbsp;
+        Entr&#233;e {{ entree.date_test }} &nbsp;&#183;&nbsp;
+        Sortie {{ sortie.date_test }}
+      </div>
     </div>
-    <div style="display:table-cell;width:20%;vertical-align:middle;text-align:right;">
+    <div style="display:table-cell;width:22%;vertical-align:middle;text-align:right;padding:8px 10px;">
       {% if logo_club_b64 %}
-      <img src="{{ logo_club_b64 }}" style="height:45px;" alt="{{ nom_club }}">
+      <img src="{{ logo_club_b64 }}" style="height:38px;display:inline-block;vertical-align:middle;" alt="{{ nom_club }}">
       {% endif %}
-      <div style="font-size:9pt;font-weight:bold;color:#1c3f6e;">{{ nom_club }}</div>
+      <div style="color:#ffffff;font-size:9pt;font-weight:bold;margin-top:2px;line-height:1.2;">{{ nom_club }}</div>
     </div>
   </div>
+  <div style="height:3px;background:#2176c7;margin-bottom:8px;flex-shrink:0;"></div>
 
   <div class="page-content">
 
     <!-- SECTION 60deg/s -->
-    <div style="background:#5a6472; color:white; font-size:7px; font-weight:700; padding:2px 8px; text-align:center; margin-bottom:2px; border-radius:2px; flex-shrink:0;">
+    <div style="background:#1c3f6e; color:#ffffff; font-size:7px; font-weight:700; padding:2px 8px; text-align:center; margin-bottom:2px; border-radius:2px; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
       PROGRESSION 60&#176;/s &#8212; Entr&#233;e &#8594; Sortie
     </div>
     <div style="display:table; width:100%; table-layout:fixed; margin-bottom:4px; flex-shrink:0;">
@@ -972,7 +999,7 @@ body {
     </div>
 
     <!-- SECTION 240deg/s -->
-    <div style="background:#5a6472; color:white; font-size:7px; font-weight:700; padding:2px 8px; text-align:center; margin-bottom:2px; border-radius:2px; flex-shrink:0;">
+    <div style="background:#1c3f6e; color:#ffffff; font-size:7px; font-weight:700; padding:2px 8px; text-align:center; margin-bottom:2px; border-radius:2px; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
       PROGRESSION 240&#176;/s &#8212; Entr&#233;e &#8594; Sortie
     </div>
     <div style="display:table; width:100%; table-layout:fixed; margin-bottom:6px; flex-shrink:0;">
@@ -988,7 +1015,7 @@ body {
 
     <!-- COURBES EXCENTRIQUES (optionnel) -->
     {% if graphiques.exc_ext %}
-    <div style="background:#5a6472;color:white;font-size:7px;font-weight:700;padding:2px 8px;text-align:center;margin:4px 0 2px 0;border-radius:2px;flex-shrink:0;">
+    <div style="background:#1c3f6e;color:#ffffff;font-size:7px;font-weight:700;padding:2px 8px;text-align:center;margin:4px 0 2px 0;border-radius:2px;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       COURBES EXCENTRIQUES 30&#176;/s &#8212; L&#233;s&#233; (pointill&#233;) vs Sain (plein)
     </div>
     <div style="display:table;width:100%;table-layout:fixed;margin-bottom:4px;flex-shrink:0;">
@@ -1035,32 +1062,38 @@ body {
      ══════════════════════════════════════════════════ -->
 <div class="page">
 
-  <!-- EN-TETE — B1 -->
-  <div style="display:table;width:100%;margin-bottom:4px;border-bottom:3px solid #1c3f6e;padding-bottom:6px;flex-shrink:0;">
-    <div style="display:table-cell;width:20%;vertical-align:middle;">
+  <!-- EN-TETE — 3A -->
+  <div style="display:table;width:100%;margin-bottom:0;background:#1c3f6e;border-radius:0;page-break-inside:avoid;flex-shrink:0;">
+    <div style="display:table-cell;width:22%;vertical-align:middle;padding:8px 10px;">
       {% if logo_cers_b64 %}
-      <img src="{{ logo_cers_b64 }}" style="height:45px;" alt="CERS Capbreton">
+      <img src="{{ logo_cers_b64 }}" style="height:42px;display:block;" alt="CERS Capbreton">
       {% else %}
-      <div style="font-size:11pt;font-weight:bold;color:#1c3f6e;">CERS<br>Capbreton</div>
+      <div style="color:#ffffff;font-size:12pt;font-weight:bold;line-height:1.2;">CERS<br>Capbreton</div>
       {% endif %}
     </div>
-    <div style="display:table-cell;width:60%;vertical-align:middle;text-align:center;">
-      <div style="font-size:16pt;font-weight:bold;color:#1c3f6e;letter-spacing:0.5px;">CERS Capbreton</div>
-      <div style="font-size:10pt;color:#555;margin-top:1px;">Bilan complet du patient &#8212; G&#233;n&#233;ration automatique &#183; Suivi de progression</div>
-      <div style="font-size:8pt;color:#888;margin-top:1px;">Isocin&#233;tique Biodex &nbsp;&#183;&nbsp; Sauts VALD ForceDecks &nbsp;&#183;&nbsp; GPS Catapult</div>
+    <div style="display:table-cell;width:56%;vertical-align:middle;text-align:center;padding:8px 10px;">
+      <div style="color:#ffffff;font-size:13pt;font-weight:bold;letter-spacing:0.3px;line-height:1.3;">
+        CERS Capbreton &nbsp;&#8212;&nbsp; Bilan Complet Patient
+      </div>
+      <div style="color:#a8c4e0;font-size:8pt;margin-top:2px;">
+        {{ patient.nom }} &nbsp;&#183;&nbsp;
+        Entr&#233;e {{ entree.date_test }} &nbsp;&#183;&nbsp;
+        Sortie {{ sortie.date_test }}
+      </div>
     </div>
-    <div style="display:table-cell;width:20%;vertical-align:middle;text-align:right;">
+    <div style="display:table-cell;width:22%;vertical-align:middle;text-align:right;padding:8px 10px;">
       {% if logo_club_b64 %}
-      <img src="{{ logo_club_b64 }}" style="height:45px;" alt="{{ nom_club }}">
+      <img src="{{ logo_club_b64 }}" style="height:38px;display:inline-block;vertical-align:middle;" alt="{{ nom_club }}">
       {% endif %}
-      <div style="font-size:9pt;font-weight:bold;color:#1c3f6e;">{{ nom_club }}</div>
+      <div style="color:#ffffff;font-size:9pt;font-weight:bold;margin-top:2px;line-height:1.2;">{{ nom_club }}</div>
     </div>
   </div>
+  <div style="height:3px;background:#2176c7;margin-bottom:8px;flex-shrink:0;"></div>
 
   <div class="page-content">
 
     <!-- TITRE SECTION -->
-    <div style="background:#0f6e56;color:#ffffff;font-size:10pt;font-weight:bold;padding:5px 10px;margin:8px 0 6px 0;border-radius:4px 4px 0 0;flex-shrink:0;">
+    <div style="background:#1c3f6e;color:#ffffff;font-size:10pt;font-weight:bold;padding:5px 10px;margin:8px 0 6px 0;border-radius:4px 4px 0 0;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       Section 2 &#8212; Bilan Sauts VALD ForceDecks
     </div>
 
@@ -1077,7 +1110,7 @@ body {
       &#187; Single Leg Jump &#8212; Hauteur de saut (Imp-Mom) [cm]
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:10px;flex-shrink:0;">
-      <tr style="background:#dde3ea;font-weight:bold;text-align:center;">
+      <tr style="background:#1c3f6e;color:#ffffff;font-weight:bold;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
         <td style="border:1px solid #999;padding:4px 6px;width:15%;text-align:left;">M&#201;TRIQUE</td>
         <td style="border:1px solid #999;padding:4px 6px;">ENT.D</td>
         <td style="border:1px solid #999;padding:4px 6px;">ENT.G</td>
@@ -1116,7 +1149,7 @@ body {
       &#187; Single Leg Jump &#8212; R&#233;activit&#233; (RSI-modified Imp-Mom) [m/s]
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:10px;flex-shrink:0;">
-      <tr style="background:#dde3ea;font-weight:bold;text-align:center;">
+      <tr style="background:#1c3f6e;color:#ffffff;font-weight:bold;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
         <td style="border:1px solid #999;padding:4px 6px;width:15%;text-align:left;">M&#201;TRIQUE</td>
         <td style="border:1px solid #999;padding:4px 6px;">ENT.D</td>
         <td style="border:1px solid #999;padding:4px 6px;">ENT.G</td>
@@ -1155,7 +1188,7 @@ body {
       &#187; Counter Movement Jump &#8212; Performance bilat&#233;rale (2 jambes)
     </div>
     <table style="width:55%;border-collapse:collapse;font-size:8.5pt;margin-bottom:10px;flex-shrink:0;">
-      <tr style="background:#dde3ea;font-weight:bold;text-align:center;">
+      <tr style="background:#1c3f6e;color:#ffffff;font-weight:bold;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
         <td style="border:1px solid #999;padding:4px 6px;width:30%;text-align:left;">M&#201;TRIQUE</td>
         <td style="border:1px solid #999;padding:4px 6px;">ENTR&#201;E</td>
         <td style="border:1px solid #999;padding:4px 6px;">SORTIE</td>
@@ -1208,31 +1241,37 @@ body {
      ══════════════════════════════════════════════════ -->
 <div class="page">
 
-  <!-- EN-TETE — B1 -->
-  <div style="display:table;width:100%;margin-bottom:4px;border-bottom:3px solid #1c3f6e;padding-bottom:6px;flex-shrink:0;">
-    <div style="display:table-cell;width:20%;vertical-align:middle;">
+  <!-- EN-TETE — 3A -->
+  <div style="display:table;width:100%;margin-bottom:0;background:#1c3f6e;border-radius:0;page-break-inside:avoid;flex-shrink:0;">
+    <div style="display:table-cell;width:22%;vertical-align:middle;padding:8px 10px;">
       {% if logo_cers_b64 %}
-      <img src="{{ logo_cers_b64 }}" style="height:45px;" alt="CERS Capbreton">
+      <img src="{{ logo_cers_b64 }}" style="height:42px;display:block;" alt="CERS Capbreton">
       {% else %}
-      <div style="font-size:11pt;font-weight:bold;color:#1c3f6e;">CERS<br>Capbreton</div>
+      <div style="color:#ffffff;font-size:12pt;font-weight:bold;line-height:1.2;">CERS<br>Capbreton</div>
       {% endif %}
     </div>
-    <div style="display:table-cell;width:60%;vertical-align:middle;text-align:center;">
-      <div style="font-size:16pt;font-weight:bold;color:#1c3f6e;letter-spacing:0.5px;">CERS Capbreton</div>
-      <div style="font-size:10pt;color:#555;margin-top:1px;">Bilan complet du patient &#8212; G&#233;n&#233;ration automatique &#183; Suivi de progression</div>
-      <div style="font-size:8pt;color:#888;margin-top:1px;">Isocin&#233;tique Biodex &nbsp;&#183;&nbsp; Sauts VALD ForceDecks &nbsp;&#183;&nbsp; GPS Catapult</div>
+    <div style="display:table-cell;width:56%;vertical-align:middle;text-align:center;padding:8px 10px;">
+      <div style="color:#ffffff;font-size:13pt;font-weight:bold;letter-spacing:0.3px;line-height:1.3;">
+        CERS Capbreton &nbsp;&#8212;&nbsp; Bilan Complet Patient
+      </div>
+      <div style="color:#a8c4e0;font-size:8pt;margin-top:2px;">
+        {{ patient.nom }} &nbsp;&#183;&nbsp;
+        Entr&#233;e {{ entree.date_test }} &nbsp;&#183;&nbsp;
+        Sortie {{ sortie.date_test }}
+      </div>
     </div>
-    <div style="display:table-cell;width:20%;vertical-align:middle;text-align:right;">
+    <div style="display:table-cell;width:22%;vertical-align:middle;text-align:right;padding:8px 10px;">
       {% if logo_club_b64 %}
-      <img src="{{ logo_club_b64 }}" style="height:45px;" alt="{{ nom_club }}">
+      <img src="{{ logo_club_b64 }}" style="height:38px;display:inline-block;vertical-align:middle;" alt="{{ nom_club }}">
       {% endif %}
-      <div style="font-size:9pt;font-weight:bold;color:#1c3f6e;">{{ nom_club }}</div>
+      <div style="color:#ffffff;font-size:9pt;font-weight:bold;margin-top:2px;line-height:1.2;">{{ nom_club }}</div>
     </div>
   </div>
+  <div style="height:3px;background:#2176c7;margin-bottom:8px;flex-shrink:0;"></div>
 
   <div class="page-content">
 
-    <div style="background:#534AB7;color:#ffffff;font-size:10pt;font-weight:bold;padding:5px 10px;margin:8px 0 6px 0;border-radius:4px 4px 0 0;flex-shrink:0;">
+    <div style="background:#1c3f6e;color:#ffffff;font-size:10pt;font-weight:bold;padding:5px 10px;margin:8px 0 6px 0;border-radius:4px 4px 0 0;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       Section 3 &#8212; Donn&#233;es GPS Catapult
     </div>
 

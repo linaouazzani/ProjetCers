@@ -14,7 +14,45 @@ import json
 from clubs_database import search_clubs
 
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
-CLUBS_DB_PATH = os.path.join(_APP_DIR, "clubs_db.json")
+CLUBS_DB_PATH    = os.path.join(_APP_DIR, "clubs_db.json")
+BLESSURES_DB_PATH = os.path.join(_APP_DIR, "blessures_db.json")
+
+BLESSURES_DEFAULT = [
+    "Rupture LCA", "Rupture LCP", "Rupture LLE", "Rupture LLI",
+    "Lésion ménisque interne", "Lésion ménisque externe",
+    "Entorse cheville grade I", "Entorse cheville grade II", "Entorse cheville grade III",
+    "Rupture tendon d'Achille",
+    "Tendinopathie rotulienne", "Tendinopathie achilléenne",
+    "Fracture tibia", "Fracture péroné", "Fracture métatarses",
+    "Pubalgie",
+    "Lésion musculaire ischio-jambiers grade I",
+    "Lésion musculaire ischio-jambiers grade II",
+    "Lésion musculaire ischio-jambiers grade III",
+    "Lésion musculaire quadriceps grade I",
+    "Lésion musculaire quadriceps grade II",
+    "Lésion musculaire quadriceps grade III",
+    "Lésion musculaire adducteurs",
+    "Luxation épaule", "Rupture coiffe des rotateurs", "Fracture clavicule",
+    "Contusion", "Autre",
+]
+
+def charger_blessures():
+    if os.path.exists(BLESSURES_DB_PATH):
+        with open(BLESSURES_DB_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            tous = list(dict.fromkeys(BLESSURES_DEFAULT + data.get("custom", [])))
+            return tous, data.get("custom", [])
+    return list(BLESSURES_DEFAULT), []
+
+def sauvegarder_blessure_custom(nouvelle_blessure: str):
+    custom = []
+    if os.path.exists(BLESSURES_DB_PATH):
+        with open(BLESSURES_DB_PATH, "r", encoding="utf-8") as f:
+            custom = json.load(f).get("custom", [])
+    if nouvelle_blessure not in custom:
+        custom.append(nouvelle_blessure)
+    with open(BLESSURES_DB_PATH, "w", encoding="utf-8") as f:
+        json.dump({"custom": custom}, f, ensure_ascii=False, indent=2)
 
 st.set_page_config(
     page_title="CERS Capbreton — Bilan Isocinétique",
@@ -114,10 +152,10 @@ if "rapport_ext" not in st.session_state:
 st.markdown("""
 <div class="hero">
   <div>
-    <h1>🏥 CERS Capbreton — Bilan Isocinétique</h1>
-    <p>Génération automatique du rapport Biodex • Groupe Ramsay Santé • 4 sports • 112 clubs</p>
+    <h1>CERS Capbreton — Bilan Complet Patient</h1>
+    <p>Rapport automatique de suivi · Isocinétique Biodex · Sauts VALD · GPS Catapult</p>
   </div>
-  <div class="hero-badge">Biodex v6 • PDF direct</div>
+  <div class="hero-badge">Rapport PDF · Impression A4</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -262,11 +300,25 @@ with col_left:
                 key="date_op"
             )
         with c3:
-            type_blessure = st.text_input(
+            blessures_liste, _ = charger_blessures()
+            type_blessure = st.selectbox(
                 "Type de blessure (optionnel)",
-                placeholder="Ex: Rupture LCA...",
-                key="blessure"
+                options=["— Sélectionner —"] + blessures_liste,
+                key="blessure_select"
             )
+            if type_blessure == "— Sélectionner —":
+                type_blessure = ""
+            with st.expander("➕ Blessure absente de la liste ?"):
+                nouvelle_blessure = st.text_input(
+                    "Nom de la blessure",
+                    placeholder="Ex: Ostéite pubienne...",
+                    key="nouvelle_blessure"
+                )
+                if st.button("Ajouter à la liste", key="btn_add_blessure"):
+                    if nouvelle_blessure and nouvelle_blessure != "— Sélectionner —":
+                        sauvegarder_blessure_custom(nouvelle_blessure)
+                        st.success(f"'{nouvelle_blessure}' ajoutée !")
+                        st.rerun()
 
         c4, c5, c6 = st.columns(3)
         with c4:

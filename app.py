@@ -116,138 +116,158 @@ col_left, col_right = st.columns([1, 1.1], gap="large")
 # ╚══════════════════════════════════════╝
 with col_left:
 
-    # 1. PDFs Biodex
-    st.markdown('<div class="card"><div class="card-title">📄 Fichiers Biodex</div>', unsafe_allow_html=True)
-    pdf_entree    = st.file_uploader("Test d'ENTRÉE (début de séjour)",      type=["pdf"], key="up_entree")
-    pdf_sortie    = st.file_uploader("Test de SORTIE (fin de séjour)",       type=["pdf"], key="up_sortie")
-    pdf_comp      = st.file_uploader("Comparatif Lésé (optionnel)",          type=["pdf"], key="up_comp")
-    pdf_comp_sain = st.file_uploader("Comparatif Sain (optionnel)",          type=["pdf"], key="up_comp_sain")
-    pdf_exc       = st.file_uploader("Test Excentrique 30°/s (optionnel)",   type=["pdf"], key="up_exc")
+    # 1. PDFs Biodex — MODIFICATION 4
+    st.markdown('<div class="card"><div class="card-title">📄 Fichiers Biodex</div>',
+                unsafe_allow_html=True)
 
-    c1, c2, c3, c4, c5 = st.columns(5)
-    with c1: st.markdown(f'<span class="badge {"badge-ok" if pdf_entree else "badge-wait"}">{"✅ Entrée" if pdf_entree else "⏳ Entrée"}</span>', unsafe_allow_html=True)
-    with c2: st.markdown(f'<span class="badge {"badge-ok" if pdf_sortie else "badge-wait"}">{"✅ Sortie" if pdf_sortie else "⏳ Sortie"}</span>', unsafe_allow_html=True)
-    with c3: st.markdown(f'<span class="badge {"badge-ok" if pdf_comp else "badge-opt"}">{"✅ Comp. Lésé" if pdf_comp else "Comp. Lésé"}</span>', unsafe_allow_html=True)
-    with c4: st.markdown(f'<span class="badge {"badge-ok" if pdf_comp_sain else "badge-opt"}">{"✅ Comp. Sain" if pdf_comp_sain else "Comp. Sain"}</span>', unsafe_allow_html=True)
-    with c5: st.markdown(f'<span class="badge {"badge-ok" if pdf_exc else "badge-opt"}">{"✅ Excentrique" if pdf_exc else "Excentrique"}</span>', unsafe_allow_html=True)
+    col_e, col_s = st.columns(2)
+    with col_e:
+        pdf_entree = st.file_uploader(
+            "📥 Test d'ENTRÉE (obligatoire)", type=["pdf"], key="up_entree"
+        )
+    with col_s:
+        pdf_sortie = st.file_uploader(
+            "📤 Test de SORTIE (obligatoire)", type=["pdf"], key="up_sortie"
+        )
+
+    with st.expander("📎 PDFs optionnels"):
+        co1, co2, co3 = st.columns(3)
+        with co1:
+            pdf_comp = st.file_uploader(
+                "Comparatif Lésé", type=["pdf"], key="up_comp"
+            )
+        with co2:
+            pdf_comp_sain = st.file_uploader(
+                "Comparatif Sain", type=["pdf"], key="up_comp_sain"
+            )
+        with co3:
+            pdf_exc = st.file_uploader(
+                "Excentrique 30°/s", type=["pdf"], key="up_exc"
+            )
+
+    cols_b = st.columns(5)
+    statuts = [
+        (pdf_entree,    "Entrée",      True),
+        (pdf_sortie,    "Sortie",      True),
+        (pdf_comp,      "Comp.Lésé",   False),
+        (pdf_comp_sain, "Comp.Sain",   False),
+        (pdf_exc,       "Excentrique", False),
+    ]
+    for col, (pdf, label, obligatoire) in zip(cols_b, statuts):
+        with col:
+            if pdf:
+                cls, ico = "badge-ok", "✅"
+            elif obligatoire:
+                cls, ico = "badge-wait", "⏳"
+            else:
+                cls, ico = "badge-opt", "○"
+            st.markdown(
+                f'<span class="badge {cls}">{ico} {label}</span>',
+                unsafe_allow_html=True
+            )
+
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 1b. VALD ForceDecks (optionnel)
+    # 1b. VALD ForceDecks — MODIFICATION 5
     import io
     from vald_parser import parse_vald_slj, parse_vald_cmj
 
-    st.markdown("---")
-    st.markdown("**📊 VALD ForceDecks — Sauts (optionnel)**")
-    st.caption("PDFs exportés depuis VALD Hub → Firefox → Imprimer → Enregistrer en PDF")
-
-    col_v1, col_v2, col_v3, col_v4 = st.columns(4)
-    with col_v1:
-        pdf_slj_e_up = st.file_uploader("SLJ Entrée", type="pdf", key="vald_slj_e",
-                                         help="PDF Single Leg Jump séance d'entrée")
-    with col_v2:
-        pdf_slj_s_up = st.file_uploader("SLJ Sortie", type="pdf", key="vald_slj_s",
-                                         help="PDF Single Leg Jump séance de sortie")
-    with col_v3:
-        pdf_cmj_e_up = st.file_uploader("CMJ Entrée", type="pdf", key="vald_cmj_e",
-                                         help="PDF CMJ entrée (avec RSI-modified visible)")
-    with col_v4:
-        pdf_cmj_s_up = st.file_uploader("CMJ Sortie", type="pdf", key="vald_cmj_s",
-                                         help="PDF CMJ sortie (avec RSI-modified visible)")
-
     vald_slj_e, vald_slj_s, vald_cmj_e, vald_cmj_s = None, None, None, None
 
-    if pdf_slj_e_up:
-        try:
-            vald_slj_e = parse_vald_slj(io.BytesIO(pdf_slj_e_up.getvalue()))
-            st.success(f"SLJ Entrée : G={vald_slj_e['slj_hauteur_g']} cm / D={vald_slj_e['slj_hauteur_d']} cm")
-        except Exception as _e:
-            st.error(f"Erreur SLJ Entrée : {_e}")
+    with st.expander("📊 VALD ForceDecks — Sauts (optionnel)"):
+        st.caption("PDFs exportés depuis VALD Hub · Firefox → Imprimer → Enregistrer en PDF")
 
-    if pdf_slj_s_up:
-        try:
-            vald_slj_s = parse_vald_slj(io.BytesIO(pdf_slj_s_up.getvalue()))
-            st.success(f"SLJ Sortie : G={vald_slj_s['slj_hauteur_g']} cm / D={vald_slj_s['slj_hauteur_d']} cm")
-        except Exception as _e:
-            st.error(f"Erreur SLJ Sortie : {_e}")
+        col_v1, col_v2, col_v3, col_v4 = st.columns(4)
+        with col_v1:
+            pdf_slj_e_up = st.file_uploader("SLJ Entrée", type="pdf", key="vald_slj_e",
+                                             help="PDF Single Leg Jump séance d'entrée")
+        with col_v2:
+            pdf_slj_s_up = st.file_uploader("SLJ Sortie", type="pdf", key="vald_slj_s",
+                                             help="PDF Single Leg Jump séance de sortie")
+        with col_v3:
+            pdf_cmj_e_up = st.file_uploader("CMJ Entrée", type="pdf", key="vald_cmj_e",
+                                             help="PDF CMJ entrée (avec RSI-modified visible)")
+        with col_v4:
+            pdf_cmj_s_up = st.file_uploader("CMJ Sortie", type="pdf", key="vald_cmj_s",
+                                             help="PDF CMJ sortie (avec RSI-modified visible)")
 
-    if pdf_cmj_e_up:
-        try:
-            vald_cmj_e = parse_vald_cmj(io.BytesIO(pdf_cmj_e_up.getvalue()))
-            rsi_txt = f"RSI={vald_cmj_e['cmj_rsi']} m/s" if vald_cmj_e['cmj_rsi'] else "RSI absent du PDF"
-            st.success(f"CMJ Entrée : H={vald_cmj_e['cmj_hauteur']} cm · {rsi_txt}")
-        except Exception as _e:
-            st.error(f"Erreur CMJ Entrée : {_e}")
+        if pdf_slj_e_up:
+            try:
+                vald_slj_e = parse_vald_slj(io.BytesIO(pdf_slj_e_up.getvalue()))
+                st.success(f"SLJ Entrée : G={vald_slj_e['slj_hauteur_g']} cm / D={vald_slj_e['slj_hauteur_d']} cm")
+            except Exception as _e:
+                st.error(f"Erreur SLJ Entrée : {_e}")
 
-    if pdf_cmj_s_up:
-        try:
-            vald_cmj_s = parse_vald_cmj(io.BytesIO(pdf_cmj_s_up.getvalue()))
-            rsi_txt = f"RSI={vald_cmj_s['cmj_rsi']} m/s" if vald_cmj_s['cmj_rsi'] else "RSI absent du PDF"
-            st.success(f"CMJ Sortie : H={vald_cmj_s['cmj_hauteur']} cm · {rsi_txt}")
-        except Exception as _e:
-            st.error(f"Erreur CMJ Sortie : {_e}")
+        if pdf_slj_s_up:
+            try:
+                vald_slj_s = parse_vald_slj(io.BytesIO(pdf_slj_s_up.getvalue()))
+                st.success(f"SLJ Sortie : G={vald_slj_s['slj_hauteur_g']} cm / D={vald_slj_s['slj_hauteur_d']} cm")
+            except Exception as _e:
+                st.error(f"Erreur SLJ Sortie : {_e}")
 
-    # 2. Informations patient
-    st.markdown('<div class="card"><div class="card-title">👤 Informations Patient</div>', unsafe_allow_html=True)
+        if pdf_cmj_e_up:
+            try:
+                vald_cmj_e = parse_vald_cmj(io.BytesIO(pdf_cmj_e_up.getvalue()))
+                rsi_txt = f"RSI={vald_cmj_e['cmj_rsi']} m/s" if vald_cmj_e['cmj_rsi'] else "RSI absent du PDF"
+                st.success(f"CMJ Entrée : H={vald_cmj_e['cmj_hauteur']} cm · {rsi_txt}")
+            except Exception as _e:
+                st.error(f"Erreur CMJ Entrée : {_e}")
 
-    date_naissance = st.date_input(
-        "Date de naissance (optionnel)",
-        value=None,
-        min_value=datetime.date(1950, 1, 1),
-        max_value=datetime.date.today(),
-        key="date_naissance"
-    )
+        if pdf_cmj_s_up:
+            try:
+                vald_cmj_s = parse_vald_cmj(io.BytesIO(pdf_cmj_s_up.getvalue()))
+                rsi_txt = f"RSI={vald_cmj_s['cmj_rsi']} m/s" if vald_cmj_s['cmj_rsi'] else "RSI absent du PDF"
+                st.success(f"CMJ Sortie : H={vald_cmj_s['cmj_hauteur']} cm · {rsi_txt}")
+            except Exception as _e:
+                st.error(f"Erreur CMJ Sortie : {_e}")
 
-    sport = st.selectbox("Sport", [
-        "— Sélectionner —", "Rugby", "Football", "Basketball",
-        "Handball", "Tennis", "Natation", "Athlétisme", "Autre"
-    ])
+    # 2. Informations complémentaires patient — MODIFICATION 1
+    with st.expander("⚙️ Informations complémentaires patient", expanded=False):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            sport = st.selectbox("Sport", [
+                "— Sélectionner —", "Rugby", "Football", "Basketball",
+                "Handball", "Tennis", "Natation", "Athlétisme", "Autre"
+            ], key="sport_sel")
+        with c2:
+            date_operation = st.date_input(
+                "Date d'opération (optionnel)",
+                value=None,
+                format="DD/MM/YYYY",
+                key="date_op"
+            )
+        with c3:
+            type_blessure = st.text_input(
+                "Type de blessure (optionnel)",
+                placeholder="Ex: Rupture LCA...",
+                key="blessure"
+            )
 
-    date_operation = st.date_input(
-        "Date d'opération (optionnel)", value=None
-    )
+        c4, c5, c6 = st.columns(3)
+        with c4:
+            acl_rsi_score = st.number_input(
+                "Score ACL-RSI % (optionnel)",
+                min_value=0, max_value=100, value=0, step=1, key="acl"
+            )
+        with c5:
+            photo = st.file_uploader(
+                "📸 Photo joueur (optionnel)",
+                type=["png", "jpg", "jpeg"], key="up_photo"
+            )
+        with c6:
+            pass  # colonne vide pour équilibre visuel
 
-    type_blessure = st.text_input(
-        "Type de blessure (optionnel)",
-        placeholder="Ex: Rupture LCA, Ménisque..."
-    )
+        remarques_medecin = st.text_area(
+            "Remarques médicales (optionnel)",
+            placeholder="Zone libre pour le médecin...",
+            height=70, key="remarques"
+        )
 
-    cote_opere = st.selectbox(
-        "Côté opéré (optionnel)",
-        ["— Sélectionner —", "Gauche", "Droit", "Bilatéral"]
-    )
+    # Variables avec valeurs par défaut si non renseignées
+    date_naissance = None
+    cote_opere = ""
 
-    acl_rsi_score = st.number_input(
-        "Score ACL-RSI % (optionnel)",
-        min_value=0, max_value=100, value=0, step=1
-    )
-
-    remarques_medecin = st.text_area(
-        "Remarques médicales finales (optionnel)",
-        placeholder="Zone libre pour le médecin ou kinésithérapeute...",
-        height=100
-    )
-
-    photo = st.file_uploader("📸 Photo du joueur (optionnel)", type=["png","jpg","jpeg"], key="up_photo")
-    if photo:
-        st.image(photo, width=70, caption="Aperçu photo")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # 3. Logo club (upload direct)
-    st.markdown('<div class="card"><div class="card-title">🖼️ Logo du Club (optionnel)</div>', unsafe_allow_html=True)
-    logo_club_upload = st.file_uploader(
-        "Logo du club (PNG recommandé, fond transparent idéal)",
-        type=["png","jpg","jpeg"],
-        key="up_logo_club",
-        help="Upload le logo directement — il apparaîtra dans le PDF",
-    )
-    if logo_club_upload:
-        st.image(logo_club_upload, width=100, caption="Logo club")
-        st.success("✅ Logo chargé")
-    else:
-        st.info("Sans logo : le nom du club s'affichera à la place.")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # 4. Club
+    # 3. Club du joueur
     st.markdown('<div class="card"><div class="card-title">🏆 Club du joueur</div>', unsafe_allow_html=True)
 
     recherche = st.text_input("🔍 Rechercher un club", placeholder="Ex: Clermont, PSG, Monaco...", key="search_club")
@@ -443,7 +463,7 @@ with col_right:
 
             progress.progress(10, text="📄 Sauvegarde des fichiers...")
 
-            # Sauvegarder PDFs
+            # Sauvegarder PDFs Biodex
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                 f.write(pdf_entree.getvalue()); path_e = f.name
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
@@ -454,19 +474,6 @@ with col_right:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(pdf_comp.getvalue()); path_comp = f.name
 
-            path_photo = None
-            if photo:
-                ext_ph = photo.name.rsplit(".", 1)[-1]
-                with tempfile.NamedTemporaryFile(suffix=f".{ext_ph}", delete=False) as f:
-                    f.write(photo.getvalue()); path_photo = f.name
-
-            # Logo club : priorité à l'upload manuel
-            path_logo_club = None
-            if logo_club_upload:
-                ext_logo = logo_club_upload.name.rsplit(".", 1)[-1]
-                with tempfile.NamedTemporaryFile(suffix=f".{ext_logo}", delete=False) as f:
-                    f.write(logo_club_upload.getvalue()); path_logo_club = f.name
-
             path_comp_sain = None
             if pdf_comp_sain:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
@@ -476,6 +483,15 @@ with col_right:
             if pdf_exc:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(pdf_exc.getvalue()); path_exc = f.name
+
+            path_photo = None
+            if photo:
+                ext_ph = photo.name.rsplit(".", 1)[-1]
+                with tempfile.NamedTemporaryFile(suffix=f".{ext_ph}", delete=False) as f:
+                    f.write(photo.getvalue()); path_photo = f.name
+
+            # Logo club : pas d'upload séparé, géré via la fiche club
+            path_logo_club = None
 
             progress.progress(30, text="🔍 Parsing des PDFs Biodex...")
 
@@ -505,9 +521,9 @@ with col_right:
                 photo_patient_path      = path_photo,
                 sport                   = sport if sport != "— Sélectionner —" else "",
                 date_naissance          = str(date_naissance) if date_naissance else "",
-                date_operation          = str(date_operation) if date_operation else "",
+                date_operation          = date_operation.strftime("%d/%m/%Y") if date_operation else "",
                 type_blessure           = type_blessure,
-                cote_opere              = cote_opere if cote_opere != "— Sélectionner —" else "",
+                cote_opere              = cote_opere,
                 acl_rsi_score           = acl_rsi_score if acl_rsi_score > 0 else None,
                 remarques_medecin       = remarques_medecin,
             )

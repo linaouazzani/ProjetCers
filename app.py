@@ -10,9 +10,11 @@ import tempfile
 import os
 import base64
 import datetime
-from clubs_database import CLUBS_DATABASE, search_clubs
+import json
+from clubs_database import search_clubs
 
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
+CLUBS_DB_PATH = os.path.join(_APP_DIR, "clubs_db.json")
 
 st.set_page_config(
     page_title="CERS Capbreton — Bilan Isocinétique",
@@ -79,6 +81,20 @@ def get_logo(nom_club: str, couleur: str) -> str:
     return generer_logo_svg(nom_club, couleur)
 
 
+def charger_clubs_db() -> dict:
+    if os.path.exists(CLUBS_DB_PATH):
+        with open(CLUBS_DB_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+
+def sauvegarder_club_db(nom: str, data: dict):
+    db = charger_clubs_db()
+    db[nom.lower().strip()] = data
+    with open(CLUBS_DB_PATH, "w", encoding="utf-8") as f:
+        json.dump(db, f, ensure_ascii=False, indent=2)
+
+
 # ── État session ──────────────────────────────────────────────────────────────
 
 if "club_selectionne" not in st.session_state:
@@ -116,7 +132,7 @@ col_left, col_right = st.columns([1, 1.1], gap="large")
 # ╚══════════════════════════════════════╝
 with col_left:
 
-    # 1. PDFs Biodex — MODIFICATION 4
+    # 1. PDFs Biodex
     st.markdown('<div class="card"><div class="card-title">📄 Fichiers Biodex</div>',
                 unsafe_allow_html=True)
 
@@ -168,7 +184,7 @@ with col_left:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 1b. VALD ForceDecks — MODIFICATION 5
+    # 1b. VALD ForceDecks
     import io
     from vald_parser import parse_vald_slj, parse_vald_cmj
 
@@ -221,7 +237,16 @@ with col_left:
             except Exception as _e:
                 st.error(f"Erreur CMJ Sortie : {_e}")
 
-    # 2. Informations complémentaires patient — MODIFICATION 1
+    # 1c. GPS Catapult — A3
+    with st.expander("📡 GPS Catapult (optionnel — à venir)"):
+        st.info("Section en cours de développement. "
+                "Uploader ici les exports Catapult CSV/XLSX du patient.")
+        pdf_gps = st.file_uploader(
+            "Fichier GPS Catapult (CSV ou XLSX)",
+            type=["csv", "xlsx"], key="up_gps"
+        )
+
+    # 2. Informations complémentaires patient — A2 (placeholder mis à jour)
     with st.expander("⚙️ Informations complémentaires patient", expanded=False):
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -255,114 +280,154 @@ with col_left:
                 type=["png", "jpg", "jpeg"], key="up_photo"
             )
         with c6:
-            pass  # colonne vide pour équilibre visuel
+            pass
 
         remarques_medecin = st.text_area(
             "Remarques médicales (optionnel)",
-            placeholder="Zone libre pour le médecin...",
+            placeholder="Zone libre pour le professionnel de santé (médecin, kinésithérapeute...)...",
             height=70, key="remarques"
         )
 
-    # Variables avec valeurs par défaut si non renseignées
+    # Variables avec valeurs par défaut
     date_naissance = None
     cote_opere = ""
 
-    # 3. Club du joueur
-    st.markdown('<div class="card"><div class="card-title">🏆 Club du joueur</div>', unsafe_allow_html=True)
+    # 3. Club du joueur — A1
+    clubs_db_locale = charger_clubs_db()
+    logo_club_upload = None  # sera défini dans l'expander
 
-    recherche = st.text_input("🔍 Rechercher un club", placeholder="Ex: Clermont, PSG, Monaco...", key="search_club")
+    with st.expander("🏆 Club du joueur", expanded=False):
 
-    if recherche and len(recherche) >= 2:
-        resultats = search_clubs(recherche)
-        if resultats:
-            st.markdown(f"**{len(resultats)} club(s) trouvé(s) :**")
-            for club in resultats[:8]:
-                logo_b64 = get_logo(club["nom"], club["couleur"])
-                col_logo, col_info = st.columns([1, 4])
-                with col_logo:
-                    st.markdown(f'<img src="{logo_b64}" style="height:35px;border-radius:4px;">', unsafe_allow_html=True)
-                with col_info:
-                    if st.button(f"{club['nom']}  ·  {club['sport']} — {club['division']}", key=f"btn_{club['nom']}", use_container_width=True):
-                        st.session_state.club_selectionne = club
-                        st.session_state.nom_club_cache = club["nom"]
-                        st.rerun()
-        else:
-            st.info("Aucun club trouvé. Essaie un autre terme.")
-    else:
-        st.markdown('<div class="info-box">Tape le nom d\'un club ci-dessus, ou sélectionne par sport :</div>', unsafe_allow_html=True)
-        sport_choix = st.selectbox("Sport", ["— Choisir un sport —"] + [d["label"] for d in CLUBS_DATABASE.values()], key="sport_select")
+        recherche_club = st.text_input(
+            "Rechercher un club enregistré",
+            placeholder="Ex: Oyonnax, Clermont...",
+            key="search_club"
+        )
 
-        if sport_choix and sport_choix != "— Choisir un sport —":
-            sport_key = next((k for k, v in CLUBS_DATABASE.items() if v["label"] == sport_choix), None)
-            if sport_key:
-                sport_data = CLUBS_DATABASE[sport_key]
-                division_choix = st.selectbox("Division", list(sport_data["divisions"].keys()), key="div_select")
-                if division_choix:
-                    clubs_div = sport_data["divisions"][division_choix]
-                    club_noms = [c["nom"] for c in clubs_div]
-                    club_nom_choix = st.selectbox("Club", ["— Choisir —"] + club_noms, key="club_select")
-                    if club_nom_choix and club_nom_choix != "— Choisir —":
-                        club_data = next((c for c in clubs_div if c["nom"] == club_nom_choix), None)
-                        if club_data and st.button("✅ Sélectionner ce club", use_container_width=True):
-                            st.session_state.club_selectionne = {
-                                "nom": club_data["nom"],
-                                "sport": sport_data["label"],
-                                "sport_key": sport_key,
-                                "division": division_choix,
-                                "couleur": club_data.get("couleur", "#1c3f6e"),
-                            }
-                            st.session_state.nom_club_cache = club_data["nom"]
+        if recherche_club and len(recherche_club) >= 2:
+            matches = {k: v for k, v in clubs_db_locale.items()
+                       if recherche_club.lower() in k}
+            if matches:
+                for cle, cdata in list(matches.items())[:4]:
+                    col_l, col_b = st.columns([1, 5])
+                    with col_l:
+                        if cdata.get("logo_b64"):
+                            st.markdown(
+                                f'<img src="{cdata["logo_b64"]}" style="height:32px;border-radius:4px;">',
+                                unsafe_allow_html=True
+                            )
+                    with col_b:
+                        if st.button(
+                            f"{cdata.get('nom', cle)}  ·  {cdata.get('sport', '')}",
+                            key=f"loc_{cle}", use_container_width=True
+                        ):
+                            st.session_state.club_selectionne = cdata
+                            st.session_state.nom_club_cache = cdata.get("nom", cle)
                             st.rerun()
+            else:
+                resultats = search_clubs(recherche_club)
+                for club in resultats[:4]:
+                    logo_b64 = get_logo(club["nom"], club["couleur"])
+                    col_l, col_b = st.columns([1, 5])
+                    with col_l:
+                        st.markdown(
+                            f'<img src="{logo_b64}" style="height:32px;border-radius:4px;">',
+                            unsafe_allow_html=True
+                        )
+                    with col_b:
+                        if st.button(
+                            f"{club['nom']}  ·  {club['sport']} — {club['division']}",
+                            key=f"db_{club['nom']}", use_container_width=True
+                        ):
+                            st.session_state.club_selectionne = club
+                            st.session_state.nom_club_cache = club["nom"]
+                            st.rerun()
+                if not resultats:
+                    st.info("Aucun club trouvé — remplir le formulaire ci-dessous.")
 
-    if not st.session_state.club_selectionne:
         st.markdown("---")
-        st.markdown("**Club non trouvé dans la liste ?**")
-        col_nom, col_sport = st.columns(2)
-        with col_nom:
-            club_manuel_nom = st.text_input(
-                "Nom du club",
-                placeholder="Ex: FC Bayeux, AS Villemur...",
-                key="club_manuel_nom"
-            )
-        with col_sport:
-            club_manuel_sport = st.selectbox(
-                "Sport",
-                ["Rugby", "Football", "Basketball",
-                 "Handball", "Volleyball", "Autre"],
-                key="club_manuel_sport"
-            )
-        if club_manuel_nom and st.button("✅ Utiliser ce club", key="btn_club_manuel"):
-            st.session_state.club_selectionne = {
-                "nom": club_manuel_nom,
-                "sport": club_manuel_sport,
-                "division": "Autre",
-                "couleur": "#1c3f6e",
-            }
-            st.session_state.nom_club_cache = club_manuel_nom
-            st.rerun()
+        st.caption("Nouveau club ou modification")
 
+        cn1, cn2 = st.columns(2)
+        with cn1:
+            club_nouveau_nom = st.text_input(
+                "Nom du club *", placeholder="Ex: Oyonnax Rugby", key="club_nom_new"
+            )
+        with cn2:
+            club_nouveau_sport = st.selectbox(
+                "Sport", ["Rugby", "Football", "Basketball",
+                          "Handball", "Volleyball", "Autre"],
+                key="club_sport_new"
+            )
+
+        logo_club_upload = st.file_uploader(
+            "Logo du club (PNG recommandé)", type=["png", "jpg", "jpeg"],
+            key="up_logo_club"
+        )
+        if logo_club_upload:
+            st.image(logo_club_upload, width=80)
+
+        cb1, cb2 = st.columns(2)
+        with cb1:
+            if st.button("✅ Utiliser ce club", use_container_width=True, key="btn_use"):
+                if club_nouveau_nom:
+                    new_club = {
+                        "nom": club_nouveau_nom,
+                        "sport": club_nouveau_sport,
+                        "division": "Autre",
+                        "couleur": "#1c3f6e",
+                    }
+                    st.session_state.club_selectionne = new_club
+                    st.session_state.nom_club_cache = club_nouveau_nom
+                    st.rerun()
+        with cb2:
+            if st.button("💾 Enregistrer dans la base", use_container_width=True, key="btn_save"):
+                if club_nouveau_nom:
+                    logo_b64_save = None
+                    if logo_club_upload:
+                        import base64 as _b64
+                        ext = logo_club_upload.name.rsplit(".", 1)[-1].lower()
+                        mime = "image/png" if ext == "png" else "image/jpeg"
+                        logo_b64_save = (f"data:{mime};base64,"
+                                         + _b64.b64encode(logo_club_upload.getvalue()).decode())
+                    new_club = {
+                        "nom": club_nouveau_nom,
+                        "sport": club_nouveau_sport,
+                        "division": "Autre",
+                        "couleur": "#1c3f6e",
+                        "logo_b64": logo_b64_save,
+                    }
+                    sauvegarder_club_db(club_nouveau_nom, new_club)
+                    st.session_state.club_selectionne = new_club
+                    st.session_state.nom_club_cache = club_nouveau_nom
+                    st.success(f"'{club_nouveau_nom}' enregistré — logo inclus !")
+                    st.rerun()
+                else:
+                    st.warning("Renseigner le nom du club avant d'enregistrer.")
+
+    # Bandeau club (hors expander, toujours visible si sélectionné)
     if st.session_state.club_selectionne:
         club = st.session_state.club_selectionne
-        logo_b64 = get_logo(club["nom"], club["couleur"])
-        st.markdown(f"""
+        logo_src = club.get("logo_b64") or get_logo(club["nom"], club.get("couleur", "#1c3f6e"))
+        col_cl, col_chg = st.columns([5, 1])
+        with col_cl:
+            st.markdown(f"""
 <div class="club-selected">
-  <img src="{logo_b64}" style="height:40px;border-radius:6px;">
+  <img src="{logo_src}" style="height:35px;border-radius:6px;">
   <div>
-    <div style="font-size:15px;">{club['nom']}</div>
-    <div style="font-size:11px;color:#555;font-weight:400;">{club['sport']} — {club['division']}</div>
+    <div style="font-size:14px;">{club['nom']}</div>
+    <div style="font-size:11px;color:#555;font-weight:400;">
+      {club.get('sport', '')} — {club.get('division', '')}
+    </div>
   </div>
 </div>""", unsafe_allow_html=True)
-        if st.button("✏️ Changer de club", use_container_width=False):
-            st.session_state.club_selectionne = None
-            st.rerun()
+        with col_chg:
+            if st.button("✏️ Changer", key="chg_club"):
+                st.session_state.club_selectionne = None
+                st.rerun()
     else:
-        st.markdown('<span class="badge badge-wait">⏳ Aucun club sélectionné</span>', unsafe_allow_html=True)
-
-    nom_club_manuel = ""
-    if st.session_state.club_selectionne and st.session_state.club_selectionne.get("nom") == "Autre club":
-        nom_club_manuel = st.text_input("Nom du club (saisie libre)", placeholder="Ex: FC Bordeaux")
-
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<span class="badge badge-wait">⏳ Aucun club sélectionné</span>',
+                    unsafe_allow_html=True)
 
 
 # ╔══════════════════════════════════════════╗
@@ -453,9 +518,7 @@ with col_right:
             st.stop()
 
         club = st.session_state.get("club_selectionne")
-        nom_club = (nom_club_manuel
-                    or (club["nom"] if club else "")
-                    or st.session_state.get("nom_club_cache", ""))
+        nom_club = (club["nom"] if club else "") or st.session_state.get("nom_club_cache", "")
         progress = st.progress(0, text="Initialisation...")
 
         try:
@@ -490,8 +553,25 @@ with col_right:
                 with tempfile.NamedTemporaryFile(suffix=f".{ext_ph}", delete=False) as f:
                     f.write(photo.getvalue()); path_photo = f.name
 
-            # Logo club : pas d'upload séparé, géré via la fiche club
+            # Logo club — A4 : priorité upload session, sinon logo_b64 depuis clubs_db
             path_logo_club = None
+            club_selec = st.session_state.get("club_selectionne")
+
+            if logo_club_upload:
+                ext_logo = logo_club_upload.name.rsplit(".", 1)[-1]
+                with tempfile.NamedTemporaryFile(suffix=f".{ext_logo}", delete=False) as f:
+                    f.write(logo_club_upload.getvalue())
+                    path_logo_club = f.name
+
+            elif club_selec and club_selec.get("logo_b64"):
+                import base64 as _b64
+                logo_data = club_selec["logo_b64"]
+                if ";base64," in logo_data:
+                    header_part, b64_str = logo_data.split(";base64,", 1)
+                    ext_logo = "png" if "png" in header_part else "jpg"
+                    with tempfile.NamedTemporaryFile(suffix=f".{ext_logo}", delete=False) as f:
+                        f.write(_b64.b64decode(b64_str))
+                        path_logo_club = f.name
 
             progress.progress(30, text="🔍 Parsing des PDFs Biodex...")
 
@@ -538,9 +618,8 @@ with col_right:
 
             progress.progress(100, text="✅ Rapport prêt !")
 
-            # Nom fichier téléchargement
-            nom_patient = (entree_data.nom.replace(" ","_").replace(".","") if entree_data else "patient")
-            nom_fichier = f"Rapport_Biodex_{nom_patient}_{nom_club.replace(' ','_')}.{ext_out}"
+            nom_patient = (entree_data.nom.replace(" ", "_").replace(".", "") if entree_data else "patient")
+            nom_fichier = f"Rapport_Biodex_{nom_patient}_{nom_club.replace(' ', '_')}.{ext_out}"
 
             st.session_state.rapport_bytes = rapport_bytes
             st.session_state.rapport_nom   = nom_fichier

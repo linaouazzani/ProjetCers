@@ -215,6 +215,7 @@ def construire_contexte(
     slj_sortie_data=None,
     cmj_entree_data=None,
     cmj_sortie_data=None,
+    cr_data: Optional[dict] = None,
 ) -> dict:
 
     poids        = entree.poids_kg or sortie.poids_kg or 101.0
@@ -590,6 +591,7 @@ def construire_contexte(
         "delai_post_op":    delai_post_op,
         "vald":             vald_ctx,
         "has_vald":         has_vald,
+        "cr":               cr_data or {},
     }
 
 
@@ -693,6 +695,7 @@ def generer_rapport_biodex(
     vald_slj_sortie:     Optional[dict] = None,
     vald_cmj_entree:     Optional[dict] = None,
     vald_cmj_sortie:     Optional[dict] = None,
+    cr_data:             Optional[dict] = None,
     output_html:         str = "outputs/rapport_biodex.html",
     output_pdf:              str = "outputs/rapport_biodex.pdf",
     template_dir:            str = "templates",
@@ -764,6 +767,7 @@ def generer_rapport_biodex(
         slj_sortie_data=vald_slj_sortie,
         cmj_entree_data=vald_cmj_entree,
         cmj_sortie_data=vald_cmj_sortie,
+        cr_data=cr_data,
     )
     print("  ✅ Contexte prêt")
 

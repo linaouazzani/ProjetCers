@@ -465,53 +465,100 @@ body {
 
   <div class="page-content">
 
-    <!-- IDENTITE PATIENT — 5 colonnes horizontales -->
-    <div style="background:#f8fafd; border:1px solid #dce6f0; border-radius:6px; padding:7px 10px; margin-bottom:5px; flex-shrink:0;">
-      <div style="display:table; width:100%; border-collapse:collapse;">
+    <!-- FICHE PATIENT ÉLARGIE -->
+    <div style="
+        display:table; width:100%; margin:8px 0 10px;
+        border:1.5px solid #1c3f6e; border-radius:6px;
+        overflow:hidden; page-break-inside:avoid; flex-shrink:0;
+    ">
+      <!-- Bande titre fiche -->
+      <div style="
+          background:#1c3f6e; color:#fff;
+          font-size:9.5px; font-weight:bold;
+          padding:5px 10px;
+          -webkit-print-color-adjust:exact; print-color-adjust:exact;
+      ">
+        Dossier Patient
+      </div>
 
-        <!-- Col 1 : Photo + Nom cote a cote -->
-        <div style="display:table-cell; vertical-align:middle; width:25%; padding-right:8px; border-right:1px solid #dce6f0;">
-          <div style="display:table; width:100%;">
-            {% if photo_b64 %}
-            <div style="display:table-cell; vertical-align:middle; width:58px;">
-              <img src="{{ photo_b64 }}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; display:block;">
-            </div>
-            {% endif %}
-            <div style="display:table-cell; vertical-align:middle; padding-left:6px;">
-              <div style="font-size:10px; font-weight:800; color:#1c3f6e; line-height:1.3; white-space:nowrap;">{{ patient.nom }}</div>
-            </div>
+      <!-- Corps fiche : 2 colonnes -->
+      <div style="display:table; width:100%;">
+
+        <!-- Colonne gauche : identité + contexte sportif -->
+        <div style="display:table-cell; width:50%; padding:8px 10px;
+                    vertical-align:top; border-right:1px solid #d0dbe8;">
+
+          <div style="margin-bottom:6px;">
+            <span style="font-size:8px;color:#1c3f6e;font-weight:bold;">PATIENT</span><br>
+            <span style="font-size:11px;font-weight:bold;color:#1c3f6e;">
+              {{ patient.nom }}
+            </span><br>
+            <span style="font-size:8.5px;color:#444;">
+              {% if cr.date_naissance %}Né le {{ cr.date_naissance }}{% endif %}
+              {% if patient.age %} · {{ patient.age }} ans{% endif %}
+              {% if patient.poids_kg %} · {{ patient.poids_kg }} kg{% endif %}
+              {% if patient.taille_cm %} · {{ patient.taille_cm }} cm{% endif %}
+            </span>
+          </div>
+
+          <div style="margin-bottom:6px;">
+            <span style="font-size:8px;color:#1c3f6e;font-weight:bold;">CONTEXTE SPORTIF</span><br>
+            <span style="font-size:8.5px;color:#333;">
+              {% if cr.sport %}{{ cr.sport }}{% elif sport %}{{ sport }}{% endif %}
+              {% if cr.club %} · <strong>{{ cr.club }}</strong>{% endif %}
+              {% if cr.niveau %} · {{ cr.niveau }}{% endif %}
+            </span>
+          </div>
+
+          <div>
+            <span style="font-size:8px;color:#1c3f6e;font-weight:bold;">MÉDECIN RESPONSABLE</span><br>
+            <span style="font-size:8.5px;color:#333;">
+              {% if cr.medecin_responsable %}Dr {{ cr.medecin_responsable }}{% else %}—{% endif %}
+            </span>
           </div>
         </div>
 
-        <!-- Col 2 : Age, Poids, Taille -->
-        <div style="display:table-cell; vertical-align:middle; width:18%; padding:0 8px; border-right:1px solid #dce6f0;">
-          <div style="font-size:7.5px; color:#444; margin-bottom:2px;"><b style="color:#1c3f6e;">Age :</b> {{ entree.age }} ans{% if date_naissance %} ({{ date_naissance }}){% endif %}</div>
-          <div style="font-size:7.5px; color:#444; margin-bottom:2px;"><b style="color:#1c3f6e;">Poids :</b> {{ entree.poids_kg }} kg</div>
-          <div style="font-size:7.5px; color:#444;"><b style="color:#1c3f6e;">Taille :</b> {{ entree.taille_cm }} cm</div>
-        </div>
+        <!-- Colonne droite : diagnostic + intervention + séjour -->
+        <div style="display:table-cell; width:50%; padding:8px 10px; vertical-align:top;">
 
-        <!-- Col 3 : Sport, Lesion, Cote opere -->
-        <div style="display:table-cell; vertical-align:middle; width:22%; padding:0 8px; border-right:1px solid #dce6f0;">
-          {% if sport %}<div style="font-size:7.5px; color:#444; margin-bottom:2px;"><b style="color:#1c3f6e;">Sport :</b> {{ sport }}</div>{% endif %}
-          <div style="font-size:7.5px; color:#444; margin-bottom:2px;"><b style="color:#1c3f6e;">Lesion :</b> {{ entree.articulation }} {{ entree.lese }}</div>
-          {% if cote_opere %}<div style="font-size:7.5px; color:#444;"><b style="color:#1c3f6e;">Cote opere :</b> {{ cote_opere }}</div>{% endif %}
-        </div>
+          <div style="margin-bottom:6px;">
+            <span style="font-size:8px;color:#1c3f6e;font-weight:bold;">DIAGNOSTIC</span><br>
+            <span style="font-size:8.5px;color:#c0392b;font-weight:bold;">
+              {% if cr.diagnostic %}{{ cr.diagnostic }}{% else %}{{ patient.articulation }} {{ patient.lese }}{% endif %}
+            </span><br>
+            {% if cr.lesions_associees %}
+            <span style="font-size:8px;color:#555;">Lésions associées : {{ cr.lesions_associees }}</span><br>
+            {% endif %}
+            <span style="font-size:8px;color:#555;">
+              Côté lésé : <strong>{{ cr.cote_lese or patient.lese }}</strong>
+            </span>
+          </div>
 
-        <!-- Col 4 : Blessure, Operation, Delai -->
-        <div style="display:table-cell; vertical-align:middle; width:24%; padding:0 8px; border-right:1px solid #dce6f0;">
-          {% if type_blessure %}<div style="font-size:7.5px; color:#444; margin-bottom:2px;"><b style="color:#1c3f6e;">Blessure :</b> {{ type_blessure }}</div>{% endif %}
-          {% if date_operation %}<div style="font-size:7.5px; color:#444; margin-bottom:2px;"><b style="color:#1c3f6e;">Operation :</b> {{ date_operation }}</div>{% endif %}
-          {% if delai_post_op %}<div style="font-size:7.5px; color:#444;"><b style="color:#1c3f6e;">Delai :</b> J+{{ delai_post_op }}</div>{% endif %}
-        </div>
+          <div style="margin-bottom:6px;">
+            <span style="font-size:8px;color:#1c3f6e;font-weight:bold;">INTERVENTION</span><br>
+            <span style="font-size:8.5px;color:#333;">
+              {% if cr.intervention %}{{ cr.intervention }}{% else %}—{% endif %}
+              {% if cr.date_intervention %} — le {{ cr.date_intervention }}{% endif %}
+            </span><br>
+            {% if cr.delai_postop_jours %}
+            <span style="font-size:8px;color:#555;">
+              Délai post-opératoire à l'entrée : <strong>{{ cr.delai_postop_jours }} jours</strong>
+            </span>
+            {% endif %}
+          </div>
 
-        <!-- Col 5 : Dates Entree / Sortie -->
-        <div style="display:table-cell; vertical-align:middle; width:16%; padding-left:8px; text-align:center;">
-          <div style="font-size:7.5px; font-weight:700; color:#1c3f6e; margin-bottom:4px;">Entree :<br>{{ entree.date_test }}</div>
-          <div style="font-size:7.5px; font-weight:700; color:#2176c7;">Sortie :<br>{{ sortie.date_test }}</div>
-        </div>
+          <div>
+            <span style="font-size:8px;color:#1c3f6e;font-weight:bold;">SÉJOUR CERS</span><br>
+            <span style="font-size:8.5px;color:#333;">
+              Entrée : {{ entree.date_test }} &nbsp;·&nbsp;
+              Sortie : {{ sortie.date_test }}
+            </span>
+          </div>
 
+        </div>
       </div>
     </div>
+    <!-- FIN FICHE PATIENT -->
 
     <!-- BARRE TITRE BILAN -->
     <div class="bilan-title">BILAN ISOCINETIQUE — Genou {{ entree.lese }}</div>

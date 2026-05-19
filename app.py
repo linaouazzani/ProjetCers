@@ -12,6 +12,7 @@ import base64
 import datetime
 import json
 from clubs_database import search_clubs
+from cr_parser import parse_compte_rendu
 
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 CLUBS_DB_PATH    = os.path.join(_APP_DIR, "clubs_db.json")
@@ -153,9 +154,9 @@ st.markdown("""
 <div class="hero">
   <div>
     <h1>CERS Capbreton — Bilan Complet Patient</h1>
-    <p>Rapport automatique de suivi · Isocinétique Biodex · Sauts VALD · GPS Catapult</p>
+    <p>Rapport automatique · Isocinétique Biodex &nbsp;·&nbsp; Sauts VALD ForceDecks &nbsp;·&nbsp; GPS Catapult</p>
   </div>
-  <div class="hero-badge">Rapport PDF · Impression A4</div>
+  <div class="hero-badge">Suivi de progression · PDF A4</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -185,7 +186,7 @@ with col_left:
         )
 
     with st.expander("📎 PDFs optionnels"):
-        co1, co2, co3 = st.columns(3)
+        co1, co2, co3, co4 = st.columns(4)
         with co1:
             pdf_comp = st.file_uploader(
                 "Comparatif Lésé", type=["pdf"], key="up_comp"
@@ -198,14 +199,21 @@ with col_left:
             pdf_exc = st.file_uploader(
                 "Excentrique 30°/s", type=["pdf"], key="up_exc"
             )
+        with co4:
+            pdf_cr = st.file_uploader(
+                "Compte-rendu médical",
+                type=["pdf"], key="up_cr",
+                help="PDF compte-rendu CERS — extrait diagnostic, intervention, bilan clinique"
+            )
 
-    cols_b = st.columns(5)
+    cols_b = st.columns(6)
     statuts = [
         (pdf_entree,    "Entrée",      True),
         (pdf_sortie,    "Sortie",      True),
         (pdf_comp,      "Comp.Lésé",   False),
         (pdf_comp_sain, "Comp.Sain",   False),
         (pdf_exc,       "Excentrique", False),
+        (pdf_cr,        "Compte-rendu",False),
     ]
     for col, (pdf, label, obligatoire) in zip(cols_b, statuts):
         with col:
@@ -274,6 +282,23 @@ with col_left:
                 st.success(f"CMJ Sortie : H={vald_cmj_s['cmj_hauteur']} cm · {rsi_txt}")
             except Exception as _e:
                 st.error(f"Erreur CMJ Sortie : {_e}")
+
+    # Parsing compte-rendu médical
+    cr_data = None
+    if pdf_cr:
+        try:
+            import io as _io
+            cr_data = parse_compte_rendu(_io.BytesIO(pdf_cr.getvalue()))
+            infos = []
+            if cr_data.get("diagnostic"):
+                infos.append(f"Diagnostic : {cr_data['diagnostic']}")
+            if cr_data.get("club"):
+                infos.append(f"Club : {cr_data['club']}")
+            if cr_data.get("medecin_responsable"):
+                infos.append(f"Dr {cr_data['medecin_responsable']}")
+            st.success("CR médical lu · " + " · ".join(infos[:3]))
+        except Exception as _e:
+            st.error(f"Erreur CR médical : {_e}")
 
     # 1c. GPS Catapult — A3
     with st.expander("📡 GPS Catapult (optionnel — à venir)"):
@@ -658,6 +683,7 @@ with col_right:
                 cote_opere              = cote_opere,
                 acl_rsi_score           = acl_rsi_score if acl_rsi_score > 0 else None,
                 remarques_medecin       = remarques_medecin,
+                cr_data                 = cr_data,
             )
 
             progress.progress(90, text="📄 Lecture du fichier généré...")

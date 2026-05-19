@@ -14,16 +14,10 @@
    Bordure          : #cccccc
 ====================================================== */
 
-@page { size: A4; margin: 8mm; }
+@page { size: A4; margin: 0mm; }
 
 @media print {
-  body { margin: 0 !important; padding: 0 !important; }
-  .page {
-    width: 194mm !important;
-    max-width: 194mm !important;
-    overflow: hidden !important;
-    page-break-after: always;
-  }
+  body { margin: 0 !important; }
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -40,24 +34,21 @@ body {
   margin: 0;
   padding: 0;
   width: 210mm;
-  overflow-x: hidden;
 }
 
 /* ====== PAGES ====== */
 .page {
-  width: 194mm;
-  max-width: 194mm;
-  margin: 0 auto;
-  height: 277mm;
+  width: 210mm;
+  max-width: 210mm;
+  height: 297mm;
+  margin: 0;
   padding: 0;
-  background: #ffffff;
+  overflow: hidden;
+  box-sizing: border-box;
   position: relative;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  page-break-inside: avoid;
-  break-inside: avoid;
-  box-sizing: border-box;
 }
 .page + .page {
   page-break-before: always;
@@ -458,7 +449,10 @@ body {
      ══════════════════════════════════════════════════ -->
 <div style="
     height:297mm;
-    width:100%;
+    width:210mm;
+    max-width:210mm;
+    margin:0;
+    padding:0;
     overflow:hidden;
     font-family:Arial,Helvetica,sans-serif;
     font-size:9pt;
@@ -467,15 +461,6 @@ body {
     background:#ffffff;
     position:relative;
 ">
-
-  <!-- BARRE BLEUE HAUTE 6px -->
-  <div style="
-      height:6px;
-      background:#1c3f6e;
-      width:100%;
-      -webkit-print-color-adjust:exact;
-      print-color-adjust:exact;
-  "></div>
 
   <!-- EN-TÊTE LOGOS + TITRE -->
   <div style="
@@ -489,11 +474,11 @@ body {
     <div style="display:table-cell; width:22%; vertical-align:middle;">
       {% if logo_cers_b64 %}
       <img src="{{ logo_cers_b64 }}"
-           style="height:52px; display:block;"
+           style="height:58px; display:block; margin:0 auto;"
            alt="CERS Capbreton">
       {% else %}
       <div style="
-          width:80px; height:52px;
+          width:90px; height:58px;
           background:#eef3fa;
           border:1.5px solid #1c3f6e;
           border-radius:4px;
@@ -526,7 +511,7 @@ body {
     <div style="display:table-cell; width:22%; vertical-align:middle; text-align:right;">
       {% if logo_club_b64 %}
       <img src="{{ logo_club_b64 }}"
-           style="height:58px; display:inline-block;"
+           style="height:58px; max-width:90px; display:inline-block; object-fit:contain;"
            alt="{{ nom_club }}">
       {% else %}
       <div style="
@@ -541,7 +526,7 @@ body {
           color:#888;
       ">Logo<br>Club</div>
       {% endif %}
-      <div style="font-size:7.5pt; font-weight:bold; color:#1c3f6e; margin-top:3px;">
+      <div style="font-size:7pt; font-weight:bold; color:#1c3f6e; margin-top:3px; word-break:break-word; max-width:90px; display:block; text-align:right;">
         {{ nom_club }}
       </div>
     </div>
@@ -758,11 +743,11 @@ body {
   </div>
 
   <!-- RÉCAPITULATIF SÉJOUR -->
-  <div style="padding:10px 22px 8px; border-top:1px solid #e8eef5;">
+  <div style="padding:10px 22px 8px; border-top:1px solid #e8eef5; flex-grow:1;">
     <div style="font-size:7pt; font-weight:bold; color:#1c3f6e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px;">
       Résumé du séjour au CERS
     </div>
-    <div style="font-size:8pt; color:#333; line-height:1.7;">
+    <div style="font-size:9pt; color:#333; line-height:1.8;">
       {% if cr and cr.conclusion %}
         {{ cr.conclusion[:420] }}{% if cr.conclusion|length > 420 %}…{% endif %}
       {% else %}
@@ -773,7 +758,7 @@ body {
   </div>
 
   <!-- SOMMAIRE -->
-  <div style="padding:6px 22px 10px;">
+  <div style="padding:8px 22px 12px;">
     <div style="font-size:7pt; font-weight:bold; color:#1c3f6e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">
       Ce rapport contient
     </div>
@@ -1707,7 +1692,7 @@ body {
 <!-- ══════════════════════════════════════════════════
      PAGE GPS — CATAPULT (placeholder)
      ══════════════════════════════════════════════════ -->
-<div class="page" style="page-break-after:avoid;">
+<div class="page">
 
   <!-- EN-TETE — 3A -->
   <div style="display:table;width:100%;margin-bottom:0;background:#1c3f6e;border-radius:0;page-break-inside:avoid;flex-shrink:0;">

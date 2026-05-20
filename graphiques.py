@@ -414,7 +414,7 @@ def _graphique_progression_2courbes_impl(
     dashes_dash  = (6, 3)
     dash = dashes_dash if linestyle == '--' else dashes_solid
 
-    fig, ax = plt.subplots(figsize=(5.5, 3.8))
+    fig, ax = plt.subplots(figsize=(4.5, 3.0))
     fig.patch.set_facecolor('white')
     ax.set_facecolor('#fafcff')
 
@@ -469,9 +469,9 @@ def _graphique_progression_2courbes_impl(
     ax.legend(fontsize=8.5, loc='upper left', framealpha=0.92,
               edgecolor='#dddddd', fancybox=True)
 
-    plt.subplots_adjust(left=0.12, right=0.96, top=0.88, bottom=0.14)
+    plt.subplots_adjust(left=0.12, right=0.96, top=0.88, bottom=0.16)
     buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=180, bbox_inches='tight', facecolor='white')
+    fig.savefig(buf, format='png', dpi=150, bbox_inches='tight', facecolor='white')
     plt.close(fig)
     buf.seek(0)
     return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()

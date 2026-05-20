@@ -509,25 +509,33 @@ body {
 
     <!-- Logo club -->
     <div style="display:table-cell; width:22%; vertical-align:middle; text-align:right;">
-      {% if logo_club_b64 %}
-      <img src="{{ logo_club_b64 }}"
-           style="height:58px; max-width:90px; display:inline-block; object-fit:contain;"
-           alt="{{ nom_club }}">
-      {% else %}
-      <div style="
-          width:64px; height:58px;
-          background:#f5f5f5;
-          border:1.5px solid #ddd;
-          border-radius:6px;
-          display:inline-block;
-          text-align:center;
-          padding-top:16px;
-          font-size:8px;
-          color:#888;
-      ">Logo<br>Club</div>
-      {% endif %}
-      <div style="font-size:7pt; font-weight:bold; color:#1c3f6e; margin-top:3px; word-break:break-word; max-width:90px; display:block; text-align:right;">
-        {{ nom_club }}
+      <div style="display:table; width:100%; table-layout:fixed;">
+        <div style="display:table-row;">
+          <div style="display:table-cell; text-align:right; padding-bottom:4px; vertical-align:middle;">
+            {% if logo_club_b64 %}
+            <img src="{{ logo_club_b64 }}"
+                 style="height:52px; max-width:90px; display:block; margin-left:auto; object-fit:contain;"
+                 alt="{{ nom_club }}">
+            {% else %}
+            <div style="
+                width:64px; height:52px;
+                background:#f5f5f5;
+                border:1.5px solid #ddd;
+                border-radius:6px;
+                text-align:center;
+                padding-top:14px;
+                font-size:8px;
+                color:#888;
+                margin-left:auto;
+            ">Logo<br>Club</div>
+            {% endif %}
+          </div>
+        </div>
+        <div style="display:table-row;">
+          <div style="display:table-cell; text-align:right; font-size:7pt; font-weight:bold; color:#1c3f6e; word-break:break-word; vertical-align:top;">
+            {{ nom_club }}
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -870,101 +878,6 @@ body {
   <div style="height:2px;background:#2176c7;margin-bottom:5px;flex-shrink:0;"></div>
 
   <div class="page-content">
-
-    <!-- FICHE PATIENT ÉLARGIE -->
-    <div style="
-        display:table; width:100%; margin:8px 0 10px;
-        border:1.5px solid #1c3f6e; border-radius:6px;
-        overflow:hidden; page-break-inside:avoid; flex-shrink:0;
-    ">
-      <!-- Bande titre fiche -->
-      <div style="
-          background:#1c3f6e; color:#fff;
-          font-size:9.5px; font-weight:bold;
-          padding:5px 10px;
-          -webkit-print-color-adjust:exact; print-color-adjust:exact;
-      ">
-        Dossier Patient
-      </div>
-
-      <!-- Corps fiche : 2 colonnes -->
-      <div style="display:table; width:100%;">
-
-        <!-- Colonne gauche : identité + contexte sportif -->
-        <div style="display:table-cell; width:50%; padding:8px 10px;
-                    vertical-align:top; border-right:1px solid #d0dbe8;">
-
-          <div style="margin-bottom:6px;">
-            <span style="font-size:8px;color:#1c3f6e;font-weight:bold;">PATIENT</span><br>
-            <span style="font-size:11px;font-weight:bold;color:#1c3f6e;">
-              {{ anon(patient.nom) }}
-            </span><br>
-            <span style="font-size:8.5px;color:#444;">
-              {% if cr.date_naissance %}Né le {{ cr.date_naissance }}{% endif %}
-              {% if patient.age %} · {{ patient.age }} ans{% endif %}
-              {% if patient.poids_kg %} · {{ patient.poids_kg }} kg{% endif %}
-              {% if patient.taille_cm %} · {{ patient.taille_cm }} cm{% endif %}
-            </span>
-          </div>
-
-          <div style="margin-bottom:6px;">
-            <span style="font-size:8px;color:#1c3f6e;font-weight:bold;">CONTEXTE SPORTIF</span><br>
-            <span style="font-size:8.5px;color:#333;">
-              {% if cr.sport %}{{ cr.sport }}{% elif sport %}{{ sport }}{% endif %}
-              {% if cr.club %} · <strong>{{ cr.club }}</strong>{% endif %}
-              {% if cr.niveau %} · {{ cr.niveau }}{% endif %}
-            </span>
-          </div>
-
-          <div>
-            <span style="font-size:8px;color:#1c3f6e;font-weight:bold;">MÉDECIN RESPONSABLE</span><br>
-            <span style="font-size:8.5px;color:#333;">
-              {% if cr.medecin_responsable %}Dr {{ cr.medecin_responsable }}{% else %}—{% endif %}
-            </span>
-          </div>
-        </div>
-
-        <!-- Colonne droite : diagnostic + intervention + séjour -->
-        <div style="display:table-cell; width:50%; padding:8px 10px; vertical-align:top;">
-
-          <div style="margin-bottom:6px;">
-            <span style="font-size:8px;color:#1c3f6e;font-weight:bold;">DIAGNOSTIC</span><br>
-            <span style="font-size:8.5px;color:#c0392b;font-weight:bold;">
-              {% if cr.diagnostic %}{{ cr.diagnostic }}{% else %}{{ patient.articulation }} {{ patient.lese }}{% endif %}
-            </span><br>
-            {% if cr.lesions_associees %}
-            <span style="font-size:8px;color:#555;">Lésions associées : {{ cr.lesions_associees }}</span><br>
-            {% endif %}
-            <span style="font-size:8px;color:#555;">
-              Côté lésé : <strong>{{ cr.cote_lese or patient.lese }}</strong>
-            </span>
-          </div>
-
-          <div style="margin-bottom:6px;">
-            <span style="font-size:8px;color:#1c3f6e;font-weight:bold;">INTERVENTION</span><br>
-            <span style="font-size:8.5px;color:#333;">
-              {% if cr.intervention %}{{ cr.intervention }}{% else %}—{% endif %}
-              {% if cr.date_intervention %} — le {{ cr.date_intervention }}{% endif %}
-            </span><br>
-            {% if cr.delai_postop_jours %}
-            <span style="font-size:8px;color:#555;">
-              Délai post-opératoire à l'entrée : <strong>{{ cr.delai_postop_jours }} jours</strong>
-            </span>
-            {% endif %}
-          </div>
-
-          <div>
-            <span style="font-size:8px;color:#1c3f6e;font-weight:bold;">SÉJOUR CERS</span><br>
-            <span style="font-size:8.5px;color:#333;">
-              Entrée : {{ entree.date_test }} &nbsp;·&nbsp;
-              Sortie : {{ sortie.date_test }}
-            </span>
-          </div>
-
-        </div>
-      </div>
-    </div>
-    <!-- FIN FICHE PATIENT -->
 
     <!-- BARRE TITRE BILAN -->
     <div class="bilan-title">BILAN ISOCINETIQUE — Genou {{ entree.lese }}</div>

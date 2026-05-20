@@ -196,6 +196,60 @@ def parse_comparatif_sain(pdf_path: str) -> dict:
 # 4. CONSTRUCTION DU CONTEXTE JINJA2
 # ════════════════════════════════════════════════════════════════
 
+def _generer_conclusion_auto(remarques, entree, sortie) -> str:
+    """Génère un paragraphe de synthèse de progression à partir des données Biodex."""
+    lignes = []
+
+    # Lignes de progression positives depuis remarques
+    for p in (remarques or {}).get("progression", [])[:6]:
+        lignes.append(p)
+
+    # Compléter avec des valeurs numériques si disponibles
+    try:
+        e60 = entree.serie_60
+        s60p = sortie.serie_60
+        if e60 and s60p:
+            for attr, label in [
+                ("ext_moment_max", "Extension 60°/s Moment Max"),
+                ("flex_moment_max", "Flexion 60°/s Moment Max"),
+            ]:
+                e_val = getattr(getattr(e60, attr, None), "lese_g", None)
+                s_val = getattr(getattr(s60p, attr, None), "lese_g", None)
+                if e_val and s_val and e_val != 0:
+                    p = round((s_val - e_val) / abs(e_val) * 100, 1)
+                    if abs(p) >= 3:
+                        signe = "+" if p >= 0 else ""
+                        msg = f"{label} (Lésé) : {e_val:.0f} → {s_val:.0f} N·m ({signe}{p:.1f}%)"
+                        if msg not in lignes:
+                            lignes.append(msg)
+    except Exception:
+        pass
+
+    try:
+        e240 = entree.serie_240
+        s240p = sortie.serie_240
+        if e240 and s240p:
+            for attr, label in [
+                ("ext_moment_max", "Extension 240°/s Moment Max"),
+                ("flex_moment_max", "Flexion 240°/s Moment Max"),
+            ]:
+                e_val = getattr(getattr(e240, attr, None), "lese_g", None)
+                s_val = getattr(getattr(s240p, attr, None), "lese_g", None)
+                if e_val and s_val and e_val != 0:
+                    p = round((s_val - e_val) / abs(e_val) * 100, 1)
+                    if abs(p) >= 3:
+                        signe = "+" if p >= 0 else ""
+                        msg = f"{label} (Lésé) : {e_val:.0f} → {s_val:.0f} N·m ({signe}{p:.1f}%)"
+                        if msg not in lignes:
+                            lignes.append(msg)
+    except Exception:
+        pass
+
+    if not lignes:
+        return ""
+    return " · ".join(lignes[:8])
+
+
 def construire_contexte(
     entree, sortie, df_comp,
     comparatif_data: dict = None,
@@ -592,6 +646,7 @@ def construire_contexte(
         "vald":             vald_ctx,
         "has_vald":         has_vald,
         "cr":               cr_data or {},
+        "conclusion_auto":  _generer_conclusion_auto(remarques, entree, sortie),
     }
 
 

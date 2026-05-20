@@ -687,13 +687,13 @@ body {
     </div>
 
     <!-- Logo club -->
-    <div style="display:table-cell; width:22%; vertical-align:middle; text-align:right;">
+    <div style="display:table-cell; width:22%; vertical-align:middle; text-align:center;">
       <div style="display:table; width:100%; table-layout:fixed;">
         <div style="display:table-row;">
           <div style="display:table-cell; text-align:center; padding-bottom:4px; vertical-align:middle;">
             {% if logo_club_b64 %}
             <img src="{{ logo_club_b64 }}"
-                 style="height:52px; max-width:90px; display:block; margin-left:auto; object-fit:contain;"
+                 style="height:52px; max-width:90px; display:block; margin:0 auto; object-fit:contain;"
                  alt="{{ nom_club }}">
             {% else %}
             <div style="
@@ -719,280 +719,194 @@ body {
     </div>
   </div>
 
-  <!-- ZONE HERO : photo gauche + infos droite -->
-  <div style="display:table; width:100%; table-layout:fixed;">
+  <!-- ── ZONE HERO : Photo + Nom uniquement ─────────────────────── -->
+  <div style="display:table; width:100%; table-layout:fixed; border-bottom:1px solid #dde8f2;">
 
     <!-- Colonne photo -->
-    <div style="
-        display:table-cell;
-        width:140px;
-        vertical-align:top;
-        background:#f0f4f8;
-        border-right:1px solid #dde8f2;
-        padding:16px 12px;
-        text-align:center;
-        -webkit-print-color-adjust:exact;
-        print-color-adjust:exact;
-    ">
-
-      <!-- Photo patient -->
+    <div style="display:table-cell; width:150px; vertical-align:middle; background:#f0f4f8; border-right:1px solid #dde8f2; padding:18px 14px; text-align:center; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
       {% if photo_b64 %}
-      <img src="{{ photo_b64 }}"
-           style="
-               width:108px; height:130px;
-               border:2.5px solid #1c3f6e;
-               border-radius:5px;
-               object-fit:cover;
-               display:block;
-               margin:0 auto 8px;
-           "
-           alt="Photo patient">
+      <img src="{{ photo_b64 }}" style="width:114px; height:138px; border:2.5px solid #1c3f6e; border-radius:6px; object-fit:cover; display:block; margin:0 auto 10px;" alt="Photo">
       {% else %}
-      <div style="
-          width:108px; height:130px;
-          background:#dde8f5;
-          border:2.5px solid #1c3f6e;
-          border-radius:5px;
-          margin:0 auto 8px;
-          padding-top:36px;
-          text-align:center;
-          color:#9ab0c8;
-          font-size:9pt;
-      ">
-        Photo<br>patient
-      </div>
+      <div style="width:114px; height:138px; background:#dde8f5; border:2.5px solid #1c3f6e; border-radius:6px; margin:0 auto 10px; padding-top:40px; text-align:center; color:#9ab0c8; font-size:9pt;">Photo<br>patient</div>
       {% endif %}
-
-      <!-- Badge RGPD -->
-      <div style="
-          display:inline-block;
-          background:#1c3f6e;
-          color:#ffffff;
-          font-size:6.5pt;
-          padding:2px 8px;
-          border-radius:10px;
-          margin-bottom:10px;
-          -webkit-print-color-adjust:exact;
-          print-color-adjust:exact;
-      ">Identité anonymisée — RGPD</div>
-
-      <!-- Séjour -->
-      <div style="
-          background:#1c3f6e;
-          border-radius:4px;
-          padding:6px 8px;
-          margin-bottom:6px;
-          text-align:left;
-          -webkit-print-color-adjust:exact;
-          print-color-adjust:exact;
-      ">
-        <div style="font-size:6.5pt; color:#a8c4e0; font-weight:bold; text-transform:uppercase;">
-          Séjour CERS
-        </div>
-        <div style="font-size:8.5pt; color:#ffffff; font-weight:bold;">
-          {{ entree.date_test }} → {{ sortie.date_test }}
-        </div>
-      </div>
-
-      <!-- Médecin -->
-      <div style="
-          background:#eef3fa;
-          border:1px solid #1c3f6e;
-          border-radius:4px;
-          padding:6px 8px;
-          text-align:left;
-      ">
-        <div style="font-size:6.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase;">
-          Médecin responsable
-        </div>
-        <div style="font-size:8pt; color:#1c3f6e; font-weight:bold;">
-          {% if cr and cr.medecin_responsable %}
-            Dr {{ cr.medecin_responsable }}
-          {% else %}
-            —
-          {% endif %}
-        </div>
-      </div>
-
+      <div style="display:inline-block; background:#1c3f6e; color:#ffffff; font-size:6pt; padding:2px 8px; border-radius:10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">Identit&#233; anonymis&#233;e &mdash; RGPD</div>
     </div>
 
-    <!-- Colonne infos -->
-    <div style="display:table-cell; vertical-align:top; padding:14px 18px;">
-
-      <!-- Nom anonymisé -->
-      <div style="
-          font-size:17pt;
-          font-weight:bold;
-          color:#1c3f6e;
-          border-bottom:2px solid #1c3f6e;
-          padding-bottom:6px;
-          margin-bottom:10px;
-      ">
+    <!-- Colonne nom + infos physiques -->
+    <div style="display:table-cell; vertical-align:middle; padding:16px 20px;">
+      <div style="font-size:20pt; font-weight:bold; color:#1c3f6e; line-height:1.1; margin-bottom:10px; border-bottom:2.5px solid #1c3f6e; padding-bottom:8px;">
         {{ anon(patient.nom) }}
       </div>
-
-      <!-- Grille infos 2 colonnes -->
-      <div style="display:table; width:100%; margin-bottom:10px;">
+      <div style="display:table; width:100%;">
         <div style="display:table-row;">
-          <div style="display:table-cell; padding:3px 6px 3px 0; width:50%; vertical-align:top;">
-            <div style="font-size:6.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase;">Date de naissance</div>
-            <div style="font-size:9pt; color:#1a1a1a;">
-              {% if cr and cr.date_naissance %}{{ cr.date_naissance }}{% endif %}
-              {% if patient.age %} · {{ patient.age }} ans{% endif %}
-            </div>
+          <div style="display:table-cell; width:50%; padding:4px 8px 4px 0; vertical-align:top; border-right:1px solid #e8eef5;">
+            <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">Date de naissance</div>
+            <div style="font-size:9.5pt; color:#1a1a1a; margin-top:1px;">{% if cr and cr.date_naissance %}{{ cr.date_naissance }}{% endif %}{% if patient.age %} &nbsp;·&nbsp; {{ patient.age }} ans{% endif %}</div>
           </div>
-          <div style="display:table-cell; padding:3px 0 3px 6px; vertical-align:top;">
-            <div style="font-size:6.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase;">Sport · Niveau</div>
-            <div style="font-size:9pt; color:#1a1a1a;">
-              {% if cr and cr.sport %}{{ cr.sport }}{% else %}{{ sport }}{% endif %}
-              {% if cr and cr.niveau %} · {{ cr.niveau }}{% endif %}
-            </div>
+          <div style="display:table-cell; width:50%; padding:4px 0 4px 8px; vertical-align:top;">
+            <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">Sport &nbsp;·&nbsp; Niveau</div>
+            <div style="font-size:9.5pt; color:#1a1a1a; margin-top:1px;">{% if cr and cr.sport %}{{ cr.sport }}{% else %}{{ sport }}{% endif %}{% if cr and cr.niveau %} &nbsp;&mdash;&nbsp; {{ cr.niveau }}{% endif %}</div>
           </div>
         </div>
         <div style="display:table-row;">
-          <div style="display:table-cell; padding:3px 6px 3px 0; vertical-align:top;">
-            <div style="font-size:6.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase;">Poids · Taille</div>
-            <div style="font-size:9pt; color:#1a1a1a;">
-              {{ patient.poids_kg }} kg · {{ patient.taille_cm }} cm
-            </div>
+          <div style="display:table-cell; padding:4px 8px 0 0; vertical-align:top; border-right:1px solid #e8eef5;">
+            <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">Poids &nbsp;·&nbsp; Taille</div>
+            <div style="font-size:9.5pt; color:#1a1a1a; margin-top:1px;">{{ patient.poids_kg }} kg &nbsp;·&nbsp; {{ patient.taille_cm }} cm</div>
           </div>
-          <div style="display:table-cell; padding:3px 0 3px 6px; vertical-align:top;">
-            <div style="font-size:6.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase;">Côté lésé · Sain</div>
-            <div style="font-size:9pt; color:#1a1a1a;">
-              {% set cote = cr.cote_lese if cr and cr.cote_lese else patient.lese %}
-              {{ cote }} (lésé) · {{ "Droit" if cote == "Gauche" else "Gauche" }} (sain)
-            </div>
-          </div>
-        </div>
-        <div style="display:table-row;">
-          <div style="display:table-cell; padding:3px 6px 3px 0; vertical-align:top;">
-            <div style="font-size:6.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase;">Délai post-opératoire</div>
-            <div style="font-size:9pt; color:#1a1a1a;">
-              {% if cr and cr.delai_postop_jours %}J+{{ cr.delai_postop_jours }} jours{% elif delai_post_op %}{{ delai_post_op }}{% else %}—{% endif %}
-            </div>
-          </div>
-          <div style="display:table-cell; padding:3px 0 3px 6px; vertical-align:top;">
-            <div style="font-size:6.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase;">Club</div>
-            <div style="font-size:9pt; color:#1a1a1a;">
-              {% if cr and cr.club %}{{ cr.club }}{% else %}{{ nom_club }}{% endif %}
-            </div>
+          <div style="display:table-cell; padding:4px 0 0 8px; vertical-align:top;">
+            <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">Club</div>
+            <div style="font-size:9.5pt; color:#1a1a1a; margin-top:1px;">{% if cr and cr.club %}{{ cr.club }}{% else %}{{ nom_club }}{% endif %}</div>
           </div>
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Diagnostic -->
-      <div style="
-          background:#fef5f5;
-          border:1px solid #e8b0b0;
-          border-left:3px solid #c0392b;
-          border-radius:0 4px 4px 0;
-          padding:7px 10px;
-          margin-bottom:8px;
-      ">
-        <div style="font-size:6.5pt; color:#c0392b; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:3px;">
-          Diagnostic principal
-        </div>
-        <div style="font-size:10pt; font-weight:bold; color:#c0392b;">
+  <!-- ── BANDE INFO : Séjour · Médecin · Côté · Délai ─────────── -->
+  <div style="display:table; width:100%; table-layout:fixed; background:#eef3fa; border-bottom:2px solid #1c3f6e; padding:8px 18px; box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+    <div style="display:table-cell; width:28%; vertical-align:middle; padding-right:12px; border-right:1px solid #c8d8ea;">
+      <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px;">S&#233;jour CERS</div>
+      <div style="font-size:9pt; color:#1c3f6e; font-weight:bold; margin-top:2px;">{{ entree.date_test }} &rarr; {{ sortie.date_test }}</div>
+    </div>
+    <div style="display:table-cell; width:30%; vertical-align:middle; padding:0 12px; border-right:1px solid #c8d8ea;">
+      <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px;">M&#233;decin responsable</div>
+      <div style="font-size:9pt; color:#1c3f6e; font-weight:bold; margin-top:2px;">{% if cr and cr.medecin_responsable %}Dr {{ cr.medecin_responsable }}{% else %}&mdash;{% endif %}</div>
+    </div>
+    <div style="display:table-cell; width:22%; vertical-align:middle; padding:0 12px; border-right:1px solid #c8d8ea;">
+      <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px;">C&#244;t&#233; l&#233;s&#233; &nbsp;·&nbsp; Sain</div>
+      <div style="font-size:9pt; color:#1c3f6e; font-weight:bold; margin-top:2px;">
+        {% set cote = cr.cote_lese if cr and cr.cote_lese else patient.lese %}
+        {{ cote }} &nbsp;·&nbsp; {{ "Droit" if cote == "Gauche" else "Gauche" }}
+      </div>
+    </div>
+    <div style="display:table-cell; width:20%; vertical-align:middle; padding-left:12px;">
+      <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px;">D&#233;lai post-op.</div>
+      <div style="font-size:9pt; color:#1c3f6e; font-weight:bold; margin-top:2px;">{% if cr and cr.delai_postop_jours %}J+{{ cr.delai_postop_jours }} j{% elif delai_post_op %}{{ delai_post_op }}{% else %}&mdash;{% endif %}</div>
+    </div>
+  </div>
+
+  <!-- ── DIAGNOSTIC + INTERVENTION ──────────────────────────────── -->
+  <div style="display:table; width:100%; table-layout:fixed; padding:10px 18px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
+    <div style="display:table-cell; width:50%; vertical-align:top; padding-right:10px; border-right:1px solid #e8eef5;">
+      <div style="background:#fef5f5; border-left:3px solid #c0392b; padding:8px 10px; border-radius:0 4px 4px 0;">
+        <div style="font-size:6pt; color:#c0392b; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:3px;">Diagnostic principal</div>
+        <div style="font-size:10pt; font-weight:bold; color:#c0392b; line-height:1.2;">
           {% if cr and cr.diagnostic %}{{ cr.diagnostic }}{% else %}{{ patient.articulation }} {{ patient.lese }}{% endif %}
         </div>
         {% if cr and cr.lesions_associees %}
-        <div style="font-size:7.5pt; color:#555; margin-top:2px;">
-          Lésions associées : {{ cr.lesions_associees }}
-        </div>
+        <div style="font-size:7.5pt; color:#666; margin-top:3px;">L&#233;sions associ&#233;es : {{ cr.lesions_associees }}</div>
+        {% endif %}
+        {% if cr and cr.date_accident %}
+        <div style="font-size:7.5pt; color:#888; margin-top:2px;">Accident : {{ cr.date_accident }}{% if cr.mecanisme %} &mdash; {{ cr.mecanisme }}{% endif %}</div>
         {% endif %}
       </div>
-
-      <!-- Intervention -->
-      <div style="
-          background:#eef3fa;
-          border:1px solid #b5cce8;
-          border-left:3px solid #1c3f6e;
-          border-radius:0 4px 4px 0;
-          padding:7px 10px;
-          margin-bottom:10px;
-      ">
-        <div style="font-size:6.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:3px;">
-          Intervention chirurgicale
+    </div>
+    <div style="display:table-cell; width:50%; vertical-align:top; padding-left:10px;">
+      <div style="background:#eef3fa; border-left:3px solid #1c3f6e; padding:8px 10px; border-radius:0 4px 4px 0;">
+        <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:3px;">Intervention chirurgicale</div>
+        <div style="font-size:10pt; font-weight:bold; color:#1c3f6e; line-height:1.2;">
+          {% if cr and cr.intervention %}{{ cr.intervention }}{% else %}&mdash;{% endif %}
         </div>
-        <div style="font-size:9.5pt; font-weight:bold; color:#1c3f6e;">
-          {% if cr and cr.intervention %}{{ cr.intervention }}{% else %}—{% endif %}
-          {% if cr and cr.date_intervention %} — {{ cr.date_intervention }}{% endif %}
-        </div>
-        {% if cr and cr.mecanisme %}
-        <div style="font-size:7.5pt; color:#555; margin-top:2px;">
-          Mécanisme : {{ cr.mecanisme }}
-          {% if cr and cr.date_accident %} — {{ cr.date_accident }}{% endif %}
-        </div>
+        {% if cr and cr.date_intervention %}
+        <div style="font-size:7.5pt; color:#555; margin-top:3px;">Date : {{ cr.date_intervention }}{% if cr.gestes_associes %} &mdash; {{ cr.gestes_associes }}{% endif %}</div>
+        {% endif %}
+        {% if cr and cr.delai_postop_jours %}
+        <div style="font-size:7.5pt; color:#888; margin-top:2px;">D&#233;lai &#224; l'entr&#233;e : {{ cr.delai_postop_jours }} jours post-op&#233;ratoire</div>
         {% endif %}
       </div>
-
     </div>
   </div>
 
-  <!-- RÉCAPITULATIF SÉJOUR -->
-  <div style="padding:10px 22px 8px; border-top:1px solid #e8eef5; flex-grow:1;">
-    <div style="font-size:7pt; font-weight:bold; color:#1c3f6e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px;">
-      Résumé du séjour au CERS
-    </div>
-    <div style="font-size:9pt; color:#333; line-height:1.8;">
-      {% if cr and cr.conclusion %}
-        {{ cr.conclusion[:420] }}{% if cr.conclusion|length > 420 %}…{% endif %}
+  <!-- ── DOSSIER CLINIQUE : Antécédents · Accident · Bilan entrée ─ -->
+  <div style="display:table; width:100%; table-layout:fixed; padding:8px 18px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
+    <div style="display:table-cell; width:33%; vertical-align:top; padding-right:8px; border-right:1px solid #e8eef5;">
+      <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">Ant&#233;c&#233;dents m&#233;dicaux</div>
+      {% if cr and cr.antecedents %}
+        {% for ant in cr.antecedents[:4] %}
+        <div style="font-size:7.5pt; color:#333; line-height:1.5;">&#9656; {{ ant }}</div>
+        {% endfor %}
       {% else %}
-        Prise en charge en rééducation post-opératoire au Centre Européen de Rééducation du Sportif.
-        Programme personnalisé incluant kinésithérapie intensive, préparation physique et reprise progressive des appuis.
+        <div style="font-size:7.5pt; color:#aaa; font-style:italic;">Aucun ant&#233;c&#233;dent renseign&#233;</div>
+      {% endif %}
+    </div>
+    <div style="display:table-cell; width:34%; vertical-align:top; padding:0 8px; border-right:1px solid #e8eef5;">
+      <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">M&#233;canisme &amp; accident</div>
+      <div style="font-size:7.5pt; color:#333; line-height:1.6;">
+        {% if cr and cr.mecanisme %}<div>&#9656; {{ cr.mecanisme }}</div>{% endif %}
+        {% if cr and cr.date_accident %}<div style="color:#888;">Date : {{ cr.date_accident }}</div>{% endif %}
+        {% if not cr or not cr.mecanisme %}<div style="color:#aaa; font-style:italic;">Non renseign&#233;</div>{% endif %}
+      </div>
+      {% if cr and cr.douleur_meca_entree %}
+      <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-top:5px; margin-bottom:2px;">Douleur m&#233;canique</div>
+      <div style="font-size:7.5pt; color:#333;">{{ cr.douleur_meca_entree }} / 10</div>
+      {% endif %}
+    </div>
+    <div style="display:table-cell; width:33%; vertical-align:top; padding-left:8px;">
+      <div style="font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">Bilan clinique entr&#233;e</div>
+      <div style="font-size:7.5pt; color:#333; line-height:1.6;">
+        {% if cr and cr.perimetre_rotulien_g %}<div>P&#233;rim&#232;tre G : {{ cr.perimetre_rotulien_g }} cm</div>{% endif %}
+        {% if cr and cr.perimetre_rotulien_d %}<div>P&#233;rim&#232;tre D : {{ cr.perimetre_rotulien_d }} cm</div>{% endif %}
+        {% if cr and cr.squat_sortie %}<div style="color:#2a8a36;">Squat : {{ cr.squat_sortie }}</div>{% endif %}
+        {% if cr and cr.saut_sortie %}<div style="color:#2a8a36;">Sauts : {{ cr.saut_sortie }}</div>{% endif %}
+        {% if not cr or (not cr.perimetre_rotulien_g and not cr.squat_sortie) %}<div style="color:#aaa; font-style:italic;">Non renseign&#233;</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RÉSUMÉ DU SÉJOUR ─────────────────────────────────────── -->
+  <div style="padding:10px 18px 8px; border-bottom:1px solid #e8eef5;">
+    <div style="font-size:6.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px;">R&#233;sum&#233; du s&#233;jour au CERS &mdash; Prise en charge &amp; &#233;volution</div>
+    <div style="font-size:8.5pt; color:#333; line-height:1.7;">
+      {% if cr and cr.conclusion %}
+        {{ cr.conclusion[:550] }}{% if cr.conclusion|length > 550 %}&#8230;{% endif %}
+      {% else %}
+        Prise en charge en r&#233;&#233;ducation post-op&#233;ratoire au Centre Europ&#233;en de R&#233;&#233;ducation du Sportif (CERS Capbreton &mdash; Groupe Ramsay Sant&#233;). Programme individualis&#233; comprenant : kin&#233;sith&#233;rapie intensive (renforcement musculaire progressif, travail proprioceptif, gain d'amplitude articulaire), pr&#233;paration physique adapt&#233;e (travail cardiovasculaire, gainage, pliom&#233;trie) et suivi psychologique avec &#233;valuation ACL-RSI. Reprise progressive des appuis et de la course. &#201;valuation isocin&#233;tique Biodex en entr&#233;e et sortie de s&#233;jour.
+      {% endif %}
+      {% if conclusion_auto %}
+      <div style="margin-top:5px; padding:5px 8px; background:#f0f8f0; border-left:2px solid #2a8a36; border-radius:0 3px 3px 0; font-size:8pt; color:#1a4a20; line-height:1.5;">
+        <strong>Progressions objectiv&#233;es :</strong> {{ conclusion_auto }}
+      </div>
       {% endif %}
     </div>
   </div>
 
-  <!-- SOMMAIRE -->
-  <div style="padding:8px 22px 12px;">
-    <div style="font-size:7pt; font-weight:bold; color:#1c3f6e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">
-      Ce rapport contient
+  <!-- ── SOMMAIRE COMPACT ────────────────────────────────────────── -->
+  <div style="display:table; width:100%; table-layout:fixed; padding:6px 18px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
+    <div style="display:table-cell; font-size:6pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; vertical-align:middle; width:18%;">Ce rapport contient</div>
+    <div style="display:table-cell; padding:0 4px; vertical-align:middle;">
+      <div style="background:#f0f4fa; border:0.5px solid #cddaea; border-radius:3px; padding:4px 7px; font-size:7pt; color:#1c3f6e; text-align:center;">&#9632; Biodex 60&#176;/s &amp; 240&#176;/s</div>
     </div>
+    <div style="display:table-cell; padding:0 4px; vertical-align:middle;">
+      <div style="background:#f0f4fa; border:0.5px solid #cddaea; border-radius:3px; padding:4px 7px; font-size:7pt; color:#1c3f6e; text-align:center;">&#9632; VALD ForceDecks</div>
+    </div>
+    <div style="display:table-cell; padding:0 4px; vertical-align:middle;">
+      <div style="background:#f0f4fa; border:0.5px solid #cddaea; border-radius:3px; padding:4px 7px; font-size:7pt; color:#1c3f6e; text-align:center;">&#9632; Graphiques progression</div>
+    </div>
+    <div style="display:table-cell; padding:0 4px; vertical-align:middle;">
+      <div style="background:#f5f5f5; border:0.5px solid #ddd; border-radius:3px; padding:4px 7px; font-size:7pt; color:#888; text-align:center;">&#9632; GPS Catapult (&#224; venir)</div>
+    </div>
+  </div>
+
+  <!-- ── REMARQUES CLINIQUES BIODEX (en bas) ────────────────────── -->
+  <div style="padding:6px 18px 50px; box-sizing:border-box;">
+    <div style="font-size:6.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Remarques cliniques &mdash; Bilan Biodex</div>
     <div style="display:table; width:100%; table-layout:fixed;">
-      <div style="display:table-row;">
-        <div style="display:table-cell; padding-right:6px; vertical-align:top;">
-          <div style="background:#f0f4fa; border:0.5px solid #cddaea; border-radius:4px; padding:5px 8px; display:table; width:100%;">
-            <div style="display:table-cell; width:14px; vertical-align:middle;">
-              <div style="width:7px; height:7px; border-radius:50%; background:#1c3f6e; -webkit-print-color-adjust:exact; print-color-adjust:exact;"></div>
-            </div>
-            <div style="display:table-cell; padding-left:6px; vertical-align:middle; font-size:7.5pt; color:#1c3f6e; line-height:1.3;">
-              Bilan isocinétique Biodex<br>60°/s et 240°/s · Concentrique
-            </div>
-          </div>
-        </div>
-        <div style="display:table-cell; padding-left:6px; vertical-align:top;">
-          <div style="background:#f0f4fa; border:0.5px solid #cddaea; border-radius:4px; padding:5px 8px; display:table; width:100%;">
-            <div style="display:table-cell; width:14px; vertical-align:middle;">
-              <div style="width:7px; height:7px; border-radius:50%; background:#2176c7; -webkit-print-color-adjust:exact; print-color-adjust:exact;"></div>
-            </div>
-            <div style="display:table-cell; padding-left:6px; vertical-align:middle; font-size:7.5pt; color:#1c3f6e; line-height:1.3;">
-              Sauts VALD ForceDecks<br>SLJ · CMJ · RSI-modified
-            </div>
-          </div>
-        </div>
+      <div style="display:table-cell; width:50%; vertical-align:top; padding-right:10px; border-right:1px solid #e8eef5;">
+        <div style="font-size:6pt; color:#c0392b; font-weight:bold; margin-bottom:2px;">&#9660; Points &#224; am&#233;liorer</div>
+        {% for p in remarques.points_attention[:3] %}
+          <div style="font-size:7.5pt; color:#c0392b; line-height:1.4; margin-bottom:1px;">&#9679; {{ p }}</div>
+        {% else %}
+          <div style="font-size:7.5pt; color:#2a8a36;">&#10003; Aucun d&#233;ficit significatif</div>
+        {% endfor %}
       </div>
-      <div style="display:table-row;">
-        <div style="display:table-cell; padding-right:6px; padding-top:5px; vertical-align:top;">
-          <div style="background:#f0f4fa; border:0.5px solid #cddaea; border-radius:4px; padding:5px 8px; display:table; width:100%;">
-            <div style="display:table-cell; width:14px; vertical-align:middle;">
-              <div style="width:7px; height:7px; border-radius:50%; background:#2a8a36; -webkit-print-color-adjust:exact; print-color-adjust:exact;"></div>
-            </div>
-            <div style="display:table-cell; padding-left:6px; vertical-align:middle; font-size:7.5pt; color:#1c3f6e; line-height:1.3;">
-              Graphiques de progression<br>Entrée → Sortie de séjour
-            </div>
-          </div>
-        </div>
-        <div style="display:table-cell; padding-left:6px; padding-top:5px; vertical-align:top;">
-          <div style="background:#f5f5f5; border:0.5px solid #ddd; border-radius:4px; padding:5px 8px; display:table; width:100%;">
-            <div style="display:table-cell; width:14px; vertical-align:middle;">
-              <div style="width:7px; height:7px; border-radius:50%; background:#888888; -webkit-print-color-adjust:exact; print-color-adjust:exact;"></div>
-            </div>
-            <div style="display:table-cell; padding-left:6px; vertical-align:middle; font-size:7.5pt; color:#888; line-height:1.3;">
-              Données GPS Catapult<br>À venir — section réservée
-            </div>
-          </div>
-        </div>
+      <div style="display:table-cell; width:50%; vertical-align:top; padding-left:10px;">
+        <div style="font-size:6pt; color:#2a8a36; font-weight:bold; margin-bottom:2px;">&#9650; Points positifs</div>
+        {% for p in remarques.points_positifs[:3] %}
+          <div style="font-size:7.5pt; color:#2a8a36; line-height:1.4; margin-bottom:1px;">&#10003; {{ p }}</div>
+        {% endfor %}
+        {% if not remarques.points_positifs %}
+          <div style="font-size:7.5pt; color:#aaa; font-style:italic;">En cours d'&#233;valuation</div>
+        {% endif %}
       </div>
     </div>
   </div>

@@ -395,58 +395,83 @@ def _graphique_progression_2courbes_impl(
     val_e = p_entree["moment_max"] or 1.0
     val_s = p_sortie["moment_max"] or 1.0
     peak  = min(p_entree.get("angle", 65), 90)
-    sigma = 25.0
+    amp   = p_entree.get("amplitude", 100)
+    sigma = amp * 0.28
 
     prog = 0.0
     if val_e != 0:
         prog = ((val_s - val_e) / abs(val_e)) * 100
 
-    # Gaussian directe sur x=0..100, clip pour garantir y>=0
-    x = np.linspace(0, 100, 200)
-    y_e = val_e * np.exp(-0.5 * ((x - peak) / sigma) ** 2)
-    y_s = val_s * np.exp(-0.5 * ((x - peak) / sigma) ** 2)
-    y_e = np.clip(y_e, 0, None)
-    y_s = np.clip(y_s, 0, None)
+    # Courbes gaussiennes réalistes (même méthode que graphique_en_base64)
+    angles_e, moments_e = courbe_biodex(val_e, peak, amp)
+    angles_s, moments_s = courbe_biodex(val_s, peak, amp)
 
-    fig, ax = plt.subplots(figsize=(4.2, 2.8))
+    couleur_e = '#1c3f6e'
+    couleur_s = '#2176c7'
+    c_prog    = '#2a8a36' if prog >= 5 else ('#c0392b' if prog <= -5 else '#555555')
+
+    dashes_solid = (None, None)
+    dashes_dash  = (6, 3)
+    dash = dashes_dash if linestyle == '--' else dashes_solid
+
+    fig, ax = plt.subplots(figsize=(5.5, 3.8))
     fig.patch.set_facecolor('white')
-    ax.set_facecolor('white')
+    ax.set_facecolor('#fafcff')
 
-    dashes = (5, 3) if linestyle == '--' else (None, None)
-    ax.plot(x, y_e, color='#1c3f6e', linewidth=2.5, linestyle=linestyle,
-            dashes=dashes, alpha=1.0)
-    ax.plot(x, y_s, color='#2176c7', linewidth=2.5, linestyle=linestyle,
-            dashes=dashes, alpha=1.0)
+    ax.plot(angles_e, moments_e, color=couleur_e, linewidth=2.4,
+            linestyle=linestyle, dashes=dash if linestyle == '--' else (None, None),
+            label=f'Entrée  {val_e:.0f} N·m', zorder=3)
+    ax.plot(angles_s, moments_s, color=couleur_s, linewidth=2.4,
+            linestyle=linestyle, dashes=dash if linestyle == '--' else (None, None),
+            label=f'Sortie   {val_s:.0f} N·m', zorder=3)
 
-    # Marqueurs sur les pics
-    idx_e = int(np.argmax(y_e))
-    idx_s = int(np.argmax(y_s))
-    ax.plot(x[idx_e], y_e[idx_e], 'o', color='#1c3f6e', markersize=5, zorder=5)
-    ax.plot(x[idx_s], y_s[idx_s], 's', color='#2176c7', markersize=5, zorder=5)
+    # Marqueurs pics
+    idx_e = int(np.argmax(moments_e))
+    idx_s = int(np.argmax(moments_s))
+    ax.plot(angles_e[idx_e], moments_e[idx_e], 'o', color=couleur_e,
+            markersize=7, zorder=5)
+    ax.plot(angles_s[idx_s], moments_s[idx_s], 's', color=couleur_s,
+            markersize=7, zorder=5)
 
-    c_prog = '#1c3f6e' if prog >= 0 else '#555555'
-    ax.set_title(f'{titre} : {prog:+.1f}%',
-                 fontsize=7, fontweight='bold', color=c_prog, pad=2)
-    ax.set_xlabel('Angle (deg)', fontsize=6.5)
-    ax.set_ylabel('Moment (N.m)', fontsize=6.5)
-    ax.set_xlim(0, 100)
-    ax.set_ylim(0, max(val_e, val_s) * 1.2)
-    ax.grid(True, alpha=0.2, linewidth=0.5, color='#aaa')
-    ax.tick_params(colors='#666666', labelsize=5.5)
-    ax.legend(
-        [f'Entree ({val_e:.0f} N.m)', f'Sortie  ({val_s:.0f} N.m)'],
-        fontsize=6, loc='upper right', framealpha=0.9, edgecolor='#dddddd'
-    )
+    # Annotations valeurs pics
+    ax.annotate(f'{val_e:.0f}',
+                xy=(angles_e[idx_e], moments_e[idx_e]),
+                xytext=(angles_e[idx_e] + 4, moments_e[idx_e] + val_e * 0.06),
+                fontsize=8, color=couleur_e, fontweight='bold')
+    ax.annotate(f'{val_s:.0f}',
+                xy=(angles_s[idx_s], moments_s[idx_s]),
+                xytext=(angles_s[idx_s] - 14, moments_s[idx_s] + val_s * 0.06),
+                fontsize=8, color=couleur_s, fontweight='bold')
+
+    # Progression badge
+    sign = '▲' if prog >= 0 else '▼'
+    ax.text(0.97, 0.95, f'{sign} {prog:+.1f}%',
+            transform=ax.transAxes, fontsize=10, fontweight='bold',
+            color=c_prog, ha='right', va='top',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
+                      edgecolor=c_prog, linewidth=1.2, alpha=0.9))
+
+    ax.set_title(titre, fontsize=10, fontweight='bold', pad=8, color='#1a1a1a')
+    ax.set_xlabel('Angle articulaire (°)', fontsize=9, color='#444444')
+    ax.set_ylabel('Moment (N·m)', fontsize=9, color='#444444')
+    ax.set_xlim(0, amp + 5)
+    ymax = max(val_e, val_s) * 1.25
+    ax.set_ylim(0, ymax)
+    ax.tick_params(axis='both', labelsize=8, colors='#555555')
+    ax.grid(True, axis='both', alpha=0.3, linewidth=0.6, color='#bbbbbb', linestyle='-')
+    ax.set_axisbelow(True)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_color('#dddddd')
-    ax.spines['left'].set_linewidth(0.6)
-    ax.spines['bottom'].set_color('#dddddd')
-    ax.spines['bottom'].set_linewidth(0.6)
+    ax.spines['left'].set_color('#cccccc')
+    ax.spines['left'].set_linewidth(0.8)
+    ax.spines['bottom'].set_color('#cccccc')
+    ax.spines['bottom'].set_linewidth(0.8)
+    ax.legend(fontsize=8.5, loc='upper left', framealpha=0.92,
+              edgecolor='#dddddd', fancybox=True)
 
-    fig.tight_layout(pad=0.3)
+    plt.subplots_adjust(left=0.12, right=0.96, top=0.88, bottom=0.14)
     buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=150, bbox_inches='tight', facecolor='white')
+    fig.savefig(buf, format='png', dpi=180, bbox_inches='tight', facecolor='white')
     plt.close(fig)
     buf.seek(0)
     return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()

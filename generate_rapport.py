@@ -250,6 +250,36 @@ def _generer_conclusion_auto(remarques, entree, sortie) -> str:
     return " · ".join(lignes[:8])
 
 
+def _generer_remarques_vitesse(serie_e, serie_s, vitesse_label: str) -> dict:
+    """Génère les remarques clés (déficits, progressions) pour une vitesse donnée."""
+    attention, positif = [], []
+    if serie_e is None or serie_s is None:
+        return {"attention": [], "positif": [], "vitesse": vitesse_label}
+    for attr, label in [
+        ("ext_moment_max",    "Ext. Moment Max"),
+        ("flex_moment_max",   "Flex. Moment Max"),
+        ("ext_puissance_max", "Ext. Puissance"),
+        ("flex_puissance_max","Flex. Puissance"),
+    ]:
+        try:
+            lese_s = getattr(getattr(serie_s, attr, None), "lese_g", None)
+            sain_s = getattr(getattr(serie_s, attr, None), "sain_d", None)
+            lese_e = getattr(getattr(serie_e, attr, None), "lese_g", None)
+            if lese_s and sain_s and sain_s != 0:
+                deficit = (lese_s - sain_s) / abs(sain_s) * 100
+                if deficit < -15:
+                    attention.append(f"{label} : déficit {abs(deficit):.1f}% (L={lese_s:.0f} vs S={sain_s:.0f} N·m)")
+                elif -10 <= deficit <= 5 and lese_s > 0:
+                    positif.append(f"{label} : symétrie {abs(deficit):.1f}%")
+            if lese_e and lese_s and lese_e != 0:
+                prog = (lese_s - lese_e) / abs(lese_e) * 100
+                if prog >= 5:
+                    positif.append(f"{label} lésé : +{prog:.1f}% ({lese_e:.0f}→{lese_s:.0f} N·m)")
+        except Exception:
+            pass
+    return {"attention": attention[:3], "positif": positif[:3], "vitesse": vitesse_label}
+
+
 def construire_contexte(
     entree, sortie, df_comp,
     comparatif_data: dict = None,
@@ -270,6 +300,14 @@ def construire_contexte(
     cmj_entree_data=None,
     cmj_sortie_data=None,
     cr_data: Optional[dict] = None,
+    titre_rapport: str = "",
+    notes_seance: str = "",
+    diagnostic_override: str = "",
+    intervention_override: str = "",
+    resume_override: str = "",
+    include_excentrique: bool = True,
+    include_vald: bool = True,
+    include_progression: bool = True,
 ) -> dict:
 
     poids        = entree.poids_kg or sortie.poids_kg or 101.0
@@ -647,6 +685,16 @@ def construire_contexte(
         "has_vald":         has_vald,
         "cr":               cr_data or {},
         "conclusion_auto":  _generer_conclusion_auto(remarques, entree, sortie),
+        "remarques_60":     _generer_remarques_vitesse(e60, s60p, "60°/s"),
+        "remarques_240":    _generer_remarques_vitesse(e240, s240p, "240°/s"),
+        "titre_rapport":    titre_rapport or "Bilan Complet du Patient",
+        "notes_seance":     notes_seance,
+        "diagnostic_override":    diagnostic_override,
+        "intervention_override":  intervention_override,
+        "resume_override":        resume_override,
+        "include_excentrique":    include_excentrique,
+        "include_vald":           include_vald,
+        "include_progression":    include_progression,
     }
 
 
@@ -764,6 +812,14 @@ def generer_rapport_biodex(
     cote_opere:              str = "",
     acl_rsi_score:           Optional[int] = None,
     remarques_medecin:       str = "",
+    titre_rapport:           str = "",
+    notes_seance:            str = "",
+    diagnostic_override:     str = "",
+    intervention_override:   str = "",
+    resume_override:         str = "",
+    include_excentrique:     bool = True,
+    include_vald:            bool = True,
+    include_progression:     bool = True,
 ) -> str:
 
     print("\n" + "█" * 60)
@@ -823,6 +879,14 @@ def generer_rapport_biodex(
         cmj_entree_data=vald_cmj_entree,
         cmj_sortie_data=vald_cmj_sortie,
         cr_data=cr_data,
+        titre_rapport=titre_rapport,
+        notes_seance=notes_seance,
+        diagnostic_override=diagnostic_override,
+        intervention_override=intervention_override,
+        resume_override=resume_override,
+        include_excentrique=include_excentrique,
+        include_vald=include_vald,
+        include_progression=include_progression,
     )
     print("  ✅ Contexte prêt")
 

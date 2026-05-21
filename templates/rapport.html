@@ -792,7 +792,7 @@ body {
       <div style="background:#fef5f5; border-left:3px solid #c0392b; padding:10px 12px; border-radius:0 4px 4px 0;">
         <div style="font-size:7.5pt; color:#c0392b; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">Diagnostic principal</div>
         <div style="font-size:12pt; font-weight:bold; color:#c0392b; line-height:1.2;">
-          {% if cr and cr.diagnostic %}{{ cr.diagnostic }}{% else %}{{ patient.articulation }} {{ patient.lese }}{% endif %}
+          {% if diagnostic_override %}{{ diagnostic_override }}{% elif cr and cr.diagnostic %}{{ cr.diagnostic }}{% else %}{{ patient.articulation }} {{ patient.lese }}{% endif %}
         </div>
         {% if cr and cr.lesions_associees %}
         <div style="font-size:9pt; color:#666; margin-top:4px;">L&#233;sions associ&#233;es : {{ cr.lesions_associees }}</div>
@@ -806,7 +806,7 @@ body {
       <div style="background:#eef3fa; border-left:3px solid #1c3f6e; padding:10px 12px; border-radius:0 4px 4px 0;">
         <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">Intervention chirurgicale</div>
         <div style="font-size:12pt; font-weight:bold; color:#1c3f6e; line-height:1.2;">
-          {% if cr and cr.intervention %}{{ cr.intervention }}{% else %}&mdash;{% endif %}
+          {% if intervention_override %}{{ intervention_override }}{% elif cr and cr.intervention %}{{ cr.intervention }}{% else %}&mdash;{% endif %}
         </div>
         {% if cr and cr.date_intervention %}
         <div style="font-size:9pt; color:#555; margin-top:4px;">Date : {{ cr.date_intervention }}{% if cr.gestes_associes %} &mdash; {{ cr.gestes_associes }}{% endif %}</div>
@@ -858,7 +858,9 @@ body {
   <div style="padding:12px 18px 10px; border-bottom:1px solid #e8eef5;">
     <div style="font-size:8pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">R&#233;sum&#233; du s&#233;jour au CERS &mdash; Prise en charge &amp; &#233;volution</div>
     <div style="font-size:10pt; color:#333; line-height:1.75;">
-      {% if cr and cr.conclusion %}
+      {% if resume_override %}
+        {{ resume_override }}
+      {% elif cr and cr.conclusion %}
         {{ cr.conclusion }}
       {% else %}
         Prise en charge en r&#233;&#233;ducation post-op&#233;ratoire au Centre Europ&#233;en de R&#233;&#233;ducation du Sportif (CERS Capbreton &mdash; Groupe Ramsay Sant&#233;). Programme individualis&#233; comprenant : kin&#233;sith&#233;rapie intensive (renforcement musculaire progressif, travail proprioceptif, gain d'amplitude articulaire), pr&#233;paration physique adapt&#233;e (travail cardiovasculaire, gainage, pliom&#233;trie) et suivi psychologique avec &#233;valuation ACL-RSI. Reprise progressive des appuis et de la course. &#201;valuation isocin&#233;tique Biodex en entr&#233;e et sortie de s&#233;jour.
@@ -871,20 +873,83 @@ body {
     </div>
   </div>
 
-  <!-- ── SOMMAIRE COMPACT ────────────────────────────────────────── -->
-  <div style="display:table; width:100%; table-layout:fixed; padding:10px 18px 46px; box-sizing:border-box;">
-    <div style="display:table-cell; font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; vertical-align:middle; width:18%;">Ce rapport contient</div>
-    <div style="display:table-cell; padding:0 4px; vertical-align:middle;">
-      <div style="background:#f0f4fa; border:0.5px solid #cddaea; border-radius:3px; padding:6px 7px; font-size:8.5pt; color:#1c3f6e; text-align:center;">&#9632; Biodex 60&#176;/s &amp; 240&#176;/s</div>
+  <!-- ── SOMMAIRE DÉTAILLÉ ────────────────────────────────────────── -->
+  <div style="padding:10px 18px 46px; box-sizing:border-box;">
+    <div style="font-size:8pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px; padding-bottom:4px; border-bottom:1.5px solid #eef3fa;">Contenu de ce rapport</div>
+
+    <!-- Test 1 : Biodex 60°/s -->
+    <div style="display:table; width:100%; table-layout:fixed; margin-bottom:6px;">
+      <div style="display:table-cell; width:26%; vertical-align:top; padding-right:10px; border-right:2px solid #1c3f6e;">
+        <div style="font-size:9pt; font-weight:bold; color:#1c3f6e;">&#9632; Bilan Isocinétique 60&#176;/s</div>
+        <div style="font-size:7.5pt; color:#888; margin-top:1px;">Concentrique / Concentrique</div>
+      </div>
+      <div style="display:table-cell; vertical-align:top; padding-left:10px;">
+        <div style="display:table; width:100%;">
+          <div style="display:table-cell; width:34%; font-size:8.5pt; color:#333; line-height:1.7;">&#8212; Moment Max (N·m)<br>&#8212; Moment / Poids (%)</div>
+          <div style="display:table-cell; width:33%; font-size:8.5pt; color:#333; line-height:1.7;">&#8212; Puissance Max (W)<br>&#8212; Travail Total (J)</div>
+          <div style="display:table-cell; width:33%; font-size:8.5pt; color:#333; line-height:1.7;">&#8212; Déficit Lésé/Sain<br>&#8212; Ratio I/Q &amp; Courbes D vs G</div>
+        </div>
+      </div>
     </div>
-    <div style="display:table-cell; padding:0 4px; vertical-align:middle;">
-      <div style="background:#f0f4fa; border:0.5px solid #cddaea; border-radius:3px; padding:6px 7px; font-size:8.5pt; color:#1c3f6e; text-align:center;">&#9632; VALD ForceDecks</div>
+
+    <!-- Test 2 : Biodex 240°/s -->
+    <div style="display:table; width:100%; table-layout:fixed; margin-bottom:6px; border-top:1px solid #f0f4fa; padding-top:6px;">
+      <div style="display:table-cell; width:26%; vertical-align:top; padding-right:10px; border-right:2px solid #1c3f6e;">
+        <div style="font-size:9pt; font-weight:bold; color:#1c3f6e;">&#9632; Bilan Isocinétique 240&#176;/s</div>
+        <div style="font-size:7.5pt; color:#888; margin-top:1px;">Concentrique / Concentrique</div>
+      </div>
+      <div style="display:table-cell; vertical-align:top; padding-left:10px;">
+        <div style="display:table; width:100%;">
+          <div style="display:table-cell; width:34%; font-size:8.5pt; color:#333; line-height:1.7;">&#8212; Moment Max (N·m)<br>&#8212; Moment / Poids (%)</div>
+          <div style="display:table-cell; width:33%; font-size:8.5pt; color:#333; line-height:1.7;">&#8212; Puissance Max (W)<br>&#8212; Travail Total (J)</div>
+          <div style="display:table-cell; width:33%; font-size:8.5pt; color:#333; line-height:1.7;">&#8212; Déficit Lésé/Sain<br>&#8212; Ratio I/Q &amp; Courbes D vs G</div>
+        </div>
+      </div>
     </div>
-    <div style="display:table-cell; padding:0 4px; vertical-align:middle;">
-      <div style="background:#f0f4fa; border:0.5px solid #cddaea; border-radius:3px; padding:6px 7px; font-size:8.5pt; color:#1c3f6e; text-align:center;">&#9632; Graphiques progression</div>
+
+    {% if excentrique and excentrique.ext_lese %}
+    <!-- Test 3 : Excentrique -->
+    <div style="display:table; width:100%; table-layout:fixed; margin-bottom:6px; border-top:1px solid #f0f4fa; padding-top:6px;">
+      <div style="display:table-cell; width:26%; vertical-align:top; padding-right:10px; border-right:2px solid #2176c7;">
+        <div style="font-size:9pt; font-weight:bold; color:#2176c7;">&#9632; Test Excentrique 30&#176;/s</div>
+        <div style="font-size:7.5pt; color:#888; margin-top:1px;">Excentrique / Excentrique</div>
+      </div>
+      <div style="display:table-cell; vertical-align:top; padding-left:10px;">
+        <div style="display:table; width:100%;">
+          <div style="display:table-cell; width:34%; font-size:8.5pt; color:#333; line-height:1.7;">&#8212; Moment Max Extension<br>&#8212; Moment Max Flexion</div>
+          <div style="display:table-cell; width:33%; font-size:8.5pt; color:#333; line-height:1.7;">&#8212; Travail Total (J)<br>&#8212; Puissance Max (W)</div>
+          <div style="display:table-cell; width:33%; font-size:8.5pt; color:#333; line-height:1.7;">&#8212; Déficit L/S (%)<br>&#8212; Ratio mixte Exc/Conc</div>
+        </div>
+      </div>
     </div>
-    <div style="display:table-cell; padding:0 4px; vertical-align:middle;">
-      <div style="background:#f5f5f5; border:0.5px solid #ddd; border-radius:3px; padding:6px 7px; font-size:8.5pt; color:#888; text-align:center;">&#9632; GPS Catapult (&#224; venir)</div>
+    {% endif %}
+
+    {% if vald and vald.has_data %}
+    <!-- Test 4 : VALD -->
+    <div style="display:table; width:100%; table-layout:fixed; margin-bottom:6px; border-top:1px solid #f0f4fa; padding-top:6px;">
+      <div style="display:table-cell; width:26%; vertical-align:top; padding-right:10px; border-right:2px solid #2a8a36;">
+        <div style="font-size:9pt; font-weight:bold; color:#2a8a36;">&#9632; VALD ForceDecks</div>
+        <div style="font-size:7.5pt; color:#888; margin-top:1px;">Sauts unipodaux &amp; bilatéraux</div>
+      </div>
+      <div style="display:table-cell; vertical-align:top; padding-left:10px;">
+        <div style="display:table; width:100%;">
+          <div style="display:table-cell; width:34%; font-size:8.5pt; color:#333; line-height:1.7;">&#8212; Single Leg Jump (SLJ)<br>&#8212; Hauteur de saut (cm)</div>
+          <div style="display:table-cell; width:33%; font-size:8.5pt; color:#333; line-height:1.7;">&#8212; RSI-modified (m/s)<br>&#8212; CMJ bilatéral</div>
+          <div style="display:table-cell; width:33%; font-size:8.5pt; color:#333; line-height:1.7;">&#8212; Déficit D/G (%)<br>&#8212; Progression entrée→sortie</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- GPS (toujours présent) -->
+    <div style="display:table; width:100%; table-layout:fixed; border-top:1px solid #f0f4fa; padding-top:6px; opacity:0.55;">
+      <div style="display:table-cell; width:26%; vertical-align:top; padding-right:10px; border-right:2px solid #aaa;">
+        <div style="font-size:9pt; font-weight:bold; color:#888;">&#9632; GPS Catapult</div>
+        <div style="font-size:7.5pt; color:#aaa; margin-top:1px;">À venir</div>
+      </div>
+      <div style="display:table-cell; vertical-align:top; padding-left:10px;">
+        <div style="font-size:8.5pt; color:#aaa; line-height:1.7;">&#8212; Distance totale (m) &nbsp;&#8212; Charge (AU) &nbsp;&#8212; Accélérations/Décélérations &nbsp;&#8212; Vitesse max (km/h)</div>
+      </div>
     </div>
   </div>
 
@@ -957,6 +1022,9 @@ body {
   <div class="page-content">
 
     <div class="bilan-title">BILAN ISOCINETIQUE — Genou {{ entree.lese }} — 60&#176;/s</div>
+    <div style="font-size:7.5pt; color:#555; text-align:center; margin:0 0 3px 0; padding:2px 0; flex-shrink:0;">
+      Protocole : Concentrique / Concentrique &nbsp;&#183;&nbsp; Vitesse 60&#176;/s &nbsp;&#183;&nbsp; Genou {{ entree.lese }}
+    </div>
 
     {{ tableau(s60, serie60_meta, "Vitesse 60deg/s — Force (Isocinetique Lent)", entree.date_test, sortie.date_test, 60) }}
 
@@ -989,10 +1057,34 @@ body {
     </div>
 
     <div class="footer">
-      <div class="footer-logo">
-        {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
-        {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
+    <!-- REMARQUES 60°/s (en bas de page) -->
+    {% if remarques_60 and (remarques_60.attention or remarques_60.positif) %}
+    <div style="background:#f5f8fc; border-top:2px solid #1c3f6e; padding:5px 0 3px 0; flex-shrink:0; margin-top:auto; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+      <div style="font-size:7pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:3px; padding:0 4px;">&#9656; Points clés &#8212; Bilan 60&#176;/s</div>
+      <div style="display:table; width:100%; table-layout:fixed;">
+        <div style="display:table-cell; width:50%; vertical-align:top; padding-right:4px; border-right:1px solid #dde8f2;">
+          <div style="font-size:7pt; font-weight:bold; color:#c0392b; padding:0 4px; margin-bottom:1px;">À surveiller :</div>
+          {% for p in remarques_60.attention %}
+          <div style="font-size:7.5pt; color:#c0392b; line-height:1.4; padding:0 4px;">&#9679; {{ p }}</div>
+          {% else %}
+          <div style="font-size:7.5pt; color:#2a8a36; padding:0 4px;">&#10003; Aucun déficit notable</div>
+          {% endfor %}
+        </div>
+        <div style="display:table-cell; width:50%; vertical-align:top; padding-left:4px;">
+          <div style="font-size:7pt; font-weight:bold; color:#2a8a36; padding:0 4px; margin-bottom:1px;">Progressions :</div>
+          {% for p in remarques_60.positif %}
+          <div style="font-size:7.5pt; color:#2a8a36; line-height:1.4; padding:0 4px;">&#9650; {{ p }}</div>
+          {% else %}
+          <div style="font-size:7.5pt; color:#888; font-style:italic; padding:0 4px;">Données en cours d'analyse</div>
+          {% endfor %}
+        </div>
       </div>
+    </div>
+    {% endif %}
+
+      <div class="footer">
+        {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS" class="footer-logo">
+        {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
       <div class="footer-mention">*Seuls les resultats cles sont affiches. Les rapports originaux detailles ont ete envoyes separement.</div>
       <div class="footer-page">Page 2 / {% if vald and vald.has_data %}7{% else %}6{% endif %}</div>
     </div>
@@ -1044,6 +1136,9 @@ body {
   <div class="page-content">
 
     <div class="bilan-title">BILAN ISOCINETIQUE — Genou {{ entree.lese }} — 240&#176;/s</div>
+    <div style="font-size:7.5pt; color:#555; text-align:center; margin:0 0 3px 0; padding:2px 0; flex-shrink:0;">
+      Protocole : Concentrique / Concentrique &nbsp;&#183;&nbsp; Vitesse 240&#176;/s &nbsp;&#183;&nbsp; Genou {{ entree.lese }}
+    </div>
 
     {{ tableau(s240, serie240_meta, "Vitesse 240deg/s — Puissance (Isocinetique Rapide)", entree.date_test, sortie.date_test, 240) }}
 
@@ -1074,6 +1169,31 @@ body {
         </div>
       </div>
     </div>
+
+    <!-- REMARQUES 240°/s (en bas de page) -->
+    {% if remarques_240 and (remarques_240.attention or remarques_240.positif) %}
+    <div style="background:#f5f8fc; border-top:2px solid #1c3f6e; padding:5px 0 3px 0; flex-shrink:0; margin-top:auto; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+      <div style="font-size:7pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:3px; padding:0 4px;">&#9656; Points clés &#8212; Bilan 240&#176;/s</div>
+      <div style="display:table; width:100%; table-layout:fixed;">
+        <div style="display:table-cell; width:50%; vertical-align:top; padding-right:4px; border-right:1px solid #dde8f2;">
+          <div style="font-size:7pt; font-weight:bold; color:#c0392b; padding:0 4px; margin-bottom:1px;">À surveiller :</div>
+          {% for p in remarques_240.attention %}
+          <div style="font-size:7.5pt; color:#c0392b; line-height:1.4; padding:0 4px;">&#9679; {{ p }}</div>
+          {% else %}
+          <div style="font-size:7.5pt; color:#2a8a36; padding:0 4px;">&#10003; Aucun déficit notable</div>
+          {% endfor %}
+        </div>
+        <div style="display:table-cell; width:50%; vertical-align:top; padding-left:4px;">
+          <div style="font-size:7pt; font-weight:bold; color:#2a8a36; padding:0 4px; margin-bottom:1px;">Progressions :</div>
+          {% for p in remarques_240.positif %}
+          <div style="font-size:7.5pt; color:#2a8a36; line-height:1.4; padding:0 4px;">&#9650; {{ p }}</div>
+          {% else %}
+          <div style="font-size:7.5pt; color:#888; font-style:italic; padding:0 4px;">Données en cours d'analyse</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
     <div class="footer">
       <div class="footer-logo">
@@ -1250,24 +1370,26 @@ body {
       </div>
     </div>
 
-    <!-- REMARQUES MÉDICALES + RÉSUMÉ CR (en bas) -->
-    <div style="display:table; width:100%; table-layout:fixed; flex-shrink:0;">
-      <div style="display:table-cell; width:50%; vertical-align:top; padding-right:3px;">
-        <div style="background:#374151; color:white; font-size:7px; font-weight:700; padding:2px 8px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">REMARQUES M&#201;DICALES</div>
-        <div style="border:1px solid #374151; border-top:none; border-radius:0 0 3px 3px; padding:4px 8px; background:#f9fafb; min-height:24px;">
-          {% if remarques_medecin %}<div style="font-size:7.5pt; color:#374151; line-height:1.5; overflow-wrap:anywhere;">{{ remarques_medecin }}</div>
-          {% else %}<div style="font-size:7.5pt; color:#aaa; font-style:italic;">Aucune remarque renseign&#233;e.</div>{% endif %}
-        </div>
-      </div>
-      <div style="display:table-cell; width:50%; vertical-align:top; padding-left:3px;">
-        {% if cr and cr.conclusion %}
-        <div style="background:#1c3f6e; color:white; font-size:7px; font-weight:700; padding:2px 8px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">R&#201;SUM&#201; COMPTE-RENDU M&#201;DICAL</div>
-        <div style="border:1px solid #1c3f6e; border-top:none; border-radius:0 0 3px 3px; padding:4px 8px; background:#f5f8fc; min-height:24px;">
-          <div style="font-size:7.5pt; color:#333; line-height:1.5; overflow-wrap:anywhere;">{{ cr.conclusion[:320] }}{% if cr.conclusion|length > 320 %}&#8230;{% endif %}</div>
-        </div>
+    <!-- REMARQUES MÉDICALES (pleine largeur) -->
+    <div style="flex-shrink:0; margin-bottom:3px;">
+      <div style="background:#374151; color:white; font-size:7.5px; font-weight:700; padding:3px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">&#9656; REMARQUES M&#201;DICALES</div>
+      <div style="border:1.5px solid #374151; border-top:none; border-radius:0 0 3px 3px; padding:6px 12px; background:#f9fafb; min-height:36px;">
+        {% if remarques_medecin %}
+        <div style="font-size:8pt; color:#374151; line-height:1.6; overflow-wrap:anywhere; white-space:pre-wrap;">{{ remarques_medecin }}</div>
+        {% else %}
+        <div style="font-size:8pt; color:#aaa; font-style:italic;">Aucune remarque renseign&#233;e.</div>
         {% endif %}
       </div>
     </div>
+    {% if cr and cr.conclusion %}
+    <!-- RÉSUMÉ CR MÉDECIN (pleine largeur) -->
+    <div style="flex-shrink:0; margin-bottom:2px;">
+      <div style="background:#1c3f6e; color:white; font-size:7.5px; font-weight:700; padding:3px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">&#9656; R&#201;SUM&#201; COMPTE-RENDU M&#201;DICAL</div>
+      <div style="border:1.5px solid #1c3f6e; border-top:none; border-radius:0 0 3px 3px; padding:6px 12px; background:#f5f8fc; min-height:24px;">
+        <div style="font-size:8pt; color:#333; line-height:1.6; overflow-wrap:anywhere;">{{ cr.conclusion[:420] }}{% if cr.conclusion|length > 420 %}&#8230;{% endif %}</div>
+      </div>
+    </div>
+    {% endif %}
 
     <div class="footer">
       <div class="footer-logo">

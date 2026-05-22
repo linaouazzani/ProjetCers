@@ -146,16 +146,6 @@ if "rapport_nom" not in st.session_state:
     st.session_state.rapport_nom = None
 if "rapport_ext" not in st.session_state:
     st.session_state.rapport_ext = "html"
-if "rapport_phase" not in st.session_state:
-    st.session_state.rapport_phase = "input"   # "input" | "personalize" | "done"
-if "parsed_entree" not in st.session_state:
-    st.session_state.parsed_entree = None
-if "parsed_sortie" not in st.session_state:
-    st.session_state.parsed_sortie = None
-if "parsed_cr" not in st.session_state:
-    st.session_state.parsed_cr = None
-if "temp_paths" not in st.session_state:
-    st.session_state.temp_paths = {}
 
 
 # ── En-tête ───────────────────────────────────────────────────────────────────
@@ -585,7 +575,7 @@ with col_right:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── ÉTAPE 1 : Bouton "Préparer" ─────────────────────────────────
+    # Génération
     st.markdown('<div class="card"><div class="card-title">🚀 Générer le Rapport PDF</div>', unsafe_allow_html=True)
 
     erreurs = []
@@ -597,40 +587,59 @@ with col_right:
     for e in erreurs:
         st.warning(f"⚠️ {e}")
 
-    if st.session_state.rapport_phase == "input":
-        btn_gen = st.button("📝  Préparer &amp; Personnaliser le rapport", disabled=bool(erreurs), use_container_width=True)
-        if btn_gen:
-            if not pdf_entree or not pdf_sortie:
-                st.error("❌ Les fichiers PDF ne sont plus disponibles — veuillez les re-uploader.")
-                st.stop()
-            # Sauvegarder les fichiers temporaires pour la génération ultérieure
+    btn_gen = st.button("🔄  Générer le Rapport PDF Complet", disabled=bool(erreurs), use_container_width=True)
+
+    if btn_gen:
+        if not pdf_entree or not pdf_sortie:
+            st.error("❌ Les fichiers PDF ne sont plus disponibles — veuillez les re-uploader.")
+            st.stop()
+
+        club = st.session_state.get("club_selectionne")
+        nom_club = (club["nom"] if club else "") or st.session_state.get("nom_club_cache", "")
+        progress = st.progress(0, text="Initialisation...")
+
+        try:
+            from generate_rapport import generer_rapport_biodex
+
+            progress.progress(10, text="📄 Sauvegarde des fichiers...")
+
+            # Sauvegarder PDFs Biodex
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                 f.write(pdf_entree.getvalue()); path_e = f.name
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                 f.write(pdf_sortie.getvalue()); path_s = f.name
+
             path_comp = None
             if pdf_comp:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(pdf_comp.getvalue()); path_comp = f.name
+
             path_comp_sain = None
             if pdf_comp_sain:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(pdf_comp_sain.getvalue()); path_comp_sain = f.name
+
             path_exc = None
             if pdf_exc:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(pdf_exc.getvalue()); path_exc = f.name
+
             path_photo = None
             if photo:
                 ext_ph = photo.name.rsplit(".", 1)[-1]
                 with tempfile.NamedTemporaryFile(suffix=f".{ext_ph}", delete=False) as f:
                     f.write(photo.getvalue()); path_photo = f.name
+
+            # Logo club — A4 : priorité upload session, sinon logo_b64 depuis clubs_db
             path_logo_club = None
             club_selec = st.session_state.get("club_selectionne")
+
             if logo_club_upload:
                 ext_logo = logo_club_upload.name.rsplit(".", 1)[-1]
                 with tempfile.NamedTemporaryFile(suffix=f".{ext_logo}", delete=False) as f:
-                    f.write(logo_club_upload.getvalue()); path_logo_club = f.name
+                    f.write(logo_club_upload.getvalue())
+                    path_logo_club = f.name
+
             elif club_selec and club_selec.get("logo_b64"):
                 import base64 as _b64
                 logo_data = club_selec["logo_b64"]
@@ -638,190 +647,86 @@ with col_right:
                     header_part, b64_str = logo_data.split(";base64,", 1)
                     ext_logo = "png" if "png" in header_part else "jpg"
                     with tempfile.NamedTemporaryFile(suffix=f".{ext_logo}", delete=False) as f:
-                        f.write(_b64.b64decode(b64_str)); path_logo_club = f.name
-            # Parser les PDFs pour pré-remplir le formulaire
-            try:
-                from biodex_parser import parse_biodex_pdf as _pbp
-                _ed = _pbp(path_e)
-                _sd = _pbp(path_s)
-                st.session_state.parsed_entree = _ed
-                st.session_state.parsed_sortie = _sd
-            except Exception:
-                st.session_state.parsed_entree = None
-                st.session_state.parsed_sortie = None
-            st.session_state.parsed_cr = cr_data
-            st.session_state.temp_paths = {
-                "path_e": path_e, "path_s": path_s,
-                "path_comp": path_comp, "path_comp_sain": path_comp_sain,
-                "path_exc": path_exc, "path_photo": path_photo,
-                "path_logo_club": path_logo_club,
-            }
-            st.session_state.rapport_phase = "personalize"
-            st.rerun()
+                        f.write(_b64.b64decode(b64_str))
+                        path_logo_club = f.name
 
-    # ── ÉTAPE 2 : Formulaire de personnalisation ──────────────────
-    if st.session_state.rapport_phase in ("personalize", "done"):
-        _ed = st.session_state.parsed_entree
-        _cr = st.session_state.parsed_cr or {}
-        _club = st.session_state.get("club_selectionne")
-        _nom_club = (_club["nom"] if _club else "") or st.session_state.get("nom_club_cache", "")
+            progress.progress(30, text="🔍 Parsing des PDFs Biodex...")
 
-        st.markdown("""
-<div style="background:linear-gradient(135deg,#1c3f6e,#2176c7);border-radius:10px;padding:14px 18px;margin:10px 0 14px 0;">
-  <div style="color:white;font-size:15px;font-weight:800;">📝 Personnalisation du rapport</div>
-  <div style="color:#a8c4e0;font-size:11px;margin-top:3px;">Modifiez les informations avant de générer le PDF final</div>
-</div>""", unsafe_allow_html=True)
+            # Dossier de sortie FIXE (obligatoire pour pdfkit sur Windows)
+            out_dir  = os.path.join(_APP_DIR, "outputs")
+            os.makedirs(out_dir, exist_ok=True)
+            out_html = os.path.join(out_dir, "rapport_temp.html")
+            out_pdf  = os.path.join(out_dir, "rapport_temp.pdf")
 
-        if st.button("← Recommencer depuis le début", key="btn_reset"):
-            st.session_state.rapport_phase = "input"
-            st.session_state.rapport_bytes = None
-            for p in st.session_state.temp_paths.values():
+            progress.progress(60, text="📊 Calcul + graphiques en cours...")
+
+            chemin = generer_rapport_biodex(
+                pdf_entree              = path_e,
+                pdf_sortie              = path_s,
+                pdf_comparatif          = path_comp,
+                pdf_comparatif_sain     = path_comp_sain,
+                pdf_excentrique         = path_exc,
+                vald_slj_entree         = vald_slj_e,
+                vald_slj_sortie         = vald_slj_s,
+                vald_cmj_entree         = vald_cmj_e,
+                vald_cmj_sortie         = vald_cmj_s,
+                output_html             = out_html,
+                output_pdf              = out_pdf,
+                template_dir            = os.path.join(_APP_DIR, "templates"),
+                nom_club                = nom_club,
+                logo_club_path          = path_logo_club,
+                photo_patient_path      = path_photo,
+                sport                   = sport if sport != "— Sélectionner —" else "",
+                date_naissance          = str(date_naissance) if date_naissance else "",
+                date_operation          = date_operation.strftime("%d/%m/%Y") if date_operation else "",
+                type_blessure           = type_blessure,
+                cote_opere              = cote_opere,
+                acl_rsi_score           = acl_rsi_score if acl_rsi_score > 0 else None,
+                remarques_medecin       = remarques_medecin,
+                cr_data                 = cr_data,
+            )
+
+            progress.progress(90, text="📄 Lecture du fichier généré...")
+
+            ext_out  = "pdf"  if chemin.endswith(".pdf")  else "html"
+            mime_out = "application/pdf" if ext_out == "pdf" else "text/html"
+
+            with open(chemin, "rb") as f:
+                rapport_bytes = f.read()
+
+            progress.progress(100, text="✅ Rapport prêt !")
+
+            nom_patient = (entree_data.nom.replace(" ", "_").replace(".", "") if entree_data else "patient")
+            nom_fichier = f"Rapport_Biodex_{nom_patient}_{nom_club.replace(' ', '_')}.{ext_out}"
+
+            st.session_state.rapport_bytes = rapport_bytes
+            st.session_state.rapport_nom   = nom_fichier
+            st.session_state.rapport_ext   = ext_out
+
+            # Nettoyer fichiers temporaires
+            for p in [path_e, path_s, path_comp, path_comp_sain, path_exc,
+                      path_photo, path_logo_club]:
                 if p and os.path.exists(p):
                     try: os.unlink(p)
                     except: pass
-            st.session_state.temp_paths = {}
-            st.rerun()
 
-        with st.form("personalisation_rapport"):
-            st.markdown("#### 🏥 Identité du rapport")
-            col_t1, col_t2 = st.columns(2)
-            with col_t1:
-                f_titre = st.text_input("Titre du rapport", value="Bilan Complet du Patient", key="f_titre")
-            with col_t2:
-                f_notes = st.text_input("Notes de séance (optionnel)", value="", placeholder="Ex: Reprise post-opératoire 6 mois", key="f_notes")
+        except Exception as ex:
+            st.error(f"❌ Erreur : {ex}")
+            import traceback
+            with st.expander("Détails de l'erreur"):
+                st.code(traceback.format_exc())
 
-            st.markdown("#### 🩺 Diagnostic & Intervention")
-            col_d1, col_d2 = st.columns(2)
-            with col_d1:
-                f_diag = st.text_input(
-                    "Diagnostic (laisser vide = depuis CR)",
-                    value=_cr.get("diagnostic", "") or "",
-                    placeholder="Ex: Rupture LCA Gauche",
-                    key="f_diag"
-                )
-            with col_d2:
-                f_interv = st.text_input(
-                    "Intervention (laisser vide = depuis CR)",
-                    value=_cr.get("intervention", "") or "",
-                    placeholder="Ex: Ligamentoplastie LCA DT4",
-                    key="f_interv"
-                )
-
-            st.markdown("#### 📄 Résumé du séjour")
-            f_resume = st.text_area(
-                "Résumé du séjour (laisser vide = depuis CR)",
-                value=_cr.get("conclusion", "") or "",
-                height=100,
-                placeholder="Décrivez le séjour, la prise en charge, les exercices réalisés...",
-                key="f_resume"
-            )
-
-            st.markdown("#### 💬 Évaluation médicale")
-            col_e1, col_e2 = st.columns([3, 1])
-            with col_e1:
-                f_remq = st.text_area(
-                    "Remarques médicales",
-                    value=remarques_medecin or "",
-                    height=80,
-                    placeholder="Zone libre pour le médecin / kinésithérapeute...",
-                    key="f_remq"
-                )
-            with col_e2:
-                f_acl = st.number_input("Score ACL-RSI (%)", min_value=0, max_value=100,
-                                         value=int(acl_rsi_score) if acl_rsi_score else 0, key="f_acl")
-
-            st.markdown("#### ✅ Sections à inclure")
-            col_s1, col_s2, col_s3 = st.columns(3)
-            with col_s1:
-                f_inc_exc  = st.checkbox("Test Excentrique", value=bool(pdf_exc), key="f_inc_exc")
-                f_inc_prog = st.checkbox("Graphiques Progression", value=True, key="f_inc_prog")
-            with col_s2:
-                f_inc_vald = st.checkbox("VALD ForceDecks", value=bool(vald_slj_e or vald_cmj_e), key="f_inc_vald")
-            with col_s3:
-                st.caption("GPS Catapult : disponible prochainement")
-
-            st.markdown("---")
-            btn_confirm = st.form_submit_button(
-                "🎯  Générer le Rapport Personnalisé",
-                use_container_width=True
-            )
-
-        if btn_confirm:
-            paths = st.session_state.temp_paths
-            progress = st.progress(0, text="Initialisation...")
-            try:
-                from generate_rapport import generer_rapport_biodex
-                out_dir  = os.path.join(_APP_DIR, "outputs")
-                os.makedirs(out_dir, exist_ok=True)
-                out_html = os.path.join(out_dir, "rapport_temp.html")
-                out_pdf  = os.path.join(out_dir, "rapport_temp.pdf")
-                progress.progress(40, text="📊 Calcul + graphiques en cours...")
-                chemin = generer_rapport_biodex(
-                    pdf_entree              = paths["path_e"],
-                    pdf_sortie              = paths["path_s"],
-                    pdf_comparatif          = paths.get("path_comp"),
-                    pdf_comparatif_sain     = paths.get("path_comp_sain"),
-                    pdf_excentrique         = paths.get("path_exc"),
-                    vald_slj_entree         = vald_slj_e,
-                    vald_slj_sortie         = vald_slj_s,
-                    vald_cmj_entree         = vald_cmj_e,
-                    vald_cmj_sortie         = vald_cmj_s,
-                    output_html             = out_html,
-                    output_pdf              = out_pdf,
-                    template_dir            = os.path.join(_APP_DIR, "templates"),
-                    nom_club                = _nom_club,
-                    logo_club_path          = paths.get("path_logo_club"),
-                    photo_patient_path      = paths.get("path_photo"),
-                    sport                   = sport if sport != "— Sélectionner —" else "",
-                    date_naissance          = str(date_naissance) if date_naissance else "",
-                    date_operation          = date_operation.strftime("%d/%m/%Y") if date_operation else "",
-                    type_blessure           = type_blessure,
-                    cote_opere              = cote_opere,
-                    acl_rsi_score           = f_acl if f_acl > 0 else None,
-                    remarques_medecin       = f_remq,
-                    cr_data                 = _cr if _cr else None,
-                    titre_rapport           = f_titre,
-                    notes_seance            = f_notes,
-                    diagnostic_override     = f_diag,
-                    intervention_override   = f_interv,
-                    resume_override         = f_resume,
-                    include_excentrique     = f_inc_exc,
-                    include_vald            = f_inc_vald,
-                    include_progression     = f_inc_prog,
-                )
-                progress.progress(90, text="📄 Lecture du fichier généré...")
-                ext_out = "pdf" if chemin.endswith(".pdf") else "html"
-                with open(chemin, "rb") as f:
-                    rapport_bytes = f.read()
-                progress.progress(100, text="✅ Rapport prêt !")
-                nom_patient = (_ed.nom.replace(" ", "_").replace(".", "") if _ed else "patient")
-                nom_fichier = f"Rapport_Biodex_{nom_patient}_{_nom_club.replace(' ', '_')}.{ext_out}"
-                st.session_state.rapport_bytes = rapport_bytes
-                st.session_state.rapport_nom   = nom_fichier
-                st.session_state.rapport_ext   = ext_out
-                st.session_state.rapport_phase = "done"
-                # Nettoyer fichiers temporaires
-                for p in paths.values():
-                    if p and os.path.exists(p):
-                        try: os.unlink(p)
-                        except: pass
-                st.session_state.temp_paths = {}
-                st.rerun()
-            except Exception as ex:
-                st.error(f"❌ Erreur : {ex}")
-                import traceback
-                with st.expander("Détails de l'erreur"):
-                    st.code(traceback.format_exc())
-
-    # ── ÉTAPE 3 : Téléchargement ──────────────────────────────────
+    # Téléchargement
     if st.session_state.rapport_bytes:
         ext  = st.session_state.rapport_ext
         mime = "application/pdf" if ext == "pdf" else "text/html"
+
         st.markdown("""
 <div class="success-box">
   <h3>✅ Rapport généré avec succès !</h3>
-  <p>Rapport personnalisé prêt au téléchargement</p>
+  <p>Page 1 : Données numériques • Page 2 : Graphiques</p>
 </div>""", unsafe_allow_html=True)
+
         st.download_button(
             label    = f"⬇️  Télécharger le Rapport ({ext.upper()})",
             data     = st.session_state.rapport_bytes,
@@ -829,6 +734,7 @@ with col_right:
             mime     = mime,
             use_container_width=True,
         )
+
         if ext == "html":
             st.markdown("""
 <div class="info-box">
@@ -836,10 +742,6 @@ with col_right:
 → <code>Ctrl+P</code> → <em>Enregistrer en PDF</em>.<br>
 Ou installe <b>wkhtmltopdf</b> depuis wkhtmltopdf.org pour avoir le PDF directement.
 </div>""", unsafe_allow_html=True)
-        if st.button("🔄 Générer un nouveau rapport", key="btn_new"):
-            st.session_state.rapport_phase = "input"
-            st.session_state.rapport_bytes = None
-            st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
 

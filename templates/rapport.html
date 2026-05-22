@@ -1056,18 +1056,17 @@ body {
       </div>
     </div>
 
-    <div class="footer">
     <!-- REMARQUES 60°/s (en bas de page) -->
     {% if remarques_60 and (remarques_60.attention or remarques_60.positif) %}
-    <div style="background:#f5f8fc; border-top:2px solid #1c3f6e; padding:5px 0 3px 0; flex-shrink:0; margin-top:auto; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+    <div style="background:#f5f8fc; border-top:2px solid #1c3f6e; padding:5px 0 3px 0; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
       <div style="font-size:7pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:3px; padding:0 4px;">&#9656; Points clés &#8212; Bilan 60&#176;/s</div>
       <div style="display:table; width:100%; table-layout:fixed;">
         <div style="display:table-cell; width:50%; vertical-align:top; padding-right:4px; border-right:1px solid #dde8f2;">
-          <div style="font-size:7pt; font-weight:bold; color:#c0392b; padding:0 4px; margin-bottom:1px;">À surveiller :</div>
+          <div style="font-size:7pt; font-weight:bold; color:#c0392b; padding:0 4px; margin-bottom:1px;">&#192; surveiller :</div>
           {% for p in remarques_60.attention %}
           <div style="font-size:7.5pt; color:#c0392b; line-height:1.4; padding:0 4px;">&#9679; {{ p }}</div>
           {% else %}
-          <div style="font-size:7.5pt; color:#2a8a36; padding:0 4px;">&#10003; Aucun déficit notable</div>
+          <div style="font-size:7.5pt; color:#2a8a36; padding:0 4px;">&#10003; Aucun d&#233;ficit notable</div>
           {% endfor %}
         </div>
         <div style="display:table-cell; width:50%; vertical-align:top; padding-left:4px;">
@@ -1075,16 +1074,18 @@ body {
           {% for p in remarques_60.positif %}
           <div style="font-size:7.5pt; color:#2a8a36; line-height:1.4; padding:0 4px;">&#9650; {{ p }}</div>
           {% else %}
-          <div style="font-size:7.5pt; color:#888; font-style:italic; padding:0 4px;">Données en cours d'analyse</div>
+          <div style="font-size:7.5pt; color:#888; font-style:italic; padding:0 4px;">Donn&#233;es en cours d'analyse</div>
           {% endfor %}
         </div>
       </div>
     </div>
     {% endif %}
 
-      <div class="footer">
-        {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS" class="footer-logo">
+    <div class="footer">
+      <div class="footer-logo">
+        {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
         {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
+      </div>
       <div class="footer-mention">*Seuls les resultats cles sont affiches. Les rapports originaux detailles ont ete envoyes separement.</div>
       <div class="footer-page">Page 2 / {% if vald and vald.has_data %}7{% else %}6{% endif %}</div>
     </div>

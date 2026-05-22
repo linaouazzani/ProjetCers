@@ -444,6 +444,106 @@ body {
   {%- else -%}—{%- endif -%}
 {%- endmacro %}
 
+{% macro tableau_split(s, meta, date_e, date_s, vitesse_num, has_e, has_s) %}
+{% set norm_ext_rp = 3.0 if vitesse_num == 60 else 2.2 %}
+{% set norm_flex_rp = 1.8 if vitesse_num == 60 else 1.5 %}
+{% set norme_iq = "0,50&#8211;0,70" if vitesse_num == 60 else "0,70&#8211;0,90" %}
+{% set speed_label = "Force concentrique" if vitesse_num == 60 else "Puissance concentrique" %}
+
+{% if has_e %}
+<div style="margin-bottom:8px;">
+  <div style="background:#1c3f6e;color:#fff;font-size:8pt;font-weight:700;padding:3px 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    Entr&#233;e &#8212; {{ date_e }} &nbsp;&#183;&nbsp; {{ vitesse_num }}&#176;/s &#8212; {{ speed_label }}
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:7pt;table-layout:fixed;">
+    <thead><tr style="background:#1c3f6e;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      <th style="border:1px solid #99aac4;padding:3px 4px;width:30%;text-align:left;">M&#233;trique</th>
+      <th style="border:1px solid #99aac4;padding:3px 4px;width:16%;text-align:center;">Sain (D)</th>
+      <th style="border:1px solid #99aac4;padding:3px 4px;width:16%;text-align:center;">L&#233;s&#233; (G)</th>
+      <th style="border:1px solid #99aac4;padding:3px 4px;width:12%;text-align:center;">D&#233;ficit</th>
+      <th style="border:1px solid #99aac4;padding:3px 4px;text-align:left;">Interpr&#233;tation</th>
+    </tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="5">&#9658;&nbsp;EXTENSION</td></tr>
+      <tr><td class="cm">Moment Max<span class="sl">N.m</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_moment_max.entree_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_moment_max.entree_lese_g | fmt }}</td><td class="d{{ s.ext_moment_max.couleur_deficit_entree[0] }}">{% if s.ext_moment_max.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_moment_max.entree_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.ext_moment_max.interpretation }}</td></tr>
+      <tr class="alt"><td class="cm">Moment/Poids<span class="sl">%</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_moment_poids.entree_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_moment_poids.entree_lese_g | fmt }}</td><td class="d{{ s.ext_moment_poids.couleur_deficit_entree[0] }}">{% if s.ext_moment_poids.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_moment_poids.entree_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">Moment normalis&#233; au poids</td></tr>
+      <tr><td class="cm">Ratio/Poids Quadri<span class="sl">N.m/kg</span></td><td {% if s.ext_ratio_poids.entree_sain_d is not none %}class="{{ 'dg' if s.ext_ratio_poids.entree_sain_d >= norm_ext_rp else 'do' }}"{% endif %} style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_ratio_poids.entree_sain_d | fmt(2) }}</td><td {% if s.ext_ratio_poids.entree_lese_g is not none %}class="{{ 'dg' if s.ext_ratio_poids.entree_lese_g >= norm_ext_rp else 'do' }}"{% endif %} style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_ratio_poids.entree_lese_g | fmt(2) }}</td><td class="d{{ s.ext_ratio_poids.couleur_deficit_entree[0] }}">{% if s.ext_ratio_poids.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.entree_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">Norme &#8805; {{ "3,0" if vitesse_num == 60 else "2,2" }} N&#183;m/kg</td></tr>
+      <tr class="alt"><td class="cm">Travail Total<span class="sl">J</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_travail_total.entree_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_travail_total.entree_lese_g | fmt }}</td><td class="d{{ s.ext_travail_total.couleur_deficit_entree[0] }}">{% if s.ext_travail_total.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_travail_total.entree_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.ext_travail_total.interpretation }}</td></tr>
+      <tr><td class="cm">Puissance Max<span class="sl">W</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_puissance_max.entree_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_puissance_max.entree_lese_g | fmt }}</td><td class="d{{ s.ext_puissance_max.couleur_deficit_entree[0] }}">{% if s.ext_puissance_max.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_puissance_max.entree_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.ext_puissance_max.interpretation }}</td></tr>
+      <tr class="grp"><td colspan="5">&#9658;&nbsp;FLEXION</td></tr>
+      <tr><td class="cm">Moment Max<span class="sl">N.m</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_moment_max.entree_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_moment_max.entree_lese_g | fmt }}</td><td class="d{{ s.flex_moment_max.couleur_deficit_entree[0] }}">{% if s.flex_moment_max.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_moment_max.entree_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.flex_moment_max.interpretation }}</td></tr>
+      <tr class="alt"><td class="cm">Moment/Poids<span class="sl">%</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_moment_poids.entree_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_moment_poids.entree_lese_g | fmt }}</td><td class="d{{ s.flex_moment_poids.couleur_deficit_entree[0] }}">{% if s.flex_moment_poids.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_moment_poids.entree_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">Moment normalis&#233; au poids</td></tr>
+      <tr><td class="cm">Travail Total<span class="sl">J</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_travail_total.entree_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_travail_total.entree_lese_g | fmt }}</td><td class="d{{ s.flex_travail_total.couleur_deficit_entree[0] }}">{% if s.flex_travail_total.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_travail_total.entree_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.flex_travail_total.interpretation }}</td></tr>
+      <tr class="alt"><td class="cm">Puissance Max<span class="sl">W</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_puissance_max.entree_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_puissance_max.entree_lese_g | fmt }}</td><td class="d{{ s.flex_puissance_max.couleur_deficit_entree[0] }}">{% if s.flex_puissance_max.entree_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_puissance_max.entree_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.flex_puissance_max.interpretation }}</td></tr>
+      <tr class="grp"><td colspan="5">&#9658;&nbsp;RATIO I/Q &#8212; Norme : {{ norme_iq }}</td></tr>
+      <tr><td class="cm">Ratio I/Q<span class="sl">Ischio/Quadri</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ meta.ratio_sain_entree | format_ratio }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ meta.ratio_lese_entree | format_ratio }}</td><td class="dw">&#8212;</td><td class="interp">Flexion / Extension</td></tr>
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if has_s %}
+<div style="margin-bottom:8px;">
+  <div style="background:#2176c7;color:#fff;font-size:8pt;font-weight:700;padding:3px 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    Sortie &#8212; {{ date_s }} &nbsp;&#183;&nbsp; {{ vitesse_num }}&#176;/s &#8212; {{ speed_label }}
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:7pt;table-layout:fixed;">
+    <thead><tr style="background:#2176c7;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      <th style="border:1px solid #6ab0e0;padding:3px 4px;width:30%;text-align:left;">M&#233;trique</th>
+      <th style="border:1px solid #6ab0e0;padding:3px 4px;width:16%;text-align:center;">Sain (D)</th>
+      <th style="border:1px solid #6ab0e0;padding:3px 4px;width:16%;text-align:center;">L&#233;s&#233; (G)</th>
+      <th style="border:1px solid #6ab0e0;padding:3px 4px;width:12%;text-align:center;">D&#233;ficit</th>
+      <th style="border:1px solid #6ab0e0;padding:3px 4px;text-align:left;">Interpr&#233;tation</th>
+    </tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="5">&#9658;&nbsp;EXTENSION</td></tr>
+      <tr><td class="cm">Moment Max<span class="sl">N.m</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_moment_max.sortie_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_moment_max.sortie_lese_g | fmt }}</td><td class="d{{ s.ext_moment_max.couleur_deficit[0] }}">{% if s.ext_moment_max.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_moment_max.sortie_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.ext_moment_max.interpretation }}</td></tr>
+      <tr class="alt"><td class="cm">Moment/Poids<span class="sl">%</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_moment_poids.sortie_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_moment_poids.sortie_lese_g | fmt }}</td><td class="d{{ s.ext_moment_poids.couleur_deficit[0] }}">{% if s.ext_moment_poids.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_moment_poids.sortie_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">Moment normalis&#233; au poids</td></tr>
+      <tr><td class="cm">Ratio/Poids Quadri<span class="sl">N.m/kg</span></td><td {% if s.ext_ratio_poids.sortie_sain_d is not none %}class="{{ 'dg' if s.ext_ratio_poids.sortie_sain_d >= norm_ext_rp else 'do' }}"{% endif %} style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_ratio_poids.sortie_sain_d | fmt(2) }}</td><td {% if s.ext_ratio_poids.sortie_lese_g is not none %}class="{{ 'dg' if s.ext_ratio_poids.sortie_lese_g >= norm_ext_rp else 'do' }}"{% endif %} style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_ratio_poids.sortie_lese_g | fmt(2) }}</td><td class="d{{ s.ext_ratio_poids.couleur_deficit[0] }}">{% if s.ext_ratio_poids.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_ratio_poids.sortie_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">Norme &#8805; {{ "3,0" if vitesse_num == 60 else "2,2" }} N&#183;m/kg</td></tr>
+      <tr class="alt"><td class="cm">Travail Total<span class="sl">J</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_travail_total.sortie_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_travail_total.sortie_lese_g | fmt }}</td><td class="d{{ s.ext_travail_total.couleur_deficit[0] }}">{% if s.ext_travail_total.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_travail_total.sortie_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.ext_travail_total.interpretation }}</td></tr>
+      <tr><td class="cm">Puissance Max<span class="sl">W</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_puissance_max.sortie_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.ext_puissance_max.sortie_lese_g | fmt }}</td><td class="d{{ s.ext_puissance_max.couleur_deficit[0] }}">{% if s.ext_puissance_max.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.ext_puissance_max.sortie_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.ext_puissance_max.interpretation }}</td></tr>
+      <tr class="grp"><td colspan="5">&#9658;&nbsp;FLEXION</td></tr>
+      <tr><td class="cm">Moment Max<span class="sl">N.m</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_moment_max.sortie_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_moment_max.sortie_lese_g | fmt }}</td><td class="d{{ s.flex_moment_max.couleur_deficit[0] }}">{% if s.flex_moment_max.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_moment_max.sortie_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.flex_moment_max.interpretation }}</td></tr>
+      <tr class="alt"><td class="cm">Moment/Poids<span class="sl">%</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_moment_poids.sortie_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_moment_poids.sortie_lese_g | fmt }}</td><td class="d{{ s.flex_moment_poids.couleur_deficit[0] }}">{% if s.flex_moment_poids.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_moment_poids.sortie_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">Moment normalis&#233; au poids</td></tr>
+      <tr><td class="cm">Travail Total<span class="sl">J</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_travail_total.sortie_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_travail_total.sortie_lese_g | fmt }}</td><td class="d{{ s.flex_travail_total.couleur_deficit[0] }}">{% if s.flex_travail_total.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_travail_total.sortie_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.flex_travail_total.interpretation }}</td></tr>
+      <tr class="alt"><td class="cm">Puissance Max<span class="sl">W</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_puissance_max.sortie_sain_d | fmt }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ s.flex_puissance_max.sortie_lese_g | fmt }}</td><td class="d{{ s.flex_puissance_max.couleur_deficit[0] }}">{% if s.flex_puissance_max.sortie_deficit_pct is not none %}{{ "%+.1f"|format(s.flex_puissance_max.sortie_deficit_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.flex_puissance_max.interpretation }}</td></tr>
+      <tr class="grp"><td colspan="5">&#9658;&nbsp;RATIO I/Q &#8212; Norme : {{ norme_iq }}</td></tr>
+      <tr><td class="cm">Ratio I/Q<span class="sl">Ischio/Quadri</span></td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ meta.ratio_sain_sortie | format_ratio }}</td><td style="text-align:center;border:1px solid #ccc;padding:2px 3px;">{{ meta.ratio_lese_sortie | format_ratio }}</td><td class="dw">&#8212;</td><td class="interp">Flexion / Extension</td></tr>
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if has_e and has_s %}
+<div style="margin-bottom:8px;">
+  <div style="background:#2a8a36;color:#fff;font-size:8pt;font-weight:700;padding:3px 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    Progression Entr&#233;e &#8594; Sortie &nbsp;&#183;&nbsp; {{ vitesse_num }}&#176;/s
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:7pt;table-layout:fixed;">
+    <thead><tr style="background:#374151;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      <th style="border:1px solid #666;padding:3px 4px;width:30%;text-align:left;">M&#233;trique</th>
+      <th style="border:1px solid #666;padding:3px 4px;width:20%;text-align:center;">Prog. Sain (D)</th>
+      <th style="border:1px solid #666;padding:3px 4px;width:20%;text-align:center;">Prog. L&#233;s&#233; (G)</th>
+      <th style="border:1px solid #666;padding:3px 4px;text-align:left;">Interpr&#233;tation</th>
+    </tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="4">&#9658;&nbsp;EXTENSION</td></tr>
+      <tr><td class="cm">Moment Max<span class="sl">N.m</span></td><td class="p{{ s.ext_moment_max.couleur_prog_sain[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if s.ext_moment_max.progression_sain is not none %}{{ "%+.1f"|format(s.ext_moment_max.progression_sain) }}%{% else %}&#8212;{% endif %}</td><td class="p{{ s.ext_moment_max.couleur_prog[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if s.ext_moment_max.progression_pct is not none %}{{ "%+.1f"|format(s.ext_moment_max.progression_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.ext_moment_max.interpretation }}</td></tr>
+      <tr class="alt"><td class="cm">Travail Total<span class="sl">J</span></td><td class="p{{ s.ext_travail_total.couleur_prog_sain[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if s.ext_travail_total.progression_sain is not none %}{{ "%+.1f"|format(s.ext_travail_total.progression_sain) }}%{% else %}&#8212;{% endif %}</td><td class="p{{ s.ext_travail_total.couleur_prog[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if s.ext_travail_total.progression_pct is not none %}{{ "%+.1f"|format(s.ext_travail_total.progression_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.ext_travail_total.interpretation }}</td></tr>
+      <tr><td class="cm">Puissance Max<span class="sl">W</span></td><td class="p{{ s.ext_puissance_max.couleur_prog_sain[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if s.ext_puissance_max.progression_sain is not none %}{{ "%+.1f"|format(s.ext_puissance_max.progression_sain) }}%{% else %}&#8212;{% endif %}</td><td class="p{{ s.ext_puissance_max.couleur_prog[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if s.ext_puissance_max.progression_pct is not none %}{{ "%+.1f"|format(s.ext_puissance_max.progression_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.ext_puissance_max.interpretation }}</td></tr>
+      <tr class="grp"><td colspan="4">&#9658;&nbsp;FLEXION</td></tr>
+      <tr><td class="cm">Moment Max<span class="sl">N.m</span></td><td class="p{{ s.flex_moment_max.couleur_prog_sain[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if s.flex_moment_max.progression_sain is not none %}{{ "%+.1f"|format(s.flex_moment_max.progression_sain) }}%{% else %}&#8212;{% endif %}</td><td class="p{{ s.flex_moment_max.couleur_prog[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if s.flex_moment_max.progression_pct is not none %}{{ "%+.1f"|format(s.flex_moment_max.progression_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.flex_moment_max.interpretation }}</td></tr>
+      <tr class="alt"><td class="cm">Travail Total<span class="sl">J</span></td><td class="p{{ s.flex_travail_total.couleur_prog_sain[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if s.flex_travail_total.progression_sain is not none %}{{ "%+.1f"|format(s.flex_travail_total.progression_sain) }}%{% else %}&#8212;{% endif %}</td><td class="p{{ s.flex_travail_total.couleur_prog[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if s.flex_travail_total.progression_pct is not none %}{{ "%+.1f"|format(s.flex_travail_total.progression_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.flex_travail_total.interpretation }}</td></tr>
+      <tr><td class="cm">Puissance Max<span class="sl">W</span></td><td class="p{{ s.flex_puissance_max.couleur_prog_sain[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if s.flex_puissance_max.progression_sain is not none %}{{ "%+.1f"|format(s.flex_puissance_max.progression_sain) }}%{% else %}&#8212;{% endif %}</td><td class="p{{ s.flex_puissance_max.couleur_prog[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if s.flex_puissance_max.progression_pct is not none %}{{ "%+.1f"|format(s.flex_puissance_max.progression_pct) }}%{% else %}&#8212;{% endif %}</td><td class="interp">{{ s.flex_puissance_max.interpretation }}</td></tr>
+      <tr class="grp"><td colspan="4">&#9658;&nbsp;RATIO I/Q</td></tr>
+      <tr><td class="cm">Ratio I/Q<span class="sl">Ischio/Quadri</span></td><td class="p{{ meta.ratio_prog_couleur[0] }}" style="border:1px solid #ccc;padding:2px 3px;text-align:center;">{% if meta.ratio_prog is not none %}{{ "%+.1f"|format(meta.ratio_prog) }}%{% else %}&#8212;{% endif %}</td><td style="border:1px solid #ccc;padding:2px 3px;text-align:center;">&#8212;</td><td class="interp">Flexion / Extension</td></tr>
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endmacro %}
+
+{# Ancien macro tableau conservé pour rétrocompatibilité — non utilisé #}
 {% macro tableau(s, meta, titre, date_e, date_s, vitesse_num=60) %}
     {% set norm_ext_rp = 3.0 if vitesse_num == 60 else 2.2 %}
     {% set norm_flex_rp = 1.8 if vitesse_num == 60 else 1.5 %}
@@ -721,7 +821,7 @@ body {
   </div>
 
   <!-- ── ZONE HERO : Photo + Nom + Infos ─────────────────────── -->
-  <div style="display:table; width:100%; table-layout:fixed; border-bottom:1px solid #dde8f2;">
+  <div style="display:table; width:100%; table-layout:fixed; border-bottom:1px solid #dde8f2; max-height:145mm; overflow:hidden;">
 
     <!-- Colonne photo -->
     <div style="display:table-cell; width:158px; vertical-align:middle; background:#f0f4f8; border-right:1px solid #dde8f2; padding:20px 14px; text-align:center; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
@@ -979,6 +1079,7 @@ body {
 
 </div>
 
+{% if has_entree_60 or has_sortie_60 %}
 <!-- ══════════════════════════════════════════════════
      PAGE 2 — BILAN ISOCINETIQUE 60°/s
      ══════════════════════════════════════════════════ -->
@@ -1026,7 +1127,7 @@ body {
       Protocole : Concentrique / Concentrique &nbsp;&#183;&nbsp; Vitesse 60&#176;/s &nbsp;&#183;&nbsp; Genou {{ entree.lese }}
     </div>
 
-    {{ tableau(s60, serie60_meta, "Vitesse 60deg/s — Force (Isocinetique Lent)", entree.date_test, sortie.date_test, 60) }}
+    {{ tableau_split(s60, serie60_meta, entree.date_test, sortie.date_test, 60, has_entree_60, has_sortie_60) }}
 
     <div class="legende">
       <div class="lr">Deficit &gt;20% — Important</div>
@@ -1092,8 +1193,9 @@ body {
 
   </div><!-- fin page-content -->
 </div><!-- fin page 2 -->
+{% endif %}
 
-
+{% if has_entree_240 or has_sortie_240 %}
 <!-- ══════════════════════════════════════════════════
      PAGE 3 — BILAN ISOCINETIQUE 240°/s
      ══════════════════════════════════════════════════ -->
@@ -1141,7 +1243,7 @@ body {
       Protocole : Concentrique / Concentrique &nbsp;&#183;&nbsp; Vitesse 240&#176;/s &nbsp;&#183;&nbsp; Genou {{ entree.lese }}
     </div>
 
-    {{ tableau(s240, serie240_meta, "Vitesse 240deg/s — Puissance (Isocinetique Rapide)", entree.date_test, sortie.date_test, 240) }}
+    {{ tableau_split(s240, serie240_meta, entree.date_test, sortie.date_test, 240, has_entree_240, has_sortie_240) }}
 
     <div class="legende">
       <div class="lr">Deficit &gt;20% — Important</div>
@@ -1207,6 +1309,7 @@ body {
 
   </div><!-- fin page-content -->
 </div><!-- fin page 3 -->
+{% endif %}
 
 
 <!-- ══════════════════════════════════════════════════
@@ -1371,23 +1474,21 @@ body {
       </div>
     </div>
 
-    <!-- REMARQUES MÉDICALES (pleine largeur) -->
+    <!-- REMARQUES MÉDICALES (pleine largeur, conditionnelle) -->
+    {% if remarques_medecin and remarques_medecin|trim %}
     <div style="flex-shrink:0; margin-bottom:3px;">
       <div style="background:#374151; color:white; font-size:7.5px; font-weight:700; padding:3px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">&#9656; REMARQUES M&#201;DICALES</div>
-      <div style="border:1.5px solid #374151; border-top:none; border-radius:0 0 3px 3px; padding:6px 12px; background:#f9fafb; min-height:36px;">
-        {% if remarques_medecin %}
+      <div style="border:1.5px solid #374151; border-top:none; border-radius:0 0 3px 3px; padding:6px 12px; background:#f9fafb;">
         <div style="font-size:8pt; color:#374151; line-height:1.6; overflow-wrap:anywhere; white-space:pre-wrap;">{{ remarques_medecin }}</div>
-        {% else %}
-        <div style="font-size:8pt; color:#aaa; font-style:italic;">Aucune remarque renseign&#233;e.</div>
-        {% endif %}
       </div>
     </div>
+    {% endif %}
     {% if cr and cr.conclusion %}
     <!-- RÉSUMÉ CR MÉDECIN (pleine largeur) -->
     <div style="flex-shrink:0; margin-bottom:2px;">
       <div style="background:#1c3f6e; color:white; font-size:7.5px; font-weight:700; padding:3px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">&#9656; R&#201;SUM&#201; COMPTE-RENDU M&#201;DICAL</div>
       <div style="border:1.5px solid #1c3f6e; border-top:none; border-radius:0 0 3px 3px; padding:6px 12px; background:#f5f8fc; min-height:24px;">
-        <div style="font-size:8pt; color:#333; line-height:1.6; overflow-wrap:anywhere;">{{ cr.conclusion[:420] }}{% if cr.conclusion|length > 420 %}&#8230;{% endif %}</div>
+        <div style="font-size:8pt; color:#333; line-height:1.6; overflow-wrap:anywhere;">{{ cr.conclusion[:350] }}{% if cr.conclusion|length > 350 %}&#8230;{% endif %}</div>
       </div>
     </div>
     {% endif %}
@@ -1592,10 +1693,9 @@ body {
 {% endif %}
 
 
-<!-- ══════════════════════════════════════════════════
-     PAGE GPS — CATAPULT (placeholder)
-     ══════════════════════════════════════════════════ -->
-<div class="page">
+{# PAGE GPS supprimée — pas de données GPS disponibles pour l'instant #}
+{# Si des données GPS sont fournies dans le futur, réactiver ce bloc #}
+{# <div class="page">
 
   <!-- EN-TETE BLANC -->
   <div style="display:table;width:100%;padding:6px 14px;border-bottom:2px solid #1c3f6e;box-sizing:border-box;flex-shrink:0;background:#ffffff;">
@@ -1657,8 +1757,9 @@ body {
       <div class="footer-page">Annexe — GPS Catapult</div>
     </div>
 
-  </div><!-- fin page-content -->
-</div><!-- fin page GPS -->
+  </div>
+</div>
+#}
 
 </body>
 </html>

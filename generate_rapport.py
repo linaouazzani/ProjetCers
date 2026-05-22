@@ -695,6 +695,10 @@ def construire_contexte(
         "include_excentrique":    include_excentrique,
         "include_vald":           include_vald,
         "include_progression":    include_progression,
+        "has_entree_60":          e60 is not None,
+        "has_sortie_60":          s60p is not None,
+        "has_entree_240":         e240 is not None,
+        "has_sortie_240":         s240p is not None,
     }
 
 
@@ -820,7 +824,7 @@ def generer_rapport_biodex(
     include_excentrique:     bool = True,
     include_vald:            bool = True,
     include_progression:     bool = True,
-) -> str:
+) -> dict:
 
     print("\n" + "█" * 60)
     print("  RAPPORT BIODEX v6 — PDF avec couleurs")
@@ -895,13 +899,27 @@ def generer_rapport_biodex(
     sauvegarder_html(html, output_html)
 
     print("\n📄 Export PDF...")
-    chemin = exporter_pdf(html, output_pdf)
+    pdf_path = None
+    pdf_bytes = None
+    try:
+        chemin = exporter_pdf(html, output_pdf)
+        if chemin and chemin.endswith(".pdf") and os.path.exists(chemin):
+            pdf_path = chemin
+            with open(chemin, "rb") as _f:
+                pdf_bytes = _f.read()
+    except Exception as _e:
+        print(f"  ⚠️  PDF non généré : {_e}")
 
     print(f"\n{'=' * 60}")
-    print(f"  🎉 RAPPORT GÉNÉRÉ : {chemin}")
+    print(f"  🎉 RAPPORT HTML GÉNÉRÉ — PDF: {'oui' if pdf_bytes else 'non'}")
     print(f"{'=' * 60}\n")
 
-    return chemin
+    return {
+        "html":       html,
+        "html_bytes": html.encode("utf-8"),
+        "pdf_path":   pdf_path,
+        "pdf_bytes":  pdf_bytes,
+    }
 
 
 # ════════════════════════════════════════════════════════════════

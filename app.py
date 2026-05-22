@@ -140,12 +140,12 @@ if "club_selectionne" not in st.session_state:
     st.session_state.club_selectionne = None
 if "nom_club_cache" not in st.session_state:
     st.session_state.nom_club_cache = ""
-if "rapport_bytes" not in st.session_state:
-    st.session_state.rapport_bytes = None
+if "rapport_html_bytes" not in st.session_state:
+    st.session_state.rapport_html_bytes = None
+if "rapport_pdf_bytes" not in st.session_state:
+    st.session_state.rapport_pdf_bytes = None
 if "rapport_nom" not in st.session_state:
     st.session_state.rapport_nom = None
-if "rapport_ext" not in st.session_state:
-    st.session_state.rapport_ext = "html"
 
 
 # ── En-tête ───────────────────────────────────────────────────────────────────
@@ -660,7 +660,7 @@ with col_right:
 
             progress.progress(60, text="📊 Calcul + graphiques en cours...")
 
-            chemin = generer_rapport_biodex(
+            result = generer_rapport_biodex(
                 pdf_entree              = path_e,
                 pdf_sortie              = path_s,
                 pdf_comparatif          = path_comp,
@@ -686,22 +686,14 @@ with col_right:
                 cr_data                 = cr_data,
             )
 
-            progress.progress(90, text="📄 Lecture du fichier généré...")
-
-            ext_out  = "pdf"  if chemin.endswith(".pdf")  else "html"
-            mime_out = "application/pdf" if ext_out == "pdf" else "text/html"
-
-            with open(chemin, "rb") as f:
-                rapport_bytes = f.read()
-
             progress.progress(100, text="✅ Rapport prêt !")
 
             nom_patient = (entree_data.nom.replace(" ", "_").replace(".", "") if entree_data else "patient")
-            nom_fichier = f"Rapport_Biodex_{nom_patient}_{nom_club.replace(' ', '_')}.{ext_out}"
+            nom_fichier = f"Rapport_Biodex_{nom_patient}_{nom_club.replace(' ', '_')}.pdf"
 
-            st.session_state.rapport_bytes = rapport_bytes
-            st.session_state.rapport_nom   = nom_fichier
-            st.session_state.rapport_ext   = ext_out
+            st.session_state.rapport_html_bytes = result["html_bytes"]
+            st.session_state.rapport_pdf_bytes  = result.get("pdf_bytes")
+            st.session_state.rapport_nom        = nom_fichier
 
             # Nettoyer fichiers temporaires
             for p in [path_e, path_s, path_comp, path_comp_sain, path_exc,
@@ -717,30 +709,37 @@ with col_right:
                 st.code(traceback.format_exc())
 
     # Téléchargement
-    if st.session_state.rapport_bytes:
-        ext  = st.session_state.rapport_ext
-        mime = "application/pdf" if ext == "pdf" else "text/html"
+    if st.session_state.rapport_html_bytes:
+        nom = st.session_state.rapport_nom or "rapport.pdf"
 
         st.markdown("""
 <div class="success-box">
   <h3>✅ Rapport généré avec succès !</h3>
-  <p>Page 1 : Données numériques • Page 2 : Graphiques</p>
+  <p>Téléchargez le HTML (modifiable dans un éditeur) ou le PDF directement.</p>
 </div>""", unsafe_allow_html=True)
 
-        st.download_button(
-            label    = f"⬇️  Télécharger le Rapport ({ext.upper()})",
-            data     = st.session_state.rapport_bytes,
-            file_name= st.session_state.rapport_nom,
-            mime     = mime,
-            use_container_width=True,
-        )
-
-        if ext == "html":
-            st.markdown("""
-<div class="info-box">
-💡 <b>PDF avec couleurs :</b> Ouvre le fichier HTML dans Chrome
-→ <code>Ctrl+P</code> → <em>Enregistrer en PDF</em>.<br>
-Ou installe <b>wkhtmltopdf</b> depuis wkhtmltopdf.org pour avoir le PDF directement.
+        col_dl1, col_dl2 = st.columns(2)
+        with col_dl1:
+            st.download_button(
+                label="⬇️ Télécharger HTML (modifiable)",
+                data=st.session_state.rapport_html_bytes,
+                file_name=nom.replace(".pdf", ".html"),
+                mime="text/html",
+                use_container_width=True,
+            )
+        with col_dl2:
+            if st.session_state.rapport_pdf_bytes:
+                st.download_button(
+                    label="⬇️ Télécharger PDF",
+                    data=st.session_state.rapport_pdf_bytes,
+                    file_name=nom,
+                    mime="application/pdf",
+                    use_container_width=True,
+                )
+            else:
+                st.markdown("""
+<div class="info-box" style="margin-top:8px;">
+💡 <b>PDF :</b> Ouvre le HTML dans Chrome → <code>Ctrl+P</code> → Enregistrer en PDF.
 </div>""", unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)

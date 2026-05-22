@@ -691,8 +691,21 @@ with col_right:
             nom_patient = (entree_data.nom.replace(" ", "_").replace(".", "") if entree_data else "patient")
             nom_fichier = f"Rapport_Biodex_{nom_patient}_{nom_club.replace(' ', '_')}.pdf"
 
-            st.session_state.rapport_html_bytes = result["html_bytes"]
-            st.session_state.rapport_pdf_bytes  = result.get("pdf_bytes")
+            # Compatibilité : generer_rapport_biodex retourne dict ou string (ancienne version)
+            if isinstance(result, dict):
+                rapport_html_bytes = result.get("html_bytes")
+                rapport_pdf_bytes  = result.get("pdf_bytes")
+            else:
+                # Ancien format : result est un chemin fichier
+                chemin = result
+                ext_out = "pdf" if chemin.endswith(".pdf") else "html"
+                with open(chemin, "rb") as _f:
+                    fb = _f.read()
+                rapport_html_bytes = fb if ext_out == "html" else None
+                rapport_pdf_bytes  = fb if ext_out == "pdf"  else None
+
+            st.session_state.rapport_html_bytes = rapport_html_bytes
+            st.session_state.rapport_pdf_bytes  = rapport_pdf_bytes
             st.session_state.rapport_nom        = nom_fichier
 
             # Nettoyer fichiers temporaires

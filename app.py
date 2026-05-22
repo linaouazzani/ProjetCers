@@ -146,6 +146,8 @@ if "rapport_nom" not in st.session_state:
     st.session_state.rapport_nom = None
 if "rapport_ext" not in st.session_state:
     st.session_state.rapport_ext = "html"
+if "rapport_html_path" not in st.session_state:
+    st.session_state.rapport_html_path = None
 
 
 # ── En-tête ───────────────────────────────────────────────────────────────────
@@ -699,9 +701,10 @@ with col_right:
             nom_patient = (entree_data.nom.replace(" ", "_").replace(".", "") if entree_data else "patient")
             nom_fichier = f"Rapport_Biodex_{nom_patient}_{nom_club.replace(' ', '_')}.{ext_out}"
 
-            st.session_state.rapport_bytes = rapport_bytes
-            st.session_state.rapport_nom   = nom_fichier
-            st.session_state.rapport_ext   = ext_out
+            st.session_state.rapport_bytes     = rapport_bytes
+            st.session_state.rapport_nom       = nom_fichier
+            st.session_state.rapport_ext       = ext_out
+            st.session_state.rapport_html_path = out_html
 
             # Nettoyer fichiers temporaires
             for p in [path_e, path_s, path_comp, path_comp_sain, path_exc,
@@ -734,6 +737,20 @@ with col_right:
             mime     = mime,
             use_container_width=True,
         )
+
+        # Bouton HTML supplémentaire
+        html_path = st.session_state.get("rapport_html_path")
+        if html_path and os.path.exists(html_path):
+            with open(html_path, "rb") as fh:
+                html_bytes = fh.read()
+            st.download_button(
+                label="⬇️ Télécharger HTML (modifiable dans Chrome)",
+                data=html_bytes,
+                file_name=st.session_state.rapport_nom.replace(".pdf", ".html"),
+                mime="text/html",
+                use_container_width=True,
+                key="dl_html",
+            )
 
         if ext == "html":
             st.markdown("""

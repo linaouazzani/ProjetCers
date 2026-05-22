@@ -146,6 +146,8 @@ if "rapport_pdf_bytes" not in st.session_state:
     st.session_state.rapport_pdf_bytes = None
 if "rapport_nom" not in st.session_state:
     st.session_state.rapport_nom = None
+if "rapport_nom_base" not in st.session_state:
+    st.session_state.rapport_nom_base = None
 
 
 # ── En-tête ───────────────────────────────────────────────────────────────────
@@ -688,25 +690,38 @@ with col_right:
 
             progress.progress(100, text="✅ Rapport prêt !")
 
-            nom_patient = (entree_data.nom.replace(" ", "_").replace(".", "") if entree_data else "patient")
-            nom_fichier = f"Rapport_Biodex_{nom_patient}_{nom_club.replace(' ', '_')}.pdf"
-
-            # Compatibilité : generer_rapport_biodex retourne dict ou string (ancienne version)
+            # Gérer les deux cas : dict (nouvelle version) ou chemin str (ancienne)
             if isinstance(result, dict):
                 rapport_html_bytes = result.get("html_bytes")
                 rapport_pdf_bytes  = result.get("pdf_bytes")
+                chemin             = result.get("pdf_path", "")
             else:
-                # Ancien format : result est un chemin fichier
                 chemin = result
-                ext_out = "pdf" if chemin.endswith(".pdf") else "html"
-                with open(chemin, "rb") as _f:
-                    fb = _f.read()
-                rapport_html_bytes = fb if ext_out == "html" else None
-                rapport_pdf_bytes  = fb if ext_out == "pdf"  else None
+                rapport_html_bytes = None
+                rapport_pdf_bytes  = None
+                if chemin and os.path.exists(chemin):
+                    with open(chemin, "rb") as f:
+                        content = f.read()
+                    if chemin.endswith(".pdf"):
+                        rapport_pdf_bytes = content
+                    else:
+                        rapport_html_bytes = content
+
+            # Récupérer le HTML brut si absent (fichier .html temporaire)
+            if rapport_html_bytes is None:
+                html_path = chemin.replace(".pdf", ".html") if chemin else out_html
+                if html_path and os.path.exists(html_path):
+                    with open(html_path, "rb") as f:
+                        rapport_html_bytes = f.read()
+
+            # Construire le nom de fichier
+            nom_patient  = (entree_data.nom.replace(" ", "_").replace(".", "") if entree_data else "patient")
+            nom_club_safe = nom_club.replace(" ", "_") if nom_club else "club"
+            nom_fichier_base = f"Rapport_Biodex_{nom_patient}_{nom_club_safe}"
 
             st.session_state.rapport_html_bytes = rapport_html_bytes
             st.session_state.rapport_pdf_bytes  = rapport_pdf_bytes
-            st.session_state.rapport_nom        = nom_fichier
+            st.session_state.rapport_nom_base   = nom_fichier_base
 
             # Nettoyer fichiers temporaires
             for p in [path_e, path_s, path_comp, path_comp_sain, path_exc,
@@ -722,38 +737,41 @@ with col_right:
                 st.code(traceback.format_exc())
 
     # Téléchargement
-    if st.session_state.rapport_html_bytes:
-        nom = st.session_state.rapport_nom or "rapport.pdf"
-
+    if st.session_state.get("rapport_html_bytes") or st.session_state.get("rapport_pdf_bytes"):
         st.markdown("""
 <div class="success-box">
-  <h3>✅ Rapport généré avec succès !</h3>
-  <p>Téléchargez le HTML (modifiable dans un éditeur) ou le PDF directement.</p>
+  <h3>&#10003; Rapport généré avec succès !</h3>
+  <p>Télécharger en HTML (modifiable dans Chrome) ou en PDF direct</p>
 </div>""", unsafe_allow_html=True)
 
+        nom_base = st.session_state.get("rapport_nom_base", "rapport")
         col_dl1, col_dl2 = st.columns(2)
+
         with col_dl1:
-            st.download_button(
-                label="⬇️ Télécharger HTML (modifiable)",
-                data=st.session_state.rapport_html_bytes,
-                file_name=nom.replace(".pdf", ".html"),
-                mime="text/html",
-                use_container_width=True,
-            )
+            html_bytes = st.session_state.get("rapport_html_bytes")
+            if html_bytes:
+                st.download_button(
+                    label="⬇️ Télécharger HTML (modifiable)",
+                    data=html_bytes,
+                    file_name=f"{nom_base}.html",
+                    mime="text/html",
+                    use_container_width=True,
+                    key="dl_html",
+                )
+
         with col_dl2:
-            if st.session_state.rapport_pdf_bytes:
+            pdf_bytes = st.session_state.get("rapport_pdf_bytes")
+            if pdf_bytes:
                 st.download_button(
                     label="⬇️ Télécharger PDF",
-                    data=st.session_state.rapport_pdf_bytes,
-                    file_name=nom,
+                    data=pdf_bytes,
+                    file_name=f"{nom_base}.pdf",
                     mime="application/pdf",
                     use_container_width=True,
+                    key="dl_pdf",
                 )
             else:
-                st.markdown("""
-<div class="info-box" style="margin-top:8px;">
-💡 <b>PDF :</b> Ouvre le HTML dans Chrome → <code>Ctrl+P</code> → Enregistrer en PDF.
-</div>""", unsafe_allow_html=True)
+                st.info("PDF non disponible — ouvrir le HTML dans Chrome → Ctrl+P → Enregistrer en PDF")
 
     st.markdown('</div>', unsafe_allow_html=True)
 

@@ -626,7 +626,7 @@ body {
 <!-- ══════════════════════════════════════════════════
      PAGE DE GARDE
      ══════════════════════════════════════════════════ -->
-<div style="
+<div data-section="page-garde" style="
     height:297mm;
     width:210mm;
     max-width:210mm;
@@ -781,14 +781,21 @@ body {
       </div>
     </div>
     <div style="display:table-cell; width:20%; vertical-align:middle; padding-left:12px;">
+      {% if (cr and cr.delai_postop_jours) or delai_post_op %}
       <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px;">D&#233;lai post-op.</div>
-      <div style="font-size:11pt; color:#1c3f6e; font-weight:bold; margin-top:3px;">{% if cr and cr.delai_postop_jours %}J+{{ cr.delai_postop_jours }} j{% elif delai_post_op %}{{ delai_post_op }}{% else %}&mdash;{% endif %}</div>
+      <div style="font-size:11pt; color:#1c3f6e; font-weight:bold; margin-top:3px;">{% if cr and cr.delai_postop_jours %}J+{{ cr.delai_postop_jours }} j{% else %}{{ delai_post_op }}{% endif %}</div>
+      {% endif %}
     </div>
   </div>
 
   <!-- ── DIAGNOSTIC + INTERVENTION ──────────────────────────────── -->
+  {% set show_intervention = intervention_override or (cr and cr.intervention) %}
   <div style="display:table; width:100%; table-layout:fixed; padding:12px 18px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
+    {% if show_intervention %}
     <div style="display:table-cell; width:50%; vertical-align:top; padding-right:10px; border-right:1px solid #e8eef5;">
+    {% else %}
+    <div style="display:table-cell; width:100%; vertical-align:top;">
+    {% endif %}
       <div style="background:#fef5f5; border-left:3px solid #c0392b; padding:10px 12px; border-radius:0 4px 4px 0;">
         <div style="font-size:7.5pt; color:#c0392b; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">Diagnostic principal</div>
         <div style="font-size:12pt; font-weight:bold; color:#c0392b; line-height:1.2;">
@@ -802,11 +809,12 @@ body {
         {% endif %}
       </div>
     </div>
+    {% if show_intervention %}
     <div style="display:table-cell; width:50%; vertical-align:top; padding-left:10px;">
       <div style="background:#eef3fa; border-left:3px solid #1c3f6e; padding:10px 12px; border-radius:0 4px 4px 0;">
         <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">Intervention chirurgicale</div>
         <div style="font-size:12pt; font-weight:bold; color:#1c3f6e; line-height:1.2;">
-          {% if intervention_override %}{{ intervention_override }}{% elif cr and cr.intervention %}{{ cr.intervention }}{% else %}&mdash;{% endif %}
+          {% if intervention_override %}{{ intervention_override }}{% else %}{{ cr.intervention }}{% endif %}
         </div>
         {% if cr and cr.date_intervention %}
         <div style="font-size:9pt; color:#555; margin-top:4px;">Date : {{ cr.date_intervention }}{% if cr.gestes_associes %} &mdash; {{ cr.gestes_associes }}{% endif %}</div>
@@ -816,43 +824,46 @@ body {
         {% endif %}
       </div>
     </div>
+    {% endif %}
   </div>
 
   <!-- ── DOSSIER CLINIQUE : Antécédents · Accident · Bilan entrée ─ -->
+  {% if cr and (cr.antecedents or cr.mecanisme or cr.perimetre_rotulien_g or cr.perimetre_rotulien_d or cr.squat_sortie or cr.saut_sortie) %}
   <div style="display:table; width:100%; table-layout:fixed; padding:10px 18px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
     <div style="display:table-cell; width:33%; vertical-align:top; padding-right:10px; border-right:1px solid #e8eef5;">
+      {% if cr.antecedents %}
       <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px;">Ant&#233;c&#233;dents m&#233;dicaux</div>
-      {% if cr and cr.antecedents %}
-        {% for ant in cr.antecedents %}
-        <div style="font-size:9pt; color:#333; line-height:1.6;">&#9656; {{ ant }}</div>
-        {% endfor %}
-      {% else %}
-        <div style="font-size:9pt; color:#aaa; font-style:italic;">Aucun ant&#233;c&#233;dent renseign&#233;</div>
+      {% for ant in cr.antecedents %}
+      <div style="font-size:9pt; color:#333; line-height:1.6;">&#9656; {{ ant }}</div>
+      {% endfor %}
       {% endif %}
     </div>
     <div style="display:table-cell; width:34%; vertical-align:top; padding:0 10px; border-right:1px solid #e8eef5;">
+      {% if cr.mecanisme or cr.date_accident %}
       <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px;">M&#233;canisme &amp; accident</div>
       <div style="font-size:9pt; color:#333; line-height:1.7;">
-        {% if cr and cr.mecanisme %}<div>&#9656; {{ cr.mecanisme }}</div>{% endif %}
-        {% if cr and cr.date_accident %}<div style="color:#888;">Date : {{ cr.date_accident }}</div>{% endif %}
-        {% if not cr or not cr.mecanisme %}<div style="color:#aaa; font-style:italic;">Non renseign&#233;</div>{% endif %}
+        {% if cr.mecanisme %}<div>&#9656; {{ cr.mecanisme }}</div>{% endif %}
+        {% if cr.date_accident %}<div style="color:#888;">Date : {{ cr.date_accident }}</div>{% endif %}
       </div>
-      {% if cr and cr.douleur_meca_entree %}
+      {% endif %}
+      {% if cr.douleur_meca_entree %}
       <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-top:6px; margin-bottom:3px;">Douleur m&#233;canique</div>
       <div style="font-size:9pt; color:#333;">{{ cr.douleur_meca_entree }} / 10</div>
       {% endif %}
     </div>
     <div style="display:table-cell; width:33%; vertical-align:top; padding-left:10px;">
+      {% if cr.perimetre_rotulien_g or cr.perimetre_rotulien_d or cr.squat_sortie or cr.saut_sortie %}
       <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px;">Bilan clinique entr&#233;e</div>
       <div style="font-size:9pt; color:#333; line-height:1.7;">
-        {% if cr and cr.perimetre_rotulien_g %}<div>P&#233;rim&#232;tre G : {{ cr.perimetre_rotulien_g }} cm</div>{% endif %}
-        {% if cr and cr.perimetre_rotulien_d %}<div>P&#233;rim&#232;tre D : {{ cr.perimetre_rotulien_d }} cm</div>{% endif %}
-        {% if cr and cr.squat_sortie %}<div style="color:#2a8a36;">Squat : {{ cr.squat_sortie }}</div>{% endif %}
-        {% if cr and cr.saut_sortie %}<div style="color:#2a8a36;">Sauts : {{ cr.saut_sortie }}</div>{% endif %}
-        {% if not cr or (not cr.perimetre_rotulien_g and not cr.squat_sortie) %}<div style="color:#aaa; font-style:italic;">Non renseign&#233;</div>{% endif %}
+        {% if cr.perimetre_rotulien_g %}<div>P&#233;rim&#232;tre G : {{ cr.perimetre_rotulien_g }} cm</div>{% endif %}
+        {% if cr.perimetre_rotulien_d %}<div>P&#233;rim&#232;tre D : {{ cr.perimetre_rotulien_d }} cm</div>{% endif %}
+        {% if cr.squat_sortie %}<div style="color:#2a8a36;">Squat : {{ cr.squat_sortie }}</div>{% endif %}
+        {% if cr.saut_sortie %}<div style="color:#2a8a36;">Sauts : {{ cr.saut_sortie }}</div>{% endif %}
       </div>
+      {% endif %}
     </div>
   </div>
+  {% endif %}
 
   <!-- ── RÉSUMÉ DU SÉJOUR ─────────────────────────────────────── -->
   <div style="padding:12px 18px 10px; border-bottom:1px solid #e8eef5;">
@@ -864,11 +875,6 @@ body {
         {{ cr.conclusion }}
       {% else %}
         Prise en charge en r&#233;&#233;ducation post-op&#233;ratoire au Centre Europ&#233;en de R&#233;&#233;ducation du Sportif (CERS Capbreton &mdash; Groupe Ramsay Sant&#233;). Programme individualis&#233; comprenant : kin&#233;sith&#233;rapie intensive (renforcement musculaire progressif, travail proprioceptif, gain d'amplitude articulaire), pr&#233;paration physique adapt&#233;e (travail cardiovasculaire, gainage, pliom&#233;trie) et suivi psychologique avec &#233;valuation ACL-RSI. Reprise progressive des appuis et de la course. &#201;valuation isocin&#233;tique Biodex en entr&#233;e et sortie de s&#233;jour.
-      {% endif %}
-      {% if conclusion_auto %}
-      <div style="margin-top:7px; padding:7px 10px; background:#f0f8f0; border-left:2px solid #2a8a36; border-radius:0 3px 3px 0; font-size:9.5pt; color:#1a4a20; line-height:1.6;">
-        <strong>Progressions objectiv&#233;es :</strong> {{ conclusion_auto }}
-      </div>
       {% endif %}
     </div>
   </div>
@@ -1385,17 +1391,15 @@ body {
       </div>
     </div>
 
-    <!-- REMARQUES MÉDICALES (pleine largeur) -->
-    <div style="flex-shrink:0; margin-bottom:3px;">
+    <!-- REMARQUES MÉDICALES (pleine largeur) — uniquement si renseignées -->
+    {% if remarques_medecin and remarques_medecin | trim and remarques_medecin | trim != "" %}
+    <div data-section="remarques-medicales" style="flex-shrink:0; margin-bottom:3px;">
       <div style="background:#374151; color:white; font-size:7.5px; font-weight:700; padding:3px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">&#9656; REMARQUES M&#201;DICALES</div>
-      <div style="border:1.5px solid #374151; border-top:none; border-radius:0 0 3px 3px; padding:6px 12px; background:#f9fafb; min-height:80px; width:100%;">
-        {% if remarques_medecin %}
-        <div style="font-size:8pt; color:#374151; line-height:1.6; overflow-wrap:anywhere; white-space:pre-wrap;">{{ remarques_medecin }}</div>
-        {% else %}
-        <div style="font-size:8pt; color:#aaa; font-style:italic;">Aucune remarque renseign&#233;e.</div>
-        {% endif %}
+      <div style="border:1.5px solid #374151; border-top:none; border-radius:0 0 3px 3px; padding:6px 12px; background:#f9fafb; min-height:40px; width:100%;">
+        <div style="font-size:8pt; color:#374151; line-height:1.6; overflow-wrap:anywhere; white-space:pre-wrap;"><span data-remarques-content>{{ remarques_medecin }}</span></div>
       </div>
     </div>
+    {% endif %}
     {% if cr and cr.conclusion %}
     <!-- RÉSUMÉ CR MÉDECIN (pleine largeur) -->
     <div style="flex-shrink:0; margin-bottom:2px;">
@@ -1403,6 +1407,13 @@ body {
       <div style="border:1.5px solid #1c3f6e; border-top:none; border-radius:0 0 3px 3px; padding:6px 12px; background:#f5f8fc; min-height:24px;">
         <div style="font-size:8pt; color:#333; line-height:1.6; overflow-wrap:anywhere;">{{ cr.conclusion[:420] }}{% if cr.conclusion|length > 420 %}&#8230;{% endif %}</div>
       </div>
+    </div>
+    {% endif %}
+
+    {% if entree and sortie and remarques and remarques.progression and (not vald or not vald.has_data) %}
+    <div style="margin:8px 0 4px; padding:7px 12px; background:#eef3fa; border-left:3px solid #1c3f6e; border-radius:0 4px 4px 0; font-size:8pt; color:#1c3f6e; flex-shrink:0;">
+      <strong>Progressions objectiv&#233;es :</strong>
+      {{ remarques.progression | join(' &middot; ') }}
     </div>
     {% endif %}
 
@@ -1590,6 +1601,13 @@ body {
       <span style="color:#e07b00;font-weight:bold;">&#9679; Orange</span> 10&#8211;15% &#8212; d&#233;ficit mod&#233;r&#233; &#160;|&#160;
       <span style="color:#c0392b;font-weight:bold;">&#9679; Rouge</span> &gt;15% &#8212; d&#233;ficit important
     </div>
+
+    {% if entree and sortie and remarques and remarques.progression %}
+    <div style="margin:8px 0 4px; padding:7px 12px; background:#eef3fa; border-left:3px solid #1c3f6e; border-radius:0 4px 4px 0; font-size:8pt; color:#1c3f6e; flex-shrink:0;">
+      <strong>Progressions objectiv&#233;es :</strong>
+      {{ remarques.progression | join(' &middot; ') }}
+    </div>
+    {% endif %}
 
     <!-- FOOTER PAGE 4 -->
     <div class="footer">

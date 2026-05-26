@@ -170,110 +170,213 @@ def _injecter_panneau_personnalisation(html: str) -> str:
     """
     import re as _re
 
+    def assigner_sections(html_text):
+        # Assigner data-section aux div.page en ordre séquentiel
+        sequential = ["bilan-60", "bilan-240", "remarques", "bilan-vald",
+                      "section-4", "section-5"]
+        pattern = r'(<div[^>]*class=["\'][^"\']*\bpage\b[^"\']*["\'][^>]*>)'
+        parts = _re.split(pattern, html_text)
+        result = []
+        page_count = 0
+        for part in parts:
+            if _re.match(r'<div[^>]*class=["\'][^"\']*\bpage\b', part):
+                sid = sequential[page_count] if page_count < len(sequential) else f"section-{page_count}"
+                page_count += 1
+                # Insérer data-section avant le > de fermeture
+                part = part.rstrip('>')
+                part = part + f' data-section="{sid}" data-printable="true">'
+            result.append(part)
+        return ''.join(result)
+
+    html = assigner_sections(html)
+
     panneau = """
 <style>
-#ctrl-panel {
-    position:fixed; top:0; left:0; right:0;
-    background:#1c3f6e; color:white;
-    padding:10px 20px; font-family:Arial,sans-serif; font-size:13px;
-    z-index:9999; display:flex; flex-wrap:wrap; gap:10px; align-items:center;
-    box-shadow:0 2px 8px rgba(0,0,0,0.3);
-}
-#ctrl-panel label {
-    display:flex; align-items:center; gap:5px; cursor:pointer;
-    background:rgba(255,255,255,0.12); padding:4px 10px;
-    border-radius:4px; font-size:12px;
-}
-#ctrl-panel label:hover { background:rgba(255,255,255,0.22); }
-#ctrl-panel input[type=checkbox] { cursor:pointer; width:14px; height:14px; }
-#print-btn {
-    background:#2a8a36; color:white; border:none;
-    padding:7px 18px; border-radius:5px; font-size:13px;
-    font-weight:bold; cursor:pointer; margin-left:auto;
-}
-#print-btn:hover { background:#237030; }
-#edit-zone { width:100%; padding-top:4px; display:none; }
-#remarques-edit {
-    width:100%; padding:4px 8px; font-size:12px;
-    border-radius:4px; border:1px solid rgba(255,255,255,0.3);
-    background:rgba(255,255,255,0.1); color:white;
-    resize:vertical; min-height:40px;
-}
-#remarques-toggle {
-    font-size:11px; color:#a8c4e0; cursor:pointer;
-    text-decoration:underline; margin-left:8px;
-}
-body { padding-top:70px; }
 @media print {
-    #ctrl-panel { display:none !important; }
-    body { padding-top:0 !important; }
+    #ctrl-panel { display: none !important; }
+    body { padding-top: 0 !important; margin-top: 0 !important; }
+    [data-section].hidden { display: none !important; }
 }
+#ctrl-panel {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: #1c3f6e;
+    color: #fff;
+    padding: 8px 16px;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    z-index: 99999;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    align-items: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+    min-height: 48px;
+}
+.ctrl-title {
+    font-size: 13px;
+    font-weight: bold;
+    margin-right: 4px;
+    white-space: nowrap;
+}
+.ctrl-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.13);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 3px 9px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11.5px;
+    user-select: none;
+    transition: background 0.15s;
+}
+.ctrl-label:hover { background: rgba(255,255,255,0.22); }
+.ctrl-label input { cursor: pointer; width:13px; height:13px; }
+.ctrl-label.unchecked {
+    background: rgba(255,255,255,0.05);
+    opacity: 0.6;
+    text-decoration: line-through;
+}
+#edit-toggle {
+    background: rgba(255,255,255,0.13);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11.5px;
+}
+#edit-toggle:hover { background: rgba(255,255,255,0.22); }
+#print-btn {
+    background: #2a8a36;
+    color: #fff;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: auto;
+    white-space: nowrap;
+}
+#print-btn:hover { background: #237030; }
+#edit-zone {
+    width: 100%;
+    display: none;
+    padding: 6px 0 2px;
+}
+#remarques-textarea {
+    width: 100%;
+    min-height: 50px;
+    padding: 5px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    resize: vertical;
+    box-sizing: border-box;
+}
+#remarques-textarea::placeholder { color: rgba(255,255,255,0.5); }
+body { padding-top: 58px; box-sizing: border-box; }
 </style>
+
 <div id="ctrl-panel">
-  <strong style="font-size:14px;margin-right:6px;">Personnaliser le rapport :</strong>
-  <label><input type="checkbox" checked onchange="toggleSection('page-garde')"> Page de garde</label>
-  <label><input type="checkbox" checked onchange="toggleSection('bilan-60')"> Bilan 60&#176;/s</label>
-  <label><input type="checkbox" checked onchange="toggleSection('bilan-240')"> Bilan 240&#176;/s</label>
-  <label><input type="checkbox" checked onchange="toggleSection('progression')"> Progression</label>
-  <label><input type="checkbox" checked onchange="toggleSection('bilan-vald')"> VALD</label>
-  <label><input type="checkbox" checked onchange="toggleSection('remarques')"> Remarques</label>
-  <label><input type="checkbox" checked onchange="toggleSection('cr-medical')"> Compte-rendu</label>
-  <span id="remarques-toggle" onclick="toggleRemarquesEdit()">&#9998; Modifier remarques</span>
-  <button id="print-btn" onclick="window.print()">&#128438; Imprimer / T&#233;l&#233;charger PDF</button>
+  <span class="ctrl-title">Personnaliser :</span>
+
+  <label class="ctrl-label" id="lbl-page-garde">
+    <input type="checkbox" checked
+           onchange="toggleSection('page-garde', this)">
+    Page de garde
+  </label>
+  <label class="ctrl-label" id="lbl-bilan-60">
+    <input type="checkbox" checked
+           onchange="toggleSection('bilan-60', this)">
+    Bilan 60°/s
+  </label>
+  <label class="ctrl-label" id="lbl-bilan-240">
+    <input type="checkbox" checked
+           onchange="toggleSection('bilan-240', this)">
+    Bilan 240°/s
+  </label>
+  <label class="ctrl-label" id="lbl-remarques">
+    <input type="checkbox" checked
+           onchange="toggleSection('remarques', this)">
+    Analyse clinique
+  </label>
+  <label class="ctrl-label" id="lbl-bilan-vald">
+    <input type="checkbox" checked
+           onchange="toggleSection('bilan-vald', this)">
+    VALD
+  </label>
+
+  <button id="edit-toggle" onclick="toggleEdit()">
+    ✏️ Remarques
+  </button>
+
+  <button id="print-btn" onclick="imprimerRapport()">
+    Imprimer / PDF
+  </button>
+
   <div id="edit-zone">
-    <textarea id="remarques-edit" placeholder="Saisir les remarques m&#233;dicales..."
-              oninput="updateRemarques(this.value)"></textarea>
+    <textarea id="remarques-textarea"
+              placeholder="Saisir les remarques médicales ici..."
+              oninput="syncRemarques(this.value)"></textarea>
   </div>
 </div>
+
 <script>
-function toggleSection(id) {
-    document.querySelectorAll('[data-section="'+id+'"]').forEach(function(el){
-        el.style.display = el.style.display === 'none' ? '' : 'none';
-    });
-}
-function toggleRemarquesEdit() {
-    var z = document.getElementById('edit-zone');
-    var ta = document.getElementById('remarques-edit');
-    if (!z.style.display || z.style.display === 'none') {
-        var rem = document.querySelector('[data-remarques-content]');
-        if (rem) ta.value = rem.innerText;
-        z.style.display = 'block';
-    } else { z.style.display = 'none'; }
-}
-function updateRemarques(val) {
+document.addEventListener('DOMContentLoaded', function() {
     var rem = document.querySelector('[data-remarques-content]');
-    if (rem) rem.innerText = val;
+    var ta  = document.getElementById('remarques-textarea');
+    if (rem && ta) ta.value = rem.innerText.trim();
+
+    var sections = ['page-garde','bilan-60','bilan-240','remarques','bilan-vald'];
+    sections.forEach(function(sid) {
+        var el  = document.querySelector('[data-section="'+sid+'"]');
+        var lbl = document.getElementById('lbl-'+sid);
+        if (!el && lbl) lbl.style.display = 'none';
+    });
+});
+
+function toggleSection(sid, checkbox) {
+    var els = document.querySelectorAll('[data-section="'+sid+'"]');
+    var lbl = document.getElementById('lbl-'+sid);
+    els.forEach(function(el) {
+        el.style.display = checkbox.checked ? '' : 'none';
+    });
+    if (lbl) lbl.classList.toggle('unchecked', !checkbox.checked);
+}
+
+function toggleEdit() {
+    var zone = document.getElementById('edit-zone');
+    zone.style.display = (zone.style.display === 'none' || zone.style.display === '')
+                         ? 'block' : 'none';
+}
+
+function syncRemarques(val) {
+    var rems = document.querySelectorAll('[data-remarques-content]');
+    rems.forEach(function(el) {
+        el.innerText = val;
+        el.style.display = val.trim() ? '' : 'none';
+    });
+    var bloc = document.querySelector('[data-section="remarques-medicales"]');
+    if (bloc) bloc.style.display = val.trim() ? '' : 'none';
+}
+
+function imprimerRapport() {
+    window.print();
 }
 </script>
 """
-    # Ajouter data-section sur les pages en ordre séquentiel
-    section_ids = ["page-garde","bilan-60","bilan-240","progression","bilan-vald","remarques","cr-medical"]
-    parts = _re.split(r'(<div[^>]*class="page"[^>]*>)', html)
-    result, page_count = [], 0
-    for part in parts:
-        if 'class="page"' in part and part.strip().startswith('<div'):
-            sid = section_ids[page_count] if page_count < len(section_ids) else f"section-{page_count}"
-            part = part.replace('class="page"', f'class="page" data-section="{sid}"')
-            page_count += 1
-        result.append(part)
-    html = ''.join(result)
 
-    # Ajouter data-remarques-content sur la zone de remarques médicales
-    html = html.replace(
-        'Aucune remarque renseign&#233;e.',
-        '<span data-remarques-content>Aucune remarque renseign&#233;e.</span>'
-    )
-    html = _re.sub(
-        r'(white-space:pre-wrap;">)([^<]{2,})',
-        r'\1<span data-remarques-content>\2</span>',
-        html, count=1
-    )
-
-    # Injecter juste après <body>
-    if '<body>' in html:
-        html = html.replace('<body>', '<body>\n' + panneau, 1)
+    if '<body' in html:
+        html = _re.sub(r'(<body[^>]*>)', r'\1\n' + panneau, html, count=1)
     else:
         html = panneau + html
+
     return html
 
 

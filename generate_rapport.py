@@ -820,7 +820,7 @@ def generer_rapport_biodex(
     include_excentrique:     bool = True,
     include_vald:            bool = True,
     include_progression:     bool = True,
-) -> str:
+) -> dict:
 
     print("\n" + "█" * 60)
     print("  RAPPORT BIODEX v6 — PDF avec couleurs")
@@ -895,13 +895,24 @@ def generer_rapport_biodex(
     sauvegarder_html(html, output_html)
 
     print("\n📄 Export PDF...")
-    chemin = exporter_pdf(html, output_pdf)
+    html_bytes = html.encode("utf-8")
+    chemin_pdf = exporter_pdf(html, output_pdf)
+
+    pdf_bytes = None
+    if chemin_pdf and chemin_pdf.endswith(".pdf") and os.path.exists(chemin_pdf):
+        with open(chemin_pdf, "rb") as f:
+            pdf_bytes = f.read()
 
     print(f"\n{'=' * 60}")
-    print(f"  🎉 RAPPORT GÉNÉRÉ : {chemin}")
+    print(f"  🎉 RAPPORT GÉNÉRÉ — PDF: {'oui' if pdf_bytes else 'non'}")
     print(f"{'=' * 60}\n")
 
-    return chemin
+    return {
+        "html":       html,
+        "html_bytes": html_bytes,
+        "pdf_path":   chemin_pdf,
+        "pdf_bytes":  pdf_bytes,
+    }
 
 
 # ════════════════════════════════════════════════════════════════

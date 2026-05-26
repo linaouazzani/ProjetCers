@@ -140,14 +140,12 @@ if "club_selectionne" not in st.session_state:
     st.session_state.club_selectionne = None
 if "nom_club_cache" not in st.session_state:
     st.session_state.nom_club_cache = ""
-if "rapport_bytes" not in st.session_state:
-    st.session_state.rapport_bytes = None
-if "rapport_nom" not in st.session_state:
-    st.session_state.rapport_nom = None
-if "rapport_ext" not in st.session_state:
-    st.session_state.rapport_ext = "html"
-if "rapport_html_path" not in st.session_state:
-    st.session_state.rapport_html_path = None
+if "rapport_html_bytes" not in st.session_state:
+    st.session_state.rapport_html_bytes = None
+if "rapport_pdf_bytes" not in st.session_state:
+    st.session_state.rapport_pdf_bytes = None
+if "rapport_nom_base" not in st.session_state:
+    st.session_state.rapport_nom_base = None
 
 
 # ── En-tête ───────────────────────────────────────────────────────────────────
@@ -161,6 +159,122 @@ st.markdown("""
   <div class="hero-badge">Suivi de progression · PDF A4</div>
 </div>
 """, unsafe_allow_html=True)
+
+
+# ── Panneau personnalisation HTML ────────────────────────────────────────────
+
+def _injecter_panneau_personnalisation(html: str) -> str:
+    """Injecte un bandeau de contrôle interactif dans le HTML du rapport.
+    Permet de cocher/décocher des sections et d'imprimer via Chrome.
+    Disparaît à l'impression (@media print).
+    """
+    import re as _re
+
+    panneau = """
+<style>
+#ctrl-panel {
+    position:fixed; top:0; left:0; right:0;
+    background:#1c3f6e; color:white;
+    padding:10px 20px; font-family:Arial,sans-serif; font-size:13px;
+    z-index:9999; display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    box-shadow:0 2px 8px rgba(0,0,0,0.3);
+}
+#ctrl-panel label {
+    display:flex; align-items:center; gap:5px; cursor:pointer;
+    background:rgba(255,255,255,0.12); padding:4px 10px;
+    border-radius:4px; font-size:12px;
+}
+#ctrl-panel label:hover { background:rgba(255,255,255,0.22); }
+#ctrl-panel input[type=checkbox] { cursor:pointer; width:14px; height:14px; }
+#print-btn {
+    background:#2a8a36; color:white; border:none;
+    padding:7px 18px; border-radius:5px; font-size:13px;
+    font-weight:bold; cursor:pointer; margin-left:auto;
+}
+#print-btn:hover { background:#237030; }
+#edit-zone { width:100%; padding-top:4px; display:none; }
+#remarques-edit {
+    width:100%; padding:4px 8px; font-size:12px;
+    border-radius:4px; border:1px solid rgba(255,255,255,0.3);
+    background:rgba(255,255,255,0.1); color:white;
+    resize:vertical; min-height:40px;
+}
+#remarques-toggle {
+    font-size:11px; color:#a8c4e0; cursor:pointer;
+    text-decoration:underline; margin-left:8px;
+}
+body { padding-top:70px; }
+@media print {
+    #ctrl-panel { display:none !important; }
+    body { padding-top:0 !important; }
+}
+</style>
+<div id="ctrl-panel">
+  <strong style="font-size:14px;margin-right:6px;">Personnaliser le rapport :</strong>
+  <label><input type="checkbox" checked onchange="toggleSection('page-garde')"> Page de garde</label>
+  <label><input type="checkbox" checked onchange="toggleSection('bilan-60')"> Bilan 60&#176;/s</label>
+  <label><input type="checkbox" checked onchange="toggleSection('bilan-240')"> Bilan 240&#176;/s</label>
+  <label><input type="checkbox" checked onchange="toggleSection('progression')"> Progression</label>
+  <label><input type="checkbox" checked onchange="toggleSection('bilan-vald')"> VALD</label>
+  <label><input type="checkbox" checked onchange="toggleSection('remarques')"> Remarques</label>
+  <label><input type="checkbox" checked onchange="toggleSection('cr-medical')"> Compte-rendu</label>
+  <span id="remarques-toggle" onclick="toggleRemarquesEdit()">&#9998; Modifier remarques</span>
+  <button id="print-btn" onclick="window.print()">&#128438; Imprimer / T&#233;l&#233;charger PDF</button>
+  <div id="edit-zone">
+    <textarea id="remarques-edit" placeholder="Saisir les remarques m&#233;dicales..."
+              oninput="updateRemarques(this.value)"></textarea>
+  </div>
+</div>
+<script>
+function toggleSection(id) {
+    document.querySelectorAll('[data-section="'+id+'"]').forEach(function(el){
+        el.style.display = el.style.display === 'none' ? '' : 'none';
+    });
+}
+function toggleRemarquesEdit() {
+    var z = document.getElementById('edit-zone');
+    var ta = document.getElementById('remarques-edit');
+    if (!z.style.display || z.style.display === 'none') {
+        var rem = document.querySelector('[data-remarques-content]');
+        if (rem) ta.value = rem.innerText;
+        z.style.display = 'block';
+    } else { z.style.display = 'none'; }
+}
+function updateRemarques(val) {
+    var rem = document.querySelector('[data-remarques-content]');
+    if (rem) rem.innerText = val;
+}
+</script>
+"""
+    # Ajouter data-section sur les pages en ordre séquentiel
+    section_ids = ["page-garde","bilan-60","bilan-240","progression","bilan-vald","remarques","cr-medical"]
+    parts = _re.split(r'(<div[^>]*class="page"[^>]*>)', html)
+    result, page_count = [], 0
+    for part in parts:
+        if 'class="page"' in part and part.strip().startswith('<div'):
+            sid = section_ids[page_count] if page_count < len(section_ids) else f"section-{page_count}"
+            part = part.replace('class="page"', f'class="page" data-section="{sid}"')
+            page_count += 1
+        result.append(part)
+    html = ''.join(result)
+
+    # Ajouter data-remarques-content sur la zone de remarques médicales
+    html = html.replace(
+        'Aucune remarque renseign&#233;e.',
+        '<span data-remarques-content>Aucune remarque renseign&#233;e.</span>'
+    )
+    html = _re.sub(
+        r'(white-space:pre-wrap;">)([^<]{2,})',
+        r'\1<span data-remarques-content>\2</span>',
+        html, count=1
+    )
+
+    # Injecter juste après <body>
+    if '<body>' in html:
+        html = html.replace('<body>', '<body>\n' + panneau, 1)
+    else:
+        html = panneau + html
+    return html
 
 
 # ── Layout ────────────────────────────────────────────────────────────────────
@@ -662,7 +776,7 @@ with col_right:
 
             progress.progress(60, text="📊 Calcul + graphiques en cours...")
 
-            chemin = generer_rapport_biodex(
+            result = generer_rapport_biodex(
                 pdf_entree              = path_e,
                 pdf_sortie              = path_s,
                 pdf_comparatif          = path_comp,
@@ -688,23 +802,36 @@ with col_right:
                 cr_data                 = cr_data,
             )
 
-            progress.progress(90, text="📄 Lecture du fichier généré...")
+            progress.progress(90, text="📄 Traitement du résultat...")
 
-            ext_out  = "pdf"  if chemin.endswith(".pdf")  else "html"
-            mime_out = "application/pdf" if ext_out == "pdf" else "text/html"
-
-            with open(chemin, "rb") as f:
-                rapport_bytes = f.read()
+            # Gérer dict (nouvelle version) ou str (ancienne version)
+            if isinstance(result, dict):
+                html_bytes = result.get("html_bytes")
+                pdf_bytes  = result.get("pdf_bytes")
+                chemin     = result.get("pdf_path", "")
+            else:
+                chemin = result
+                pdf_bytes  = None
+                html_bytes = None
+                if chemin and os.path.exists(chemin):
+                    with open(chemin, "rb") as f:
+                        if chemin.endswith(".pdf"):
+                            pdf_bytes = f.read()
+                        else:
+                            html_bytes = f.read()
+                if html_bytes is None and os.path.exists(out_html):
+                    with open(out_html, "rb") as f:
+                        html_bytes = f.read()
 
             progress.progress(100, text="✅ Rapport prêt !")
 
-            nom_patient = (entree_data.nom.replace(" ", "_").replace(".", "") if entree_data else "patient")
-            nom_fichier = f"Rapport_Biodex_{nom_patient}_{nom_club.replace(' ', '_')}.{ext_out}"
+            nom_patient  = (entree_data.nom.replace(" ", "_").replace(".", "") if entree_data else "patient")
+            nom_club_safe = (nom_club or "club").replace(" ", "_")
+            nom_base     = f"Rapport_{nom_patient}_{nom_club_safe}"
 
-            st.session_state.rapport_bytes     = rapport_bytes
-            st.session_state.rapport_nom       = nom_fichier
-            st.session_state.rapport_ext       = ext_out
-            st.session_state.rapport_html_path = out_html
+            st.session_state.rapport_html_bytes = html_bytes
+            st.session_state.rapport_pdf_bytes  = pdf_bytes
+            st.session_state.rapport_nom_base   = nom_base
 
             # Nettoyer fichiers temporaires
             for p in [path_e, path_s, path_comp, path_comp_sain, path_exc,
@@ -720,45 +847,44 @@ with col_right:
                 st.code(traceback.format_exc())
 
     # Téléchargement
-    if st.session_state.rapport_bytes:
-        ext  = st.session_state.rapport_ext
-        mime = "application/pdf" if ext == "pdf" else "text/html"
-
+    if st.session_state.get("rapport_html_bytes") or st.session_state.get("rapport_pdf_bytes"):
         st.markdown("""
 <div class="success-box">
-  <h3>✅ Rapport généré avec succès !</h3>
-  <p>Page 1 : Données numériques • Page 2 : Graphiques</p>
+  <h3>&#10003; Rapport g&#233;n&#233;r&#233; !</h3>
+  <p>T&#233;l&#233;charger en PDF, ou en HTML pour personnaliser avant impression</p>
 </div>""", unsafe_allow_html=True)
 
-        st.download_button(
-            label    = f"⬇️  Télécharger le Rapport ({ext.upper()})",
-            data     = st.session_state.rapport_bytes,
-            file_name= st.session_state.rapport_nom,
-            mime     = mime,
-            use_container_width=True,
-        )
+        nom_base = st.session_state.get("rapport_nom_base", "rapport")
+        col1, col2 = st.columns(2)
 
-        # Bouton HTML supplémentaire
-        html_path = st.session_state.get("rapport_html_path")
-        if html_path and os.path.exists(html_path):
-            with open(html_path, "rb") as fh:
-                html_bytes = fh.read()
-            st.download_button(
-                label="⬇️ Télécharger HTML (modifiable dans Chrome)",
-                data=html_bytes,
-                file_name=st.session_state.rapport_nom.replace(".pdf", ".html"),
-                mime="text/html",
-                use_container_width=True,
-                key="dl_html",
-            )
+        with col1:
+            pdf_b = st.session_state.get("rapport_pdf_bytes")
+            if pdf_b:
+                st.download_button(
+                    label="⬇️ Télécharger PDF",
+                    data=pdf_b,
+                    file_name=f"{nom_base}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    key="dl_pdf",
+                )
+            else:
+                st.info("PDF non disponible sur ce serveur.")
 
-        if ext == "html":
-            st.markdown("""
-<div class="info-box">
-💡 <b>PDF avec couleurs :</b> Ouvre le fichier HTML dans Chrome
-→ <code>Ctrl+P</code> → <em>Enregistrer en PDF</em>.<br>
-Ou installe <b>wkhtmltopdf</b> depuis wkhtmltopdf.org pour avoir le PDF directement.
-</div>""", unsafe_allow_html=True)
+        with col2:
+            html_b = st.session_state.get("rapport_html_bytes")
+            if html_b:
+                html_interactif = _injecter_panneau_personnalisation(
+                    html_b.decode("utf-8")
+                )
+                st.download_button(
+                    label="🎛️ Personnaliser puis imprimer (HTML)",
+                    data=html_interactif.encode("utf-8"),
+                    file_name=f"{nom_base}_personnalisable.html",
+                    mime="text/html",
+                    use_container_width=True,
+                    key="dl_html",
+                )
 
     st.markdown('</div>', unsafe_allow_html=True)
 

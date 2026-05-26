@@ -63,8 +63,12 @@ def parse_compte_rendu(pdf_source) -> dict:
         date_naissance = find_date(r"[Nn][ée]\s+le\s+(\d{2}/\d{2}/\d{4})")
         sexe = find(r"[Ss]exe\s*:\s*(\w+)")
         medecin_responsable = find(
-            r"[Mm][ée]decin\s+responsable\s*:\s*(.+?)(?:\n|$)"
+            r"[Mm][ée]decin\s+responsable\s*:\s*[Dd]octeur\s+([A-Z][A-Za-z\s]+?)(?:\n|Fait|$)"
         )
+        if not medecin_responsable:
+            medecin_responsable = find(
+                r"[Dd]octeur\s+([A-Z]+\s+[A-Z][a-z]+)"
+            )
 
         # ── Contexte sportif ──────────────────────────────────────
         sport = find(r"[Ss]port\s+pratiqu[ée]\s*:\s*(.+?)(?:\n|Niveau)")

@@ -533,6 +533,12 @@ with col_left:
             type=["csv", "xlsx"], key="up_gps"
         )
 
+    # Valeurs par défaut (accessibles même si l'expander n'est pas ouvert)
+    remarques_medecin = ""
+    programme_kine    = ""
+    programme_prepa   = ""
+    conclusion_sortie = ""
+
     # 2. Informations complémentaires patient — A2 (placeholder mis à jour)
     with st.expander("⚙️ Informations complémentaires patient", expanded=False):
         c1, c2, c3 = st.columns(3)

@@ -140,6 +140,47 @@ def parse_compte_rendu(pdf_source) -> dict:
             flags=re.IGNORECASE | re.DOTALL
         )
 
+        # ── Sections cliniques isolées (entrée / sortie) ──────────
+        m_entree_sec = re.search(
+            r"EXAMEN CLINIQUE D.ENTREE(.+?)(?=EXAMEN CLINIQUE DE SORTIE|CONCLUSION|$)",
+            full_text, re.DOTALL | re.IGNORECASE
+        )
+        m_sortie_sec = re.search(
+            r"EXAMEN CLINIQUE DE SORTIE(.+?)(?=CONCLUSION A LA SORTIE|CONCLUSION|$)",
+            full_text, re.DOTALL | re.IGNORECASE
+        )
+        entree_sec_txt = m_entree_sec.group(1) if m_entree_sec else ""
+        sortie_sec_txt = m_sortie_sec.group(1) if m_sortie_sec else ""
+
+        # État trophique régional (entrée / sortie)
+        etat_trophique_entree = None
+        if entree_sec_txt:
+            etat_trophique_entree = find(
+                r"[Ee]tat\s+trophique[^:]*:\s*(.+?)(?:\n|$)", entree_sec_txt
+            )
+        etat_trophique_sortie = None
+        if sortie_sec_txt:
+            etat_trophique_sortie = find(
+                r"[Ee]tat\s+trophique[^:]*:\s*(.+?)(?:\n|$)", sortie_sec_txt
+            )
+
+        # Périmètre rotulien SORTIE
+        perimetre_g_sortie = None
+        perimetre_d_sortie = None
+        if sortie_sec_txt:
+            m_perim_s = re.search(
+                r"[Pp][ée]rim[eè]tre\s+rotulien[^\n]*\n[^\n]*?(\d{2,3}[.,]?\d?)\s+(\d{2,3}[.,]?\d?)",
+                sortie_sec_txt, re.DOTALL
+            )
+            if m_perim_s:
+                perimetre_g_sortie = m_perim_s.group(1).replace(",", ".")
+                perimetre_d_sortie = m_perim_s.group(2).replace(",", ".")
+
+        # Épanchement SORTIE
+        epanchement_sortie = None
+        if sortie_sec_txt:
+            epanchement_sortie = find(r"[Ee]panchement\s*:\s*(\w+)", sortie_sec_txt)
+
         # ── Conclusion ────────────────────────────────────────────
         conclusion = find(
             r"CONCLUSION A LA SORTIE\s*\n(.+?)(?=RISQUES|$)",
@@ -207,6 +248,14 @@ def parse_compte_rendu(pdf_source) -> dict:
             "douleur_meca_sortie":  douleur_meca_sortie,
             "squat_sortie":         squat_sortie,
             "saut_sortie":          saut_sortie,
+            # État trophique régional
+            "etat_trophique_entree": etat_trophique_entree,
+            "etat_trophique_sortie": etat_trophique_sortie,
+            # Périmètre sortie
+            "perimetre_rotulien_g_sortie": perimetre_g_sortie,
+            "perimetre_rotulien_d_sortie": perimetre_d_sortie,
+            # Épanchement sortie
+            "epanchement_sortie":   epanchement_sortie,
             # Antécédents (conservé pour compatibilité)
             "antecedents":          antecedents,
             # Conclusion complète
@@ -227,6 +276,9 @@ def _empty_result() -> dict:
         "gestes_associes","delai_postop_jours","date_entree","date_sortie",
         "douleur_meca_entree","perimetre_rotulien_g","perimetre_rotulien_d",
         "epanchement_entree","douleur_meca_sortie","squat_sortie","saut_sortie",
+        "etat_trophique_entree","etat_trophique_sortie",
+        "perimetre_rotulien_g_sortie","perimetre_rotulien_d_sortie",
+        "epanchement_sortie",
         "conclusion",
     ]} | {"antecedents": []}
 

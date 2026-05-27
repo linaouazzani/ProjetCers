@@ -311,6 +311,11 @@ body { padding-top: 58px; box-sizing: border-box; }
            onchange="toggleSection('bilan-vald', this)">
     VALD
   </label>
+  <label class="ctrl-label" id="lbl-conclusion-programme">
+    <input type="checkbox" checked
+           onchange="toggleSection('conclusion-programme', this)">
+    Conclusion
+  </label>
 
   <button id="edit-toggle" onclick="toggleEdit()">
     ✏️ Remarques
@@ -333,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var ta  = document.getElementById('remarques-textarea');
     if (rem && ta) ta.value = rem.innerText.trim();
 
-    var sections = ['page-garde','bilan-60','bilan-240','remarques','bilan-vald'];
+    var sections = ['page-garde','bilan-60','bilan-240','remarques','bilan-vald','conclusion-programme'];
     sections.forEach(function(sid) {
         var el  = document.querySelector('[data-section="'+sid+'"]');
         var lbl = document.getElementById('lbl-'+sid);
@@ -582,6 +587,27 @@ with col_left:
             "Remarques médicales (optionnel)",
             placeholder="Zone libre pour le professionnel de santé (médecin, kinésithérapeute...)...",
             height=70, key="remarques"
+        )
+
+        st.markdown("---")
+        st.caption("📋 Programme de rééducation (optionnel — apparaît dans la dernière page du rapport)")
+        ck, cp = st.columns(2)
+        with ck:
+            programme_kine = st.text_area(
+                "Programme kinésithérapie",
+                placeholder="Ex:\nSemaine 1-2 : Drainage, mobilisation passive, isométrique quadriceps\nSemaine 3-4 : Renforcement progressif, proprioception statique\nSemaine 5-8 : Renforcement dynamique, proprioception dynamique\nSemaine 8+ : Travail fonctionnel, course légère",
+                height=100, key="prog_kine"
+            )
+        with cp:
+            programme_prepa = st.text_area(
+                "Programme préparation physique",
+                placeholder="Ex:\nPhase 1 : Vélo, gainage statique, renforcement global\nPhase 2 : Pliométrie basse intensité, travail cardio\nPhase 3 : Course progressive, exercices sport-spécifiques\nPhase 4 : Intensification, retour au jeu",
+                height=100, key="prog_prepa"
+            )
+        conclusion_sortie = st.text_area(
+            "Conclusion de sortie / Recommandations (optionnel)",
+            placeholder="Conclusion médicale personnalisée et recommandations pour la suite de la rééducation à domicile...",
+            height=65, key="conclusion_sortie"
         )
 
     # Variables avec valeurs par défaut
@@ -903,6 +929,9 @@ with col_right:
                 acl_rsi_score           = acl_rsi_score if acl_rsi_score > 0 else None,
                 remarques_medecin       = remarques_medecin,
                 cr_data                 = cr_data,
+                programme_kine          = programme_kine,
+                programme_prepa         = programme_prepa,
+                conclusion_sortie       = conclusion_sortie,
             )
 
             progress.progress(90, text="📄 Traitement du résultat...")

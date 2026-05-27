@@ -308,6 +308,9 @@ def construire_contexte(
     include_excentrique: bool = True,
     include_vald: bool = True,
     include_progression: bool = True,
+    programme_kine: str = "",
+    programme_prepa: str = "",
+    conclusion_sortie: str = "",
 ) -> dict:
 
     poids        = entree.poids_kg or sortie.poids_kg or 101.0
@@ -695,6 +698,9 @@ def construire_contexte(
         "include_excentrique":    include_excentrique,
         "include_vald":           include_vald,
         "include_progression":    include_progression,
+        "programme_kine":         programme_kine,
+        "programme_prepa":        programme_prepa,
+        "conclusion_sortie":      conclusion_sortie,
     }
 
 
@@ -820,6 +826,9 @@ def generer_rapport_biodex(
     include_excentrique:     bool = True,
     include_vald:            bool = True,
     include_progression:     bool = True,
+    programme_kine:          str = "",
+    programme_prepa:         str = "",
+    conclusion_sortie:       str = "",
 ) -> dict:
 
     print("\n" + "█" * 60)
@@ -887,6 +896,9 @@ def generer_rapport_biodex(
         include_excentrique=include_excentrique,
         include_vald=include_vald,
         include_progression=include_progression,
+        programme_kine=programme_kine,
+        programme_prepa=programme_prepa,
+        conclusion_sortie=conclusion_sortie,
     )
     print("  ✅ Contexte prêt")
 

@@ -828,7 +828,7 @@ body {
   </div>
 
   <!-- ── DOSSIER CLINIQUE : Mécanisme + Bilan comparatif entrée/sortie ─ -->
-  {% set has_clinical = cr and (cr.mecanisme or cr.date_accident or cr.perimetre_rotulien_g or cr.perimetre_rotulien_d or cr.douleur_meca_entree or cr.douleur_meca_sortie or cr.squat_sortie or cr.saut_sortie or cr.epanchement_entree) %}
+  {% set has_clinical = cr and (cr.mecanisme or cr.date_accident or cr.perimetre_rotulien_g or cr.perimetre_rotulien_d or cr.perimetre_rotulien_g_sortie or cr.douleur_meca_entree or cr.douleur_meca_sortie or cr.squat_sortie or cr.saut_sortie or cr.epanchement_entree or cr.epanchement_sortie or cr.etat_trophique_entree or cr.etat_trophique_sortie) %}
   {% if has_clinical %}
   <div style="display:table; width:100%; table-layout:fixed; padding:8px 18px 10px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
 
@@ -859,22 +859,48 @@ body {
           </tr>
         </thead>
         <tbody>
-          {% if cr.perimetre_rotulien_g or cr.perimetre_rotulien_d %}
+          {% if cr.perimetre_rotulien_g or cr.perimetre_rotulien_d or cr.perimetre_rotulien_g_sortie or cr.perimetre_rotulien_d_sortie %}
           <tr>
             <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">P&#233;rim&#232;tre rotulien</td>
             <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
               {% if cr.perimetre_rotulien_g %}G : {{ cr.perimetre_rotulien_g }} cm{% endif %}
-              {% if cr.perimetre_rotulien_g and cr.perimetre_rotulien_d %} &nbsp;/&nbsp; {% endif %}
+              {% if cr.perimetre_rotulien_g and cr.perimetre_rotulien_d %} / {% endif %}
               {% if cr.perimetre_rotulien_d %}D : {{ cr.perimetre_rotulien_d }} cm{% endif %}
+              {% if not cr.perimetre_rotulien_g and not cr.perimetre_rotulien_d %}<span style="color:#888;">&mdash;</span>{% endif %}
             </td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#888;">&mdash;</td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center;">
+              {% if cr.perimetre_rotulien_g_sortie or cr.perimetre_rotulien_d_sortie %}
+              <span style="color:#2a8a36; font-weight:600;">
+                {% if cr.perimetre_rotulien_g_sortie %}G : {{ cr.perimetre_rotulien_g_sortie }} cm{% endif %}
+                {% if cr.perimetre_rotulien_g_sortie and cr.perimetre_rotulien_d_sortie %} / {% endif %}
+                {% if cr.perimetre_rotulien_d_sortie %}D : {{ cr.perimetre_rotulien_d_sortie }} cm{% endif %}
+              </span>
+              {% else %}
+              <span style="color:#888;">&mdash;</span>
+              {% endif %}
+            </td>
           </tr>
           {% endif %}
-          {% if cr.epanchement_entree %}
+          {% if cr.etat_trophique_entree or cr.etat_trophique_sortie %}
           <tr style="background:#fafcff;">
+            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">&#201;tat trophique</td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
+              {% if cr.etat_trophique_entree %}{{ cr.etat_trophique_entree }}{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
+            </td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center;">
+              {% if cr.etat_trophique_sortie %}<span style="color:#2a8a36; font-weight:600;">{{ cr.etat_trophique_sortie }}</span>{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
+            </td>
+          </tr>
+          {% endif %}
+          {% if cr.epanchement_entree or cr.epanchement_sortie %}
+          <tr>
             <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">&#201;panchement</td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">{{ cr.epanchement_entree }}</td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#888;">&mdash;</td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
+              {% if cr.epanchement_entree %}{{ cr.epanchement_entree }}{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
+            </td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center;">
+              {% if cr.epanchement_sortie %}<span style="color:#2a8a36; font-weight:600;">{{ cr.epanchement_sortie }}</span>{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
+            </td>
           </tr>
           {% endif %}
           {% if cr.douleur_meca_entree or cr.douleur_meca_sortie %}
@@ -1153,7 +1179,7 @@ body {
         {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
       </div>
       <div class="footer-mention">*Seuls les resultats cles sont affiches. Les rapports originaux detailles ont ete envoyes separement.</div>
-      <div class="footer-page">Page 2 / {% if vald and vald.has_data %}7{% else %}6{% endif %}</div>
+      <div class="footer-page">Page 2 / {% if vald and vald.has_data %}6{% else %}5{% endif %}</div>
     </div>
 
   </div><!-- fin page-content -->
@@ -1268,7 +1294,7 @@ body {
         {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
       </div>
       <div class="footer-mention">*Seuls les resultats cles sont affiches. Les rapports originaux detailles ont ete envoyes separement.</div>
-      <div class="footer-page">Page 3 / {% if vald and vald.has_data %}7{% else %}6{% endif %}</div>
+      <div class="footer-page">Page 3 / {% if vald and vald.has_data %}6{% else %}5{% endif %}</div>
     </div>
 
   </div><!-- fin page-content -->
@@ -1446,16 +1472,6 @@ body {
       </div>
     </div>
     {% endif %}
-    {% if cr and cr.conclusion %}
-    <!-- RÉSUMÉ CR MÉDECIN (pleine largeur) -->
-    <div style="flex-shrink:0; margin-bottom:2px;">
-      <div style="background:#1c3f6e; color:white; font-size:7.5px; font-weight:700; padding:3px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">&#9656; R&#201;SUM&#201; COMPTE-RENDU M&#201;DICAL</div>
-      <div style="border:1.5px solid #1c3f6e; border-top:none; border-radius:0 0 3px 3px; padding:6px 12px; background:#f5f8fc; min-height:24px;">
-        <div style="font-size:8pt; color:#333; line-height:1.6; overflow-wrap:anywhere; white-space:pre-wrap;">{{ cr.conclusion }}</div>
-      </div>
-    </div>
-    {% endif %}
-
     {% if entree and sortie and remarques and remarques.progression and (not vald or not vald.has_data) %}
     <div style="margin:8px 0 4px; padding:7px 12px; background:#eef3fa; border-left:3px solid #1c3f6e; border-radius:0 4px 4px 0; font-size:8pt; color:#1c3f6e; flex-shrink:0;">
       <strong>Progressions objectiv&#233;es :</strong>
@@ -1469,7 +1485,7 @@ body {
         {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
       </div>
       <div class="footer-mention">*Seuls les resultats cles sont affiches. Les rapports originaux detailles ont ete envoyes separement.</div>
-      <div class="footer-page">Page 4 / {% if vald and vald.has_data %}7{% else %}6{% endif %}</div>
+      <div class="footer-page">Page 4 / {% if vald and vald.has_data %}6{% else %}5{% endif %}</div>
     </div>
 
   </div><!-- fin page-content -->
@@ -1663,11 +1679,197 @@ body {
       </div>
       <div class="footer-mention">*Seuls les resultats cles sont affiches. Les rapports originaux detailles ont ete envoyes separement.</div>
       <div class="footer-page">Page 5 / 6</div>
+
     </div>
 
   </div><!-- fin page-content -->
 </div><!-- fin page 4 -->
 {% endif %}
+
+
+<!-- ══════════════════════════════════════════════════
+     PAGE FINALE — PROGRAMME DE RÉÉDUCATION & CONCLUSION
+     ══════════════════════════════════════════════════ -->
+<div class="page" data-section="conclusion-programme" style="height:auto; overflow:visible;">
+
+  <!-- EN-TETE BLANC -->
+  <div style="display:table;width:100%;padding:6px 14px;border-bottom:2px solid #1c3f6e;box-sizing:border-box;flex-shrink:0;background:#ffffff;">
+    <div style="display:table-cell;width:20%;vertical-align:middle;">
+      {% if logo_cers_b64 %}
+      <img src="{{ logo_cers_b64 }}" style="height:34px;display:block;" alt="CERS Capbreton">
+      {% else %}
+      <div style="font-size:9pt;font-weight:bold;color:#1c3f6e;line-height:1.2;">CERS<br>Capbreton</div>
+      {% endif %}
+      <div style="font-size:6pt;color:#1c3f6e;font-weight:bold;margin-top:2px;">Groupe Ramsay Sant&#233;</div>
+    </div>
+    <div style="display:table-cell;width:60%;vertical-align:middle;text-align:center;padding:0 10px;">
+      <div style="font-size:11pt;font-weight:bold;color:#1c3f6e;line-height:1.2;">CERS Capbreton &nbsp;&#8212;&nbsp; Bilan Complet Patient</div>
+      <div style="font-size:7pt;color:#555;margin-top:1px;">
+        {{ anon(patient.nom) }} &nbsp;&#183;&nbsp;
+        Entr&#233;e {{ entree.date_test }} &nbsp;&#183;&nbsp;
+        Sortie {{ sortie.date_test }}
+      </div>
+    </div>
+    <div style="display:table-cell;width:20%;vertical-align:middle;">
+      <div style="display:table;width:100%;table-layout:fixed;">
+        <div style="display:table-row;">
+          <div style="display:table-cell;text-align:center;padding-bottom:2px;vertical-align:middle;">
+            {% if logo_club_b64 %}
+            <img src="{{ logo_club_b64 }}" style="height:30px;max-width:70px;display:block;margin:0 auto;object-fit:contain;" alt="{{ nom_club }}">
+            {% endif %}
+          </div>
+        </div>
+        <div style="display:table-row;">
+          <div style="display:table-cell;text-align:center;font-size:7pt;font-weight:bold;color:#1c3f6e;word-break:break-word;">{{ nom_club }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="height:4px;min-height:4px;background:#1c3f6e;margin-bottom:6px;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+
+  <div class="page-content">
+
+    <!-- TITRE SECTION -->
+    <div style="background:#1c3f6e;color:#ffffff;font-size:10pt;font-weight:bold;padding:5px 12px;margin:0 0 8px 0;border-radius:3px;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      Synth&#232;se du S&#233;jour &mdash; Programme de R&#233;&#233;ducation &amp; Conclusion
+    </div>
+
+    <!-- RÉCAPITULATIF PROGRESSIONS BIODEX -->
+    {% if remarques and remarques.progression %}
+    <div style="background:#eef3fa; border-left:4px solid #1c3f6e; padding:7px 12px; margin-bottom:8px; border-radius:0 4px 4px 0; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+      <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">&#9650; Progressions objectiv&#233;es &#8212; Bilan isocin&#233;tique Biodex</div>
+      <div style="display:table; width:100%; table-layout:fixed;">
+        {% for p in remarques.progression %}
+        <div style="display:table-row;">
+          <div style="display:table-cell; font-size:7.5pt; color:#1c3f6e; line-height:1.5; padding:1px 0;">&#9656; {{ p }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- PROGRAMMES KINÉ + PRÉPA -->
+    {% if programme_kine or programme_prepa %}
+    <div style="display:table; width:100%; table-layout:fixed; margin-bottom:8px; flex-shrink:0;">
+
+      <!-- PROGRAMME KINÉSITHÉRAPIE -->
+      {% if programme_kine %}
+      {% if programme_prepa %}
+      <div style="display:table-cell; width:50%; vertical-align:top; padding-right:6px; border-right:1px solid #dde8f2;">
+      {% else %}
+      <div style="display:table-cell; width:100%; vertical-align:top;">
+      {% endif %}
+        <div style="background:#1c3f6e; color:white; font-size:8pt; font-weight:bold; padding:4px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+          Programme Kin&#233;sith&#233;rapie
+        </div>
+        <div style="border:1px solid #1c3f6e; border-top:none; border-radius:0 0 3px 3px; padding:6px 10px; background:#f5f8fc;">
+          {% for ligne in programme_kine.split('\n') %}{% if ligne.strip() %}
+          {% set parts = ligne.strip().split(':') %}
+          {% if parts|length > 1 %}
+          <div style="display:table; width:100%; margin-bottom:3px;">
+            <div style="display:table-cell; width:32%; font-size:7.5pt; font-weight:bold; color:#1c3f6e; vertical-align:top; padding-right:6px; line-height:1.4;">{{ parts[0].strip() }}</div>
+            <div style="display:table-cell; font-size:7.5pt; color:#333; vertical-align:top; line-height:1.4; border-left:2px solid #c8d4e8; padding-left:6px;">{{ parts[1:]|join(':')|trim }}</div>
+          </div>
+          {% else %}
+          <div style="font-size:7.5pt; color:#333; line-height:1.4; margin-bottom:2px;">{{ ligne.strip() }}</div>
+          {% endif %}
+          {% endif %}{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- PROGRAMME PRÉPARATION PHYSIQUE -->
+      {% if programme_prepa %}
+      {% if programme_kine %}
+      <div style="display:table-cell; width:50%; vertical-align:top; padding-left:6px;">
+      {% else %}
+      <div style="display:table-cell; width:100%; vertical-align:top;">
+      {% endif %}
+        <div style="background:#2176c7; color:white; font-size:8pt; font-weight:bold; padding:4px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+          Programme Pr&#233;paration Physique
+        </div>
+        <div style="border:1px solid #2176c7; border-top:none; border-radius:0 0 3px 3px; padding:6px 10px; background:#f0f7ff;">
+          {% for ligne in programme_prepa.split('\n') %}{% if ligne.strip() %}
+          {% set parts = ligne.strip().split(':') %}
+          {% if parts|length > 1 %}
+          <div style="display:table; width:100%; margin-bottom:3px;">
+            <div style="display:table-cell; width:32%; font-size:7.5pt; font-weight:bold; color:#2176c7; vertical-align:top; padding-right:6px; line-height:1.4;">{{ parts[0].strip() }}</div>
+            <div style="display:table-cell; font-size:7.5pt; color:#333; vertical-align:top; line-height:1.4; border-left:2px solid #99c4ea; padding-left:6px;">{{ parts[1:]|join(':')|trim }}</div>
+          </div>
+          {% else %}
+          <div style="font-size:7.5pt; color:#333; line-height:1.4; margin-bottom:2px;">{{ ligne.strip() }}</div>
+          {% endif %}
+          {% endif %}{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+    {% endif %}
+
+    <!-- CONCLUSION DE SORTIE (personnalisée OU extraite du CR) -->
+    {% if conclusion_sortie or (cr and cr.conclusion) %}
+    <div style="flex-shrink:0; margin-bottom:8px;">
+      <div style="background:#2a8a36; color:white; font-size:8pt; font-weight:bold; padding:4px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+        &#9656; Conclusion de Sortie &amp; Recommandations
+      </div>
+      <div style="border:1.5px solid #2a8a36; border-top:none; border-radius:0 0 3px 3px; padding:8px 12px; background:#f0faf2;">
+        <div style="font-size:8pt; color:#1a3a1a; line-height:1.65; overflow-wrap:anywhere; white-space:pre-wrap;">{{ conclusion_sortie if conclusion_sortie else cr.conclusion }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ENGAGEMENT DE L'ÉQUIPE PLURIDISCIPLINAIRE -->
+    <div style="flex-shrink:0; margin-bottom:6px;">
+      <div style="background:#374151; color:white; font-size:8pt; font-weight:bold; padding:4px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+        &#9733; Engagement de l&#8217;&#201;quipe Pluridisciplinaire du CERS Capbreton
+      </div>
+      <div style="border:1.5px solid #374151; border-top:none; border-radius:0 0 3px 3px; padding:10px 14px; background:#f9fafb;">
+        <div style="font-size:8.5pt; color:#1c3f6e; font-weight:bold; margin-bottom:7px;">
+          Ces progr&#232;s ont &#233;t&#233; rendus possibles gr&#226;ce au travail de l&#8217;&#233;quipe pluridisciplinaire du CERS Capbreton (Groupe Ramsay Sant&#233;).
+        </div>
+        <div style="display:table; width:100%; table-layout:fixed; margin-bottom:8px;">
+          <div style="display:table-cell; width:50%; vertical-align:top; padding-right:12px; border-right:1px solid #e0e8f2;">
+            <div style="font-size:7.5pt; font-weight:bold; color:#1c3f6e; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px; padding-bottom:2px; border-bottom:1px solid #c8d4e8;">
+              Kin&#233;sith&#233;rapie
+            </div>
+            <div style="font-size:7.5pt; color:#374151; line-height:1.65;">
+              &#9656; Renforcement musculaire progressif et analytique<br>
+              &#9656; Travail proprioceptif et stabilisation articulaire<br>
+              &#9656; R&#233;cup&#233;ration des amplitudes articulaires compl&#232;tes<br>
+              &#9656; R&#233;&#233;ducation fonctionnelle et r&#233;int&#233;gration gestuelle
+            </div>
+          </div>
+          <div style="display:table-cell; width:50%; vertical-align:top; padding-left:12px;">
+            <div style="font-size:7.5pt; font-weight:bold; color:#2176c7; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px; padding-bottom:2px; border-bottom:1px solid #99c4ea;">
+              Pr&#233;paration Physique
+            </div>
+            <div style="font-size:7.5pt; color:#374151; line-height:1.65;">
+              &#9656; Travail cardio-vasculaire adapt&#233; et progressif<br>
+              &#9656; Renforcement global, gainage et stabilit&#233;<br>
+              &#9656; Pliom&#233;trie progressive et travail explosif<br>
+              &#9656; R&#233;int&#233;gration dans les exercices sportifs sp&#233;cifiques
+            </div>
+          </div>
+        </div>
+        <div style="font-size:7.5pt; color:#555; line-height:1.6; font-style:italic; border-top:1px solid #e0e8f2; padding-top:6px;">
+          Le suivi individualis&#233; et la synergie entre les diff&#233;rents professionnels ont permis une prise en charge optimale, garantissant une progression s&#233;curis&#233;e et adapt&#233;e aux objectifs de retour au sport du patient.
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER PAGE FINALE -->
+    <div class="footer" style="margin-top:auto;">
+      <div class="footer-logo">
+        {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
+        {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
+      </div>
+      <div class="footer-mention">Centre Europ&#233;en de R&#233;&#233;ducation du Sportif &middot; Groupe Ramsay Sant&#233; &middot; Capbreton (40130) &middot; Document confidentiel</div>
+      <div class="footer-page">Page {% if vald and vald.has_data %}6{% else %}5{% endif %} / {% if vald and vald.has_data %}6{% else %}5{% endif %}</div>
+    </div>
+
+  </div><!-- fin page-content -->
+</div><!-- fin page conclusion -->
 
 
 {# PAGE GPS SUPPRIMÉE — pas de données GPS disponibles #}

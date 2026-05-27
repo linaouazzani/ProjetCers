@@ -142,27 +142,46 @@ def parse_compte_rendu(pdf_source) -> dict:
 
         # ── Sections cliniques isolées (entrée / sortie) ──────────
         m_entree_sec = re.search(
-            r"EXAMEN CLINIQUE D.ENTREE(.+?)(?=EXAMEN CLINIQUE DE SORTIE|CONCLUSION|$)",
+            r"EXAMEN\s+CLINIQUE\s+D.ENTR[EÉ]E(.+?)(?=EXAMEN\s+CLINIQUE\s+DE\s+SORTIE|CONCLUSION|$)",
             full_text, re.DOTALL | re.IGNORECASE
         )
         m_sortie_sec = re.search(
-            r"EXAMEN CLINIQUE DE SORTIE(.+?)(?=CONCLUSION A LA SORTIE|CONCLUSION|$)",
+            r"EXAMEN\s+CLINIQUE\s+DE\s+SORTIE(.+?)(?=CONCLUSION\s+A\s+LA\s+SORTIE|CONCLUSION|$)",
             full_text, re.DOTALL | re.IGNORECASE
         )
         entree_sec_txt = m_entree_sec.group(1) if m_entree_sec else ""
         sortie_sec_txt = m_sortie_sec.group(1) if m_sortie_sec else ""
 
-        # État trophique régional (entrée / sortie)
-        etat_trophique_entree = None
+        # ── Squat / Sauts entrée (dans section ENTREE) ───────────
+        squat_entree = None
+        saut_entree  = None
         if entree_sec_txt:
-            etat_trophique_entree = find(
-                r"[Ee]tat\s+trophique[^:]*:\s*(.+?)(?:\n|$)", entree_sec_txt
-            )
-        etat_trophique_sortie = None
-        if sortie_sec_txt:
-            etat_trophique_sortie = find(
-                r"[Ee]tat\s+trophique[^:]*:\s*(.+?)(?:\n|$)", sortie_sec_txt
-            )
+            squat_entree = find(r"Squat\s+[Uu]nipodal\s*:\s*([^\n]+)", entree_sec_txt)
+            saut_entree  = find(r"Sauts?\s+[Uu]nipodaux?\s*:\s*([^\n]+)", entree_sec_txt)
+
+        # État trophique régional (entrée / sortie) — essai multi-patterns
+        def _extract_trophique(txt):
+            if not txt:
+                return None
+            for pat in [
+                r"[EÉeé]tat\s+[Tt]rophique[^:\n]*:\s*([^\n]+)",
+                r"[EÉeé]tat\s+[Tt]rophique\s*[Rr][eé]gional[^:\n]*:\s*([^\n]+)",
+                r"[Tt]rophique\s+[Rr][eé]gional[^:\n]*:\s*([^\n]+)",
+                r"[Tt]rophique[^:\n]*:\s*([^\n]+)",
+            ]:
+                m = re.search(pat, txt, re.IGNORECASE)
+                if m:
+                    val = m.group(1).strip()
+                    if val and len(val) > 1:
+                        return val
+            return None
+
+        etat_trophique_entree = _extract_trophique(entree_sec_txt)
+        # Fallback : chercher dans le texte complet si section vide
+        if not etat_trophique_entree:
+            etat_trophique_entree = _extract_trophique(full_text)
+
+        etat_trophique_sortie = _extract_trophique(sortie_sec_txt)
 
         # Périmètre rotulien SORTIE
         perimetre_g_sortie = None
@@ -246,6 +265,8 @@ def parse_compte_rendu(pdf_source) -> dict:
             "epanchement_entree":   epanchement_entree,
             # Clinique sortie
             "douleur_meca_sortie":  douleur_meca_sortie,
+            "squat_entree":         squat_entree,
+            "saut_entree":          saut_entree,
             "squat_sortie":         squat_sortie,
             "saut_sortie":          saut_sortie,
             # État trophique régional
@@ -275,7 +296,7 @@ def _empty_result() -> dict:
         "date_accident","mecanisme","intervention","date_intervention",
         "gestes_associes","delai_postop_jours","date_entree","date_sortie",
         "douleur_meca_entree","perimetre_rotulien_g","perimetre_rotulien_d",
-        "epanchement_entree","douleur_meca_sortie","squat_sortie","saut_sortie",
+        "epanchement_entree","douleur_meca_sortie","squat_entree","saut_entree","squat_sortie","saut_sortie",
         "etat_trophique_entree","etat_trophique_sortie",
         "perimetre_rotulien_g_sortie","perimetre_rotulien_d_sortie",
         "epanchement_sortie",

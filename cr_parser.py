@@ -159,6 +159,60 @@ def parse_compte_rendu(pdf_source) -> dict:
             squat_entree = find(r"Squat\s+[Uu]nipodal\s*:\s*([^\n]+)", entree_sec_txt)
             saut_entree  = find(r"Sauts?\s+[Uu]nipodaux?\s*:\s*([^\n]+)", entree_sec_txt)
 
+        # ── Marche entrée / sortie ────────────────────────────────
+        marche_entree = None
+        marche_sortie = None
+        if entree_sec_txt:
+            marche_entree = find(r"[Mm]arche\s*:\s*([^\n]+)", entree_sec_txt)
+        if sortie_sec_txt:
+            marche_sortie = find(r"[Mm]arche\s*:\s*([^\n]+)", sortie_sec_txt)
+
+        # ── Appui monopodal entrée / sortie ───────────────────────
+        appui_mono_entree = None
+        appui_mono_sortie = None
+        if entree_sec_txt:
+            appui_mono_entree = find(r"[Aa]ppui\s+[Mm]onopodal\s*:\s*([^\n]+)", entree_sec_txt)
+            if not appui_mono_entree:
+                appui_mono_entree = find(r"[Aa]ppui\s+[Uu]nipodal\s*:\s*([^\n]+)", entree_sec_txt)
+        if sortie_sec_txt:
+            appui_mono_sortie = find(r"[Aa]ppui\s+[Mm]onopodal\s*:\s*([^\n]+)", sortie_sec_txt)
+            if not appui_mono_sortie:
+                appui_mono_sortie = find(r"[Aa]ppui\s+[Uu]nipodal\s*:\s*([^\n]+)", sortie_sec_txt)
+
+        # ── Programme de rééducation (depuis le CR médical) ───────
+        programme_kine_cr  = None
+        programme_prepa_cr = None
+        m_prog_sec = re.search(
+            r"PROGRAMME\s+DE\s+R[EÉ][EÉ]DUCATION(.+?)(?=RISQUES|SIGNATURE|^Fait\s|\Z)",
+            full_text, re.DOTALL | re.IGNORECASE | re.MULTILINE
+        )
+        if m_prog_sec:
+            prog_txt = m_prog_sec.group(1)
+            # Section kinésithérapie
+            m_kine = re.search(
+                r"[Kk]in[eé]sith[eé]rapie[^\n]*\n(.+?)(?=[Pp]r[eé]paration\s+[Pp]hysique|PREPARATION|$)",
+                prog_txt, re.DOTALL | re.IGNORECASE
+            )
+            if m_kine:
+                kine_lines = [
+                    l.strip() for l in m_kine.group(1).split("\n")
+                    if l.strip() and len(l.strip()) > 3
+                ]
+                if kine_lines:
+                    programme_kine_cr = "\n".join(kine_lines)
+            # Section préparation physique
+            m_prepa = re.search(
+                r"[Pp]r[eé]paration\s+[Pp]hysique[^\n]*\n(.+?)(?=RISQUES|SIGNATURE|^Fait\s|$)",
+                prog_txt, re.DOTALL | re.IGNORECASE | re.MULTILINE
+            )
+            if m_prepa:
+                prepa_lines = [
+                    l.strip() for l in m_prepa.group(1).split("\n")
+                    if l.strip() and len(l.strip()) > 3
+                ]
+                if prepa_lines:
+                    programme_prepa_cr = "\n".join(prepa_lines)
+
         # État trophique régional (entrée / sortie) — essai multi-patterns
         def _extract_trophique(txt):
             if not txt:
@@ -269,6 +323,14 @@ def parse_compte_rendu(pdf_source) -> dict:
             "saut_entree":          saut_entree,
             "squat_sortie":         squat_sortie,
             "saut_sortie":          saut_sortie,
+            # Fonctionnel : marche & appui monopodal
+            "marche_entree":        marche_entree,
+            "marche_sortie":        marche_sortie,
+            "appui_mono_entree":    appui_mono_entree,
+            "appui_mono_sortie":    appui_mono_sortie,
+            # Programme de rééducation (extrait du CR)
+            "programme_kine_cr":    programme_kine_cr,
+            "programme_prepa_cr":   programme_prepa_cr,
             # État trophique régional
             "etat_trophique_entree": etat_trophique_entree,
             "etat_trophique_sortie": etat_trophique_sortie,
@@ -297,10 +359,12 @@ def _empty_result() -> dict:
         "gestes_associes","delai_postop_jours","date_entree","date_sortie",
         "douleur_meca_entree","perimetre_rotulien_g","perimetre_rotulien_d",
         "epanchement_entree","douleur_meca_sortie","squat_entree","saut_entree","squat_sortie","saut_sortie",
+        "marche_entree","marche_sortie","appui_mono_entree","appui_mono_sortie",
         "etat_trophique_entree","etat_trophique_sortie",
         "perimetre_rotulien_g_sortie","perimetre_rotulien_d_sortie",
         "epanchement_sortie",
         "conclusion",
+        "programme_kine_cr","programme_prepa_cr",
     ]} | {"antecedents": []}
 
 

@@ -108,10 +108,29 @@ def parse_compte_rendu(pdf_source) -> dict:
             r"EXAMEN CLINIQUE D.ENTREE.*?Douleur m[ée]canique[^:]*:\s*([\d./]+)",
             flags=re.IGNORECASE | re.DOTALL
         )
-        perimetre_g = find(r"Gauche\s+([\d.]+)\s+\d")
-        perimetre_d = find(r"\d+\s+([\d.]+)\s+[\d.]+\s*Epanchement")
+
+        # Périmètre rotulien : chercher la ligne "Périmètre rotulien" puis
+        # les 3 premières valeurs numériques sur la ligne suivante (G, D, diff)
+        perimetre_g = None
+        perimetre_d = None
+        m_perim = re.search(
+            r"[Pp][ée]rim[eè]tre\s+rotulien[^\n]*\n[^\n]*?(\d{2,3}[.,]?\d?)\s+(\d{2,3}[.,]?\d?)",
+            full_text, re.DOTALL
+        )
+        if m_perim:
+            perimetre_g = m_perim.group(1).replace(",", ".")
+            perimetre_d = m_perim.group(2).replace(",", ".")
+
+        epanchement_entree = find(
+            r"EXAMEN CLINIQUE D.ENTREE.*?[Ee]panchement\s*:\s*(\w+)",
+            flags=re.IGNORECASE | re.DOTALL
+        )
 
         # ── Bilan clinique sortie ─────────────────────────────────
+        douleur_meca_sortie = find(
+            r"EXAMEN CLINIQUE DE SORTIE.*?Douleur m[ée]canique[^:]*:\s*([\d./]+)",
+            flags=re.IGNORECASE | re.DOTALL
+        )
         squat_sortie = find(
             r"EXAMEN CLINIQUE DE SORTIE.*?Squat\s+Unipodal\s*:\s*(.+?)(?:\n|Sauts)",
             flags=re.IGNORECASE | re.DOTALL
@@ -129,8 +148,8 @@ def parse_compte_rendu(pdf_source) -> dict:
         if conclusion:
             conclusion = " ".join(
                 line.strip() for line in conclusion.split("\n")
-                if len(line.strip()) > 20
-            )[:800]
+                if len(line.strip()) > 10
+            )
 
         # ── Antécédents ──────────────────────────────────────────
         antecedents_block = find(
@@ -179,15 +198,18 @@ def parse_compte_rendu(pdf_source) -> dict:
             # Séjour
             "date_entree":          date_entree,
             "date_sortie":          date_sortie,
-            # Clinique
+            # Clinique entrée
             "douleur_meca_entree":  douleur_meca_entree,
             "perimetre_rotulien_g": perimetre_g,
             "perimetre_rotulien_d": perimetre_d,
+            "epanchement_entree":   epanchement_entree,
+            # Clinique sortie
+            "douleur_meca_sortie":  douleur_meca_sortie,
             "squat_sortie":         squat_sortie,
             "saut_sortie":          saut_sortie,
-            # Antécédents
+            # Antécédents (conservé pour compatibilité)
             "antecedents":          antecedents,
-            # Conclusion
+            # Conclusion complète
             "conclusion":           conclusion,
         }
     except Exception as e:
@@ -204,7 +226,8 @@ def _empty_result() -> dict:
         "date_accident","mecanisme","intervention","date_intervention",
         "gestes_associes","delai_postop_jours","date_entree","date_sortie",
         "douleur_meca_entree","perimetre_rotulien_g","perimetre_rotulien_d",
-        "squat_sortie","saut_sortie","conclusion",
+        "epanchement_entree","douleur_meca_sortie","squat_sortie","saut_sortie",
+        "conclusion",
     ]} | {"antecedents": []}
 
 

@@ -827,41 +827,87 @@ body {
     {% endif %}
   </div>
 
-  <!-- ── DOSSIER CLINIQUE : Antécédents · Accident · Bilan entrée ─ -->
-  {% if cr and (cr.antecedents or cr.mecanisme or cr.perimetre_rotulien_g or cr.perimetre_rotulien_d or cr.squat_sortie or cr.saut_sortie) %}
-  <div style="display:table; width:100%; table-layout:fixed; padding:10px 18px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
-    <div style="display:table-cell; width:33%; vertical-align:top; padding-right:10px; border-right:1px solid #e8eef5;">
-      {% if cr.antecedents %}
-      <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px;">Ant&#233;c&#233;dents m&#233;dicaux</div>
-      {% for ant in cr.antecedents %}
-      <div style="font-size:9pt; color:#333; line-height:1.6;">&#9656; {{ ant }}</div>
-      {% endfor %}
-      {% endif %}
-    </div>
-    <div style="display:table-cell; width:34%; vertical-align:top; padding:0 10px; border-right:1px solid #e8eef5;">
-      {% if cr.mecanisme or cr.date_accident %}
+  <!-- ── DOSSIER CLINIQUE : Mécanisme + Bilan comparatif entrée/sortie ─ -->
+  {% set has_clinical = cr and (cr.mecanisme or cr.date_accident or cr.perimetre_rotulien_g or cr.perimetre_rotulien_d or cr.douleur_meca_entree or cr.douleur_meca_sortie or cr.squat_sortie or cr.saut_sortie or cr.epanchement_entree) %}
+  {% if has_clinical %}
+  <div style="display:table; width:100%; table-layout:fixed; padding:8px 18px 10px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
+
+    {% if cr.mecanisme or cr.date_accident %}
+    <!-- Colonne gauche : Mécanisme & accident -->
+    <div style="display:table-cell; width:34%; vertical-align:top; padding-right:12px; border-right:1px solid #e8eef5;">
       <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px;">M&#233;canisme &amp; accident</div>
       <div style="font-size:9pt; color:#333; line-height:1.7;">
         {% if cr.mecanisme %}<div>&#9656; {{ cr.mecanisme }}</div>{% endif %}
-        {% if cr.date_accident %}<div style="color:#888;">Date : {{ cr.date_accident }}</div>{% endif %}
+        {% if cr.date_accident %}<div style="color:#888; font-size:8pt;">Date : {{ cr.date_accident }}</div>{% endif %}
       </div>
-      {% endif %}
-      {% if cr.douleur_meca_entree %}
-      <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-top:6px; margin-bottom:3px;">Douleur m&#233;canique</div>
-      <div style="font-size:9pt; color:#333;">{{ cr.douleur_meca_entree }} / 10</div>
-      {% endif %}
     </div>
-    <div style="display:table-cell; width:33%; vertical-align:top; padding-left:10px;">
-      {% if cr.perimetre_rotulien_g or cr.perimetre_rotulien_d or cr.squat_sortie or cr.saut_sortie %}
-      <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px;">Bilan clinique entr&#233;e</div>
-      <div style="font-size:9pt; color:#333; line-height:1.7;">
-        {% if cr.perimetre_rotulien_g %}<div>P&#233;rim&#232;tre G : {{ cr.perimetre_rotulien_g }} cm</div>{% endif %}
-        {% if cr.perimetre_rotulien_d %}<div>P&#233;rim&#232;tre D : {{ cr.perimetre_rotulien_d }} cm</div>{% endif %}
-        {% if cr.squat_sortie %}<div style="color:#2a8a36;">Squat : {{ cr.squat_sortie }}</div>{% endif %}
-        {% if cr.saut_sortie %}<div style="color:#2a8a36;">Sauts : {{ cr.saut_sortie }}</div>{% endif %}
-      </div>
-      {% endif %}
+    {% endif %}
+
+    <!-- Colonne droite : Bilan clinique comparatif -->
+    {% if cr.mecanisme or cr.date_accident %}
+    <div style="display:table-cell; vertical-align:top; padding-left:12px;">
+    {% else %}
+    <div style="display:table-cell; vertical-align:top; padding-left:0;">
+    {% endif %}
+      <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:6px;">Bilan clinique &mdash; Entr&#233;e vs Sortie</div>
+      <table style="width:100%; border-collapse:collapse; font-size:8.5pt;">
+        <thead>
+          <tr>
+            <th style="background:#eef3fa; color:#1c3f6e; font-weight:bold; padding:3px 8px; text-align:left; border:1px solid #c8d4e8; font-size:7.5pt; width:38%;">Mesure</th>
+            <th style="background:#1c3f6e; color:white; font-weight:bold; padding:3px 8px; text-align:center; border:1px solid #99aac4; font-size:7.5pt; width:31%;">Entr&#233;e</th>
+            <th style="background:#2176c7; color:white; font-weight:bold; padding:3px 8px; text-align:center; border:1px solid #99aac4; font-size:7.5pt; width:31%;">Sortie</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if cr.perimetre_rotulien_g or cr.perimetre_rotulien_d %}
+          <tr>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">P&#233;rim&#232;tre rotulien</td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
+              {% if cr.perimetre_rotulien_g %}G : {{ cr.perimetre_rotulien_g }} cm{% endif %}
+              {% if cr.perimetre_rotulien_g and cr.perimetre_rotulien_d %} &nbsp;/&nbsp; {% endif %}
+              {% if cr.perimetre_rotulien_d %}D : {{ cr.perimetre_rotulien_d }} cm{% endif %}
+            </td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#888;">&mdash;</td>
+          </tr>
+          {% endif %}
+          {% if cr.epanchement_entree %}
+          <tr style="background:#fafcff;">
+            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">&#201;panchement</td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">{{ cr.epanchement_entree }}</td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#888;">&mdash;</td>
+          </tr>
+          {% endif %}
+          {% if cr.douleur_meca_entree or cr.douleur_meca_sortie %}
+          <tr>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">Douleur m&#233;canique</td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
+              {% if cr.douleur_meca_entree %}{{ cr.douleur_meca_entree }} / 10{% else %}&mdash;{% endif %}
+            </td>
+            {% if cr.douleur_meca_sortie %}
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; font-weight:600; color:#2a8a36;">{{ cr.douleur_meca_sortie }} / 10</td>
+            {% else %}
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; font-weight:600; color:#888;">&mdash;</td>
+            {% endif %}
+          </tr>
+          {% endif %}
+          {% if cr.squat_sortie %}
+          <tr style="background:#fafcff;">
+            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">Squat unipodal</td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#888;">&mdash;</td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#2a8a36; font-weight:600;">{{ cr.squat_sortie }}</td>
+          </tr>
+          {% endif %}
+          {% if cr.saut_sortie %}
+          <tr>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">Sauts unipodaux</td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#888;">&mdash;</td>
+            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#2a8a36; font-weight:600;">{{ cr.saut_sortie }}</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
     </div>
+
   </div>
   {% endif %}
 
@@ -1405,7 +1451,7 @@ body {
     <div style="flex-shrink:0; margin-bottom:2px;">
       <div style="background:#1c3f6e; color:white; font-size:7.5px; font-weight:700; padding:3px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">&#9656; R&#201;SUM&#201; COMPTE-RENDU M&#201;DICAL</div>
       <div style="border:1.5px solid #1c3f6e; border-top:none; border-radius:0 0 3px 3px; padding:6px 12px; background:#f5f8fc; min-height:24px;">
-        <div style="font-size:8pt; color:#333; line-height:1.6; overflow-wrap:anywhere;">{{ cr.conclusion[:420] }}{% if cr.conclusion|length > 420 %}&#8230;{% endif %}</div>
+        <div style="font-size:8pt; color:#333; line-height:1.6; overflow-wrap:anywhere; white-space:pre-wrap;">{{ cr.conclusion }}</div>
       </div>
     </div>
     {% endif %}

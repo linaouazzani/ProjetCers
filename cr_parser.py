@@ -194,83 +194,133 @@ def parse_compte_rendu(pdf_source) -> dict:
                 pass
 
         # ── Bilan fonctionnel ─────────────────────────────────
-        # Extraire d'abord les blocs "entrée" et "sortie" séparément
-        entree_block = find_block(
-            r"EXAMEN\s+CLINIQUE\s+D.ENTR[EÉ]E",
-            end_patterns=[
-                r"\nEXAMEN\s+CLINIQUE\s+DE\s+SORTIE",
-                r"\nBILAN\s+ISOCIN",
-                r"\nPROGRAMME",
-                r"\nCONCLUSION",
-                r"\nRISQUES",
-            ]
-        )
-        sortie_block = find_block(
-            r"EXAMEN\s+CLINIQUE\s+DE\s+SORTIE",
-            end_patterns=[
-                r"\nBILAN\s+ISOCIN",
-                r"\nPROGRAMME",
-                r"\nCONCLUSION",
-                r"\nRISQUES",
-                r"\n[A-Z]{4,}\s*\n",
+
+        def extract_zone(text, start_keywords, end_keywords):
+            """
+            Extrait une zone de texte entre des mots-clés de début et de fin.
+            Retourne None si non trouvé.
+            """
+            start_pos = None
+            for kw in start_keywords:
+                m = re.search(kw, text, re.IGNORECASE)
+                if m:
+                    start_pos = m.start()
+                    break
+            if start_pos is None:
+                return None
+
+            end_pos = len(text)
+            for kw in end_keywords:
+                m = re.search(kw, text[start_pos:], re.IGNORECASE)
+                if m:
+                    candidate = start_pos + m.start()
+                    if candidate > start_pos and candidate < end_pos:
+                        end_pos = candidate
+            return text[start_pos:end_pos]
+
+        def get_fonctionnel(zone, label_patterns):
+            """
+            Cherche une valeur fonctionnelle dans une zone de texte.
+            Essaie plusieurs patterns successivement.
+            """
+            if not zone:
+                return None
+            for pat in label_patterns:
+                try:
+                    m = re.search(pat, zone, re.IGNORECASE | re.DOTALL)
+                    if m:
+                        val = m.group(1).strip()
+                        # Garder seulement la première ligne utile
+                        val = val.split("\n")[0].strip()
+                        val = re.sub(r"\s+", " ", val)
+                        if len(val) > 2 and len(val) < 100:
+                            return val
+                except Exception:
+                    continue
+            return None
+
+        # Découper le texte en zone ENTRÉE et zone SORTIE
+        zone_entree = extract_zone(
+            full_text,
+            start_keywords=[
+                r"EXAMEN CLINIQUE D.ENTR[EÉ]E",
+                r"EXAMEN D.ENTR[EÉ]E",
+            ],
+            end_keywords=[
+                r"VISITES HEBDOMADAIRES",
+                r"EXAMEN CLINIQUE DE SORTIE",
+                r"PROGRAMME DE R[EÉ][EÉ]DUCATION",
+                r"EVALUATIONS ISOCIN[EÉ]TIQUES",
             ]
         )
 
-        # Valeurs d'entrée (dans le bloc entrée, sinon texte complet)
-        _entree_txt = entree_block if entree_block else full_text
-        marche_entree = find(
-            r"Marche\s*\n\s*Marche\s*:\s*([^\n]+)",
-            r"Marche\s*:\s*([^\n]+?)(?:\n|Appui|$)",
-            text=_entree_txt,
+        zone_sortie = extract_zone(
+            full_text,
+            start_keywords=[
+                r"EXAMEN CLINIQUE DE SORTIE",
+                r"EXAMEN DE SORTIE",
+            ],
+            end_keywords=[
+                r"EVALUATIONS ISOCIN[EÉ]TIQUES",
+                r"RISQUES LI[EÉ]S",
+                r"ORGANISATION DE LA CONTINUIT[EÉ]",
+                r"CONCLUSION",
+            ]
         )
-        squat_entree = find(
-            r"Squat\s*\nUnipodal\s*:\s*([^\n]+)",
-            r"Squat\s+[Uu]nipodal\s*:\s*([^\n]+)",
-            r"Squat\s*:\s*([^\n]+)",
-            text=_entree_txt,
-        )
-        saut_entree = find(
-            r"Sauts?\s*\n[Uu]nipodal\s*:\s*([^\n]+)",
-            r"Sauts?\s+[Uu]nipodal\s*:\s*([^\n]+)",
-            r"Sauts?\s*:\s*([^\n]+)",
-            text=_entree_txt,
-        )
-        appui_mono_entree = find(
-            r"[Ee]quilibre\s*:\s*([^\n]+)",
-            r"[Aa]ppui\s+mono\w*\s*:\s*([^\n]+)",
+
+        # Marche
+        marche_entree = get_fonctionnel(zone_entree, [
+            r"[Mm]arche\s*\n\s*[Mm]arche\s*:\s*([^\n]+)",
+            r"[Mm]arche\s*:\s*([^\n]+)",
+            r"[Mm]arch[ée]\s*:\s*([^\n]+)",
+        ])
+        marche_sortie = get_fonctionnel(zone_sortie, [
+            r"[Mm]arche\s*\n\s*[Mm]arche\s*:\s*([^\n]+)",
+            r"[Mm]arche\s*:\s*([^\n]+)",
+            r"[Mm]arch[ée]\s*:\s*([^\n]+)",
+        ])
+
+        # Squat
+        squat_entree = get_fonctionnel(zone_entree, [
+            r"[Ss]quat\s*\n\s*[Uu]nipodal\s*:\s*([^\n]+)",
+            r"[Ss]quat\s+[Uu]nipodal\s*:\s*([^\n]+)",
+            r"[Ss]quat\s*:\s*([^\n]+)",
+        ])
+        squat_sortie = get_fonctionnel(zone_sortie, [
+            r"[Ss]quat\s*\n\s*[Uu]nipodal\s*:\s*([^\n]+)",
+            r"[Ss]quat\s+[Uu]nipodal\s*:\s*([^\n]+)",
+            r"[Ss]quat\s*:\s*([^\n]+)",
+        ])
+
+        # Sauts
+        saut_entree = get_fonctionnel(zone_entree, [
+            r"[Ss]auts?\s*\n\s*[Uu]nipodal\s*:\s*([^\n]+)",
+            r"[Ss]auts?\s+[Uu]nipodal\s*:\s*([^\n]+)",
+            r"[Ss]aut\s+[Uu]nipodal\s*:\s*([^\n]+)",
+            r"[Ss]auts?\s*:\s*([^\n]+)",
+        ])
+        saut_sortie = get_fonctionnel(zone_sortie, [
+            r"[Ss]auts?\s*\n\s*[Uu]nipodal\s*:\s*([^\n]+)",
+            r"[Ss]auts?\s+[Uu]nipodal\s*:\s*([^\n]+)",
+            r"[Ss]aut\s+[Uu]nipodal\s*:\s*([^\n]+)",
+            r"[Ss]auts?\s*:\s*([^\n]+)",
+        ])
+
+        # Appui monopodal
+        appui_mono_entree = get_fonctionnel(zone_entree, [
+            r"[Aa]ppui\s+monopodal\s*\n[^\n]*\n\s*[Bb]ilan[^:]*:\s*([^\n]+)",
             r"[Bb]ilan\s+de\s+l.[ée]quilibre\s*:\s*([^\n]+)",
-            text=_entree_txt,
-        )
-
-        # Valeurs de sortie (dans le bloc sortie si trouvé, sinon None)
-        if sortie_block:
-            marche_sortie = find(
-                r"Marche\s*\n\s*Marche\s*:\s*([^\n]+)",
-                r"Marche\s*:\s*([^\n]+?)(?:\n|Appui|$)",
-                text=sortie_block,
-            )
-            squat_sortie = find(
-                r"Squat\s*\nUnipodal\s*:\s*([^\n]+)",
-                r"Squat\s+[Uu]nipodal\s*:\s*([^\n]+)",
-                r"Squat\s*:\s*([^\n]+)",
-                text=sortie_block,
-            )
-            saut_sortie = find(
-                r"Sauts?\s*\n[Uu]nipodal\s*:\s*([^\n]+)",
-                r"Sauts?\s+[Uu]nipodal\s*:\s*([^\n]+)",
-                r"Sauts?\s*:\s*([^\n]+)",
-                text=sortie_block,
-            )
-            appui_mono_sortie = find(
-                r"[Ee]quilibre\s*:\s*([^\n]+)",
-                r"[Aa]ppui\s+mono\w*\s*:\s*([^\n]+)",
-                text=sortie_block,
-            )
-        else:
-            marche_sortie = None
-            squat_sortie = None
-            saut_sortie = None
-            appui_mono_sortie = None
+            r"[Ee]quilibre\s*:\s*([^\n]+)",
+            r"[Aa]ppui\s+monopodal[^\n]*\n\s*([^\n]+)",
+            r"[Aa]ppui\s+mono\w*\s*:\s*([^\n]+)",
+        ])
+        appui_mono_sortie = get_fonctionnel(zone_sortie, [
+            r"[Aa]ppui\s+monopodal\s*\n[^\n]*\n\s*[Bb]ilan[^:]*:\s*([^\n]+)",
+            r"[Bb]ilan\s+de\s+l.[ée]quilibre\s*:\s*([^\n]+)",
+            r"[Ee]quilibre\s*:\s*([^\n]+)",
+            r"[Aa]ppui\s+monopodal[^\n]*\n\s*([^\n]+)",
+            r"[Aa]ppui\s+mono\w*\s*:\s*([^\n]+)",
+        ])
 
         douleur_entree = find(
             r"EXAMEN CLINIQUE D.ENTREE.*?[Mm][ée]canique[^:]*:\s*([\d/]+)",

@@ -730,13 +730,12 @@ body {
       {% else %}
       <div style="width:122px; height:148px; background:#dde8f5; border:2.5px solid #1c3f6e; border-radius:6px; margin:0 auto 10px; padding-top:46px; text-align:center; color:#9ab0c8; font-size:10pt;">Photo<br>patient</div>
       {% endif %}
-      <div style="display:inline-block; background:#1c3f6e; color:#ffffff; font-size:7pt; padding:3px 9px; border-radius:10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">Identit&#233; anonymis&#233;e &mdash; RGPD</div>
     </div>
 
     <!-- Colonne nom + infos physiques -->
     <div style="display:table-cell; vertical-align:middle; padding:18px 22px;">
       <div style="font-size:22pt; font-weight:bold; color:#1c3f6e; line-height:1.1; margin-bottom:12px; border-bottom:2.5px solid #1c3f6e; padding-bottom:9px;">
-        {{ anon(patient.nom) }}
+        {% if cr and cr.nom_complet %}{{ cr.nom_complet }}{% else %}{{ patient.nom }}{% endif %}
       </div>
       <div style="display:table; width:100%;">
         <div style="display:table-row;">
@@ -839,178 +838,48 @@ body {
     {% endif %}
   </div>
 
-  <!-- ── BILAN CLINIQUE FONCTIONNEL : comparatif entrée/sortie ─ -->
-  {% set has_biodex = s60 and (s60.ext_moment_max.entree_lese_g is not none or s60.ext_moment_max.sortie_lese_g is not none) %}
-  {% set has_clinical = has_biodex or (cr and (cr.perimetre_rotulien_g or cr.perimetre_rotulien_d or cr.perimetre_rotulien_g_sortie or cr.douleur_meca_entree or cr.douleur_meca_sortie or cr.squat_sortie or cr.saut_sortie or cr.squat_entree or cr.saut_entree or cr.epanchement_entree or cr.epanchement_sortie or cr.etat_trophique_entree or cr.etat_trophique_sortie or cr.marche_entree or cr.marche_sortie or cr.appui_mono_entree or cr.appui_mono_sortie)) %}
-  {% if has_clinical %}
-  <div style="padding:8px 18px 10px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
-      <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:6px;">Bilan clinique fonctionnel &mdash; Entr&#233;e vs Sortie</div>
-      <table style="width:100%; border-collapse:collapse; font-size:8.5pt;">
-        <thead>
-          <tr>
-            <th style="background:#eef3fa; color:#1c3f6e; font-weight:bold; padding:3px 8px; text-align:left; border:1px solid #c8d4e8; font-size:7.5pt; width:38%;">Mesure</th>
-            <th style="background:#1c3f6e; color:white; font-weight:bold; padding:3px 8px; text-align:center; border:1px solid #99aac4; font-size:7.5pt; width:31%;">Entr&#233;e</th>
-            <th style="background:#2176c7; color:white; font-weight:bold; padding:3px 8px; text-align:center; border:1px solid #99aac4; font-size:7.5pt; width:31%;">Sortie</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% if cr.perimetre_rotulien_g or cr.perimetre_rotulien_d or cr.perimetre_rotulien_g_sortie or cr.perimetre_rotulien_d_sortie %}
-          <tr>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">P&#233;rim&#232;tre rotulien</td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
-              {% if cr.perimetre_rotulien_g %}G : {{ cr.perimetre_rotulien_g }} cm{% endif %}
-              {% if cr.perimetre_rotulien_g and cr.perimetre_rotulien_d %} / {% endif %}
-              {% if cr.perimetre_rotulien_d %}D : {{ cr.perimetre_rotulien_d }} cm{% endif %}
-              {% if not cr.perimetre_rotulien_g and not cr.perimetre_rotulien_d %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center;">
-              {% if cr.perimetre_rotulien_g_sortie or cr.perimetre_rotulien_d_sortie %}
-              <span style="color:#2a8a36; font-weight:600;">
-                {% if cr.perimetre_rotulien_g_sortie %}G : {{ cr.perimetre_rotulien_g_sortie }} cm{% endif %}
-                {% if cr.perimetre_rotulien_g_sortie and cr.perimetre_rotulien_d_sortie %} / {% endif %}
-                {% if cr.perimetre_rotulien_d_sortie %}D : {{ cr.perimetre_rotulien_d_sortie }} cm{% endif %}
-              </span>
-              {% else %}
-              <span style="color:#888;">&mdash;</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endif %}
-          {% if cr.etat_trophique_entree or cr.etat_trophique_sortie %}
-          <tr style="background:#fafcff;">
-            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">&#201;tat trophique</td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
-              {% if cr.etat_trophique_entree %}{{ cr.etat_trophique_entree }}{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center;">
-              {% if cr.etat_trophique_sortie %}<span style="color:#2a8a36; font-weight:600;">{{ cr.etat_trophique_sortie }}</span>{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-          </tr>
-          {% endif %}
-          {% if cr.epanchement_entree or cr.epanchement_sortie %}
-          <tr>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">&#201;panchement</td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
-              {% if cr.epanchement_entree %}{{ cr.epanchement_entree }}{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center;">
-              {% if cr.epanchement_sortie %}<span style="color:#2a8a36; font-weight:600;">{{ cr.epanchement_sortie }}</span>{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-          </tr>
-          {% endif %}
-          {% if cr.douleur_meca_entree or cr.douleur_meca_sortie %}
-          <tr>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">Douleur m&#233;canique</td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
-              {% if cr.douleur_meca_entree %}{{ cr.douleur_meca_entree }} / 10{% else %}&mdash;{% endif %}
-            </td>
-            {% if cr.douleur_meca_sortie %}
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; font-weight:600; color:#2a8a36;">{{ cr.douleur_meca_sortie }} / 10</td>
-            {% else %}
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; font-weight:600; color:#888;">&mdash;</td>
-            {% endif %}
-          </tr>
-          {% endif %}
-          {% if cr.squat_entree or cr.squat_sortie %}
-          <tr style="background:#fafcff;">
-            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">Squat unipodal</td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
-              {% if cr.squat_entree %}{{ cr.squat_entree }}{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#2a8a36; font-weight:600;">
-              {% if cr.squat_sortie %}{{ cr.squat_sortie }}{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-          </tr>
-          {% endif %}
-          {% if cr.saut_entree or cr.saut_sortie %}
-          <tr>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">Sauts unipodaux</td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
-              {% if cr.saut_entree %}{{ cr.saut_entree }}{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#2a8a36; font-weight:600;">
-              {% if cr.saut_sortie %}{{ cr.saut_sortie }}{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-          </tr>
-          {% endif %}
-          {% if cr.marche_entree or cr.marche_sortie %}
-          <tr style="background:#fafcff;">
-            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">Marche</td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
-              {% if cr.marche_entree %}{{ cr.marche_entree }}{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#2a8a36; font-weight:600;">
-              {% if cr.marche_sortie %}{{ cr.marche_sortie }}{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-          </tr>
-          {% endif %}
-          {% if cr.appui_mono_entree or cr.appui_mono_sortie %}
-          <tr>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">Appui monopodal</td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
-              {% if cr.appui_mono_entree %}{{ cr.appui_mono_entree }}{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#2a8a36; font-weight:600;">
-              {% if cr.appui_mono_sortie %}{{ cr.appui_mono_sortie }}{% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-          </tr>
-          {% endif %}
-          {% if has_biodex %}
-          <tr style="background:#f0f4f8;">
-            <td colspan="3" style="padding:2px 8px; border:1px solid #c8d4e8; background:#dae3ee; color:#1c3f6e; font-size:7pt; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">&#9658; Bilan musculaire Biodex 60&#176;/s</td>
-          </tr>
-          {% if s60.ext_moment_max.entree_lese_g is not none or s60.ext_moment_max.sortie_lese_g is not none %}
-          <tr style="background:#fafcff;">
-            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">Quadriceps &mdash; Moment Max<span style="display:block; font-size:6.5pt; color:#888;">N&middot;m &nbsp;&#183;&nbsp; G&#233;n&#233;ratrice l&#233;s&#233;e (G) / saine (D)</span></td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
-              {% if s60.ext_moment_max.entree_lese_g is not none %}G&#160;:&#160;{{ s60.ext_moment_max.entree_lese_g | fmt }}{% endif %}
-              {% if s60.ext_moment_max.entree_lese_g is not none and s60.ext_moment_max.entree_sain_d is not none %} / {% endif %}
-              {% if s60.ext_moment_max.entree_sain_d is not none %}D&#160;:&#160;{{ s60.ext_moment_max.entree_sain_d | fmt }}{% endif %}
-              {% if s60.ext_moment_max.entree_lese_g is none and s60.ext_moment_max.entree_sain_d is none %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; font-weight:600; color:#2a8a36;">
-              {% if s60.ext_moment_max.sortie_lese_g is not none %}G&#160;:&#160;{{ s60.ext_moment_max.sortie_lese_g | fmt }}{% endif %}
-              {% if s60.ext_moment_max.sortie_lese_g is not none and s60.ext_moment_max.sortie_sain_d is not none %} / {% endif %}
-              {% if s60.ext_moment_max.sortie_sain_d is not none %}D&#160;:&#160;{{ s60.ext_moment_max.sortie_sain_d | fmt }}{% endif %}
-              {% if s60.ext_moment_max.sortie_lese_g is none and s60.ext_moment_max.sortie_sain_d is none %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-          </tr>
-          {% endif %}
-          {% if s60.flex_moment_max.entree_lese_g is not none or s60.flex_moment_max.sortie_lese_g is not none %}
-          <tr>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">Ischio-jambiers &mdash; Moment Max<span style="display:block; font-size:6.5pt; color:#888;">N&middot;m &nbsp;&#183;&nbsp; G&#233;n&#233;ratrice l&#233;s&#233;e (G) / saine (D)</span></td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; color:#1c3f6e; font-weight:600;">
-              {% if s60.flex_moment_max.entree_lese_g is not none %}G&#160;:&#160;{{ s60.flex_moment_max.entree_lese_g | fmt }}{% endif %}
-              {% if s60.flex_moment_max.entree_lese_g is not none and s60.flex_moment_max.entree_sain_d is not none %} / {% endif %}
-              {% if s60.flex_moment_max.entree_sain_d is not none %}D&#160;:&#160;{{ s60.flex_moment_max.entree_sain_d | fmt }}{% endif %}
-              {% if s60.flex_moment_max.entree_lese_g is none and s60.flex_moment_max.entree_sain_d is none %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center; font-weight:600; color:#2a8a36;">
-              {% if s60.flex_moment_max.sortie_lese_g is not none %}G&#160;:&#160;{{ s60.flex_moment_max.sortie_lese_g | fmt }}{% endif %}
-              {% if s60.flex_moment_max.sortie_lese_g is not none and s60.flex_moment_max.sortie_sain_d is not none %} / {% endif %}
-              {% if s60.flex_moment_max.sortie_sain_d is not none %}D&#160;:&#160;{{ s60.flex_moment_max.sortie_sain_d | fmt }}{% endif %}
-              {% if s60.flex_moment_max.sortie_lese_g is none and s60.flex_moment_max.sortie_sain_d is none %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-          </tr>
-          {% endif %}
-          {% if s60.ext_ratio_poids.entree_lese_g is not none or s60.ext_ratio_poids.sortie_lese_g is not none %}
-          <tr style="background:#fafcff;">
-            <td style="padding:3px 8px; border:1px solid #dde8f2; color:#444;">D&#233;ficit Q (entrée → sortie)<span style="display:block; font-size:6.5pt; color:#888;">Rapport L&#233;s&#233;/Sain (%)</span></td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center;">
-              {% if s60.ext_moment_max.entree_deficit_pct is not none %}
-              <span class="d{{ s60.ext_moment_max.couleur_deficit_entree[0] }}" style="padding:1px 4px; border-radius:2px;">{{ "%+.1f"|format(s60.ext_moment_max.entree_deficit_pct) }}%</span>
-              {% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-            <td style="padding:3px 8px; border:1px solid #dde8f2; text-align:center;">
-              {% if s60.ext_moment_max.sortie_deficit_pct is not none %}
-              <span class="d{{ s60.ext_moment_max.couleur_deficit[0] }}" style="padding:1px 4px; border-radius:2px;">{{ "%+.1f"|format(s60.ext_moment_max.sortie_deficit_pct) }}%</span>
-              {% else %}<span style="color:#888;">&mdash;</span>{% endif %}
-            </td>
-          </tr>
-          {% endif %}
-          {% endif %}
-        </tbody>
-      </table>
+  <!-- ── BILAN FONCTIONNEL : comparatif entrée / sortie ──────────── -->
+  {% set has_fonctionnel = cr and (cr.marche_entree or cr.squat_entree or cr.saut_entree or cr.appui_mono_entree or cr.marche_sortie or cr.squat_sortie or cr.saut_sortie or cr.appui_mono_sortie) %}
+  {% if has_fonctionnel %}
+  <div style="padding:0 18px 10px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
+    <div style="font-size:7pt; font-weight:bold; color:#ffffff; background:#1c3f6e; padding:3px 8px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+      BILAN FONCTIONNEL &mdash; Entr&#233;e vs Sortie
+    </div>
+    <table style="width:100%; border-collapse:collapse; font-size:8pt; table-layout:fixed;">
+      <tr style="background:#dde8f2; font-weight:bold; color:#1c3f6e; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+        <td style="border:1px solid #c8d4e8; padding:3px 6px; width:28%;">TEST FONCTIONNEL</td>
+        <td style="border:1px solid #c8d4e8; padding:3px 6px; width:36%; text-align:center;">ENTR&#201;E</td>
+        <td style="border:1px solid #c8d4e8; padding:3px 6px; text-align:center;">SORTIE</td>
+      </tr>
+      {% if cr.marche_entree or cr.marche_sortie %}
+      <tr>
+        <td style="border:1px solid #dde8f2; padding:3px 6px; font-weight:bold; color:#1c3f6e;">Marche</td>
+        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#1c3f6e; font-weight:600;">{{ cr.marche_entree or "&mdash;" }}</td>
+        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#2a8a36; font-weight:600;">{{ cr.marche_sortie or "&mdash;" }}</td>
+      </tr>
+      {% endif %}
+      {% if cr.squat_entree or cr.squat_sortie %}
+      <tr style="background:#f8fafd;">
+        <td style="border:1px solid #dde8f2; padding:3px 6px; font-weight:bold; color:#1c3f6e;">Squat unipodal</td>
+        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#1c3f6e; font-weight:600;">{{ cr.squat_entree or "&mdash;" }}</td>
+        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#2a8a36; font-weight:600;">{{ cr.squat_sortie or "&mdash;" }}</td>
+      </tr>
+      {% endif %}
+      {% if cr.saut_entree or cr.saut_sortie %}
+      <tr>
+        <td style="border:1px solid #dde8f2; padding:3px 6px; font-weight:bold; color:#1c3f6e;">Sauts unipodaux</td>
+        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#1c3f6e; font-weight:600;">{{ cr.saut_entree or "&mdash;" }}</td>
+        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#2a8a36; font-weight:600;">{{ cr.saut_sortie or "&mdash;" }}</td>
+      </tr>
+      {% endif %}
+      {% if cr.appui_mono_entree or cr.appui_mono_sortie %}
+      <tr style="background:#f8fafd;">
+        <td style="border:1px solid #dde8f2; padding:3px 6px; font-weight:bold; color:#1c3f6e;">Appui monopodal</td>
+        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#1c3f6e; font-weight:600;">{{ cr.appui_mono_entree or "&mdash;" }}</td>
+        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#2a8a36; font-weight:600;">{{ cr.appui_mono_sortie or "&mdash;" }}</td>
+      </tr>
+      {% endif %}
+    </table>
   </div>
   {% endif %}
 
@@ -1030,113 +899,6 @@ body {
   </div>
   {% endif %}
 
-  <!-- ── SOMMAIRE DÉTAILLÉ ────────────────────────────────────────── -->
-  <div style="padding:10px 18px 50px; box-sizing:border-box;">
-    <div style="font-size:8pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px; padding-bottom:4px; border-bottom:1.5px solid #eef3fa;">Contenu de ce rapport</div>
-
-    {% if entree or sortie %}
-    <div style="display:table; width:100%; border:1px solid #dde8f2; border-left:3px solid #1c3f6e; border-radius:0 4px 4px 0; margin-bottom:7px;">
-      <div style="display:table-cell; width:32%; background:#eef3fa; padding:6px 10px; vertical-align:top; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-        <div style="font-size:8pt; font-weight:bold; color:#1c3f6e;">Bilan Isocin&#233;tique 60&#176;/s</div>
-        <div style="font-size:7pt; color:#555;">Concentrique / Concentrique</div>
-        <div style="font-size:7pt; color:#555; margin-top:1px;">
-          {% if entree %}Entr&#233;e : {{ entree.date_test }}{% endif %}
-          {% if sortie %} &middot; Sortie : {{ sortie.date_test }}{% endif %}
-        </div>
-      </div>
-      <div style="display:table-cell; padding:6px 10px; vertical-align:top;">
-        <div style="font-size:7.5pt; color:#333; line-height:1.7;">
-          &#8212; Moment Max (N&#183;m) &middot; Moment/Poids (%){% if sortie %} &middot; Progression entr&#233;e&#8594;sortie{% endif %}<br>
-          &#8212; Puissance Max (W) &middot; Travail Total (J)<br>
-          &#8212; D&#233;ficit L&#233;s&#233;/Sain &middot; Ratio I/Q &middot; Courbes D vs G entr&#233;e et sortie
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
-    {% if entree or sortie %}
-    <div style="display:table; width:100%; border:1px solid #dde8f2; border-left:3px solid #1c3f6e; border-radius:0 4px 4px 0; margin-bottom:7px;">
-      <div style="display:table-cell; width:32%; background:#eef3fa; padding:6px 10px; vertical-align:top; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-        <div style="font-size:8pt; font-weight:bold; color:#1c3f6e;">Bilan Isocin&#233;tique 240&#176;/s</div>
-        <div style="font-size:7pt; color:#555;">Concentrique / Concentrique</div>
-        <div style="font-size:7pt; color:#555; margin-top:1px;">
-          {% if entree %}Entr&#233;e : {{ entree.date_test }}{% endif %}
-          {% if sortie %} &middot; Sortie : {{ sortie.date_test }}{% endif %}
-        </div>
-      </div>
-      <div style="display:table-cell; padding:6px 10px; vertical-align:top;">
-        <div style="font-size:7.5pt; color:#333; line-height:1.7;">
-          &#8212; Moment Max (N&#183;m) &middot; Puissance isosin&#233;tique rapide<br>
-          &#8212; Puissance Max (W) &middot; Travail Total (J)<br>
-          &#8212; D&#233;ficit L&#233;s&#233;/Sain &middot; Ratio I/Q &middot; Courbes D vs G
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
-    {% if vald and vald.has_data %}
-    <div style="display:table; width:100%; border:1px solid #dde8f2; border-left:3px solid #2176c7; border-radius:0 4px 4px 0; margin-bottom:7px;">
-      <div style="display:table-cell; width:32%; background:#e8f4fd; padding:6px 10px; vertical-align:top; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-        <div style="font-size:8pt; font-weight:bold; color:#2176c7;">VALD ForceDecks</div>
-        <div style="font-size:7pt; color:#555;">Sauts unipodaux &amp; bilat&#233;raux</div>
-      </div>
-      <div style="display:table-cell; padding:6px 10px; vertical-align:top;">
-        <div style="font-size:7.5pt; color:#333; line-height:1.7;">
-          &#8212; Single Leg Jump : Hauteur G/D &middot; RSI-modified G/D<br>
-          &#8212; Counter Movement Jump : Hauteur &middot; RSI<br>
-          &#8212; Asym&#233;trie % &middot; Progression entr&#233;e&#8594;sortie
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
-    {% if excentrique and excentrique.ext_lese %}
-    <div style="display:table; width:100%; border:1px solid #dde8f2; border-left:3px solid #8B4513; border-radius:0 4px 4px 0; margin-bottom:7px;">
-      <div style="display:table-cell; width:32%; background:#f8f0e8; padding:6px 10px; vertical-align:top; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-        <div style="font-size:8pt; font-weight:bold; color:#8B4513;">Test Excentrique 30&#176;/s</div>
-        <div style="font-size:7pt; color:#555;">Exc / Exc</div>
-      </div>
-      <div style="display:table-cell; padding:6px 10px; vertical-align:top;">
-        <div style="font-size:7.5pt; color:#333; line-height:1.7;">
-          &#8212; Test excentrique 30&#176;/s &middot; Mode Exc/Exc<br>
-          &#8212; Moment Max Extension/Flexion &middot; Travail Total<br>
-          &#8212; Ratio Mixte Exc/Conc
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
-    {% if cr and cr.conclusion %}
-    <div style="display:table; width:100%; border:1px solid #dde8f2; border-left:3px solid #2a8a36; border-radius:0 4px 4px 0; margin-bottom:7px;">
-      <div style="display:table-cell; width:32%; background:#e8f6eb; padding:6px 10px; vertical-align:top; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-        <div style="font-size:8pt; font-weight:bold; color:#2a8a36;">Compte-rendu m&#233;dical</div>
-        <div style="font-size:7pt; color:#555;">CERS Capbreton</div>
-      </div>
-      <div style="display:table-cell; padding:6px 10px; vertical-align:top;">
-        <div style="font-size:7.5pt; color:#333; line-height:1.7;">
-          &#8212; Diagnostic &middot; Intervention chirurgicale<br>
-          &#8212; Bilan clinique entr&#233;e/sortie &middot; Ant&#233;c&#233;dents<br>
-          &#8212; Conclusion m&#233;dicale &middot; Programme de r&#233;&#233;ducation
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
-    <div style="display:table; width:100%; border:1px solid #dde8f2; border-left:3px solid #374151; border-radius:0 4px 4px 0; margin-bottom:7px;">
-      <div style="display:table-cell; width:32%; background:#f3f4f6; padding:6px 10px; vertical-align:top; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-        <div style="font-size:8pt; font-weight:bold; color:#374151;">Synth&#232;se &amp; Conclusion</div>
-        <div style="font-size:7pt; color:#555;">Derni&#232;re page</div>
-      </div>
-      <div style="display:table-cell; padding:6px 10px; vertical-align:top;">
-        <div style="font-size:7.5pt; color:#333; line-height:1.7;">
-          &#8212; R&#233;sum&#233; du s&#233;jour &middot; Progressions objectiv&#233;es<br>
-          &#8212; Programme kin&#233; &middot; Programme pr&#233;paration physique<br>
-          &#8212; Conclusion de sortie &middot; &#201;quipe pluridisciplinaire
-        </div>
-      </div>
-    </div>
-
-  </div>
 
   <!-- FOOTER PAGE DE GARDE -->
   <div style="
@@ -1565,12 +1327,7 @@ body {
       </div>
     </div>
     {% endif %}
-    {% if entree and sortie and remarques and remarques.progression and (not vald or not vald.has_data) %}
-    <div style="margin:8px 0 4px; padding:7px 12px; background:#eef3fa; border-left:3px solid #1c3f6e; border-radius:0 4px 4px 0; font-size:8pt; color:#1c3f6e; flex-shrink:0;">
-      <strong>Progressions objectiv&#233;es :</strong>
-      {{ remarques.progression | join(' &middot; ') }}
-    </div>
-    {% endif %}
+
 
     <div class="footer">
       <div class="footer-logo">
@@ -1757,12 +1514,6 @@ body {
       <span style="color:#c0392b;font-weight:bold;">&#9679; Rouge</span> &gt;15% &#8212; d&#233;ficit important
     </div>
 
-    {% if entree and sortie and remarques and remarques.progression %}
-    <div style="margin:8px 0 4px; padding:7px 12px; background:#eef3fa; border-left:3px solid #1c3f6e; border-radius:0 4px 4px 0; font-size:8pt; color:#1c3f6e; flex-shrink:0;">
-      <strong>Progressions objectiv&#233;es :</strong>
-      {{ remarques.progression | join(' &middot; ') }}
-    </div>
-    {% endif %}
 
     <!-- FOOTER PAGE 4 -->
     <div class="footer">
@@ -1821,101 +1572,75 @@ body {
   <div style="height:4px;min-height:4px;background:#1c3f6e;margin-bottom:6px;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
 
   <div class="page-content" style="overflow:visible !important;">
-    {# Variables effectives : manuel en priorité, sinon données du CR #}
-    {% set eff_kine  = programme_kine  if programme_kine  else (cr.programme_kine_cr  or '') %}
-    {% set eff_prepa = programme_prepa if programme_prepa else (cr.programme_prepa_cr or '') %}
+    {# Variables effectives : CR en priorité (liste), sinon manuel (string→split) #}
+    {% if cr and cr.programme_kine %}
+      {% set eff_kine_lines = cr.programme_kine %}
+    {% elif programme_kine %}
+      {% set eff_kine_lines = programme_kine.split('\n') %}
+    {% else %}
+      {% set eff_kine_lines = [] %}
+    {% endif %}
+    {% if cr and cr.programme_prepa %}
+      {% set eff_prepa_lines = cr.programme_prepa %}
+    {% elif programme_prepa %}
+      {% set eff_prepa_lines = programme_prepa.split('\n') %}
+    {% else %}
+      {% set eff_prepa_lines = [] %}
+    {% endif %}
 
     <!-- TITRE SECTION -->
     <div style="background:#1c3f6e;color:#ffffff;font-size:10pt;font-weight:bold;padding:5px 12px;margin:0 0 8px 0;border-radius:3px;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       Synth&#232;se du S&#233;jour &mdash; Programme de R&#233;&#233;ducation &amp; Conclusion
     </div>
 
-    <!-- ══ RÉSUMÉ DU SÉJOUR (déplacé depuis la page de garde) ══ -->
+    <!-- ══ RÉSUMÉ DU SÉJOUR ══ -->
+    {% if resume_override or (cr and cr.conclusion and cr.conclusion | trim) %}
     <div style="border:1.5px solid #1c3f6e; border-radius:4px; overflow:hidden; margin-bottom:8px; flex-shrink:0;">
       <div style="background:#1c3f6e; color:#ffffff; font-size:8.5pt; font-weight:700; padding:3px 10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
         R&#233;sum&#233; du s&#233;jour au CERS &mdash; Prise en charge &amp; &#233;volution
       </div>
       <div style="padding:7px 12px; background:#f5f8fc; font-size:8.5pt; color:#333; line-height:1.7;">
-        {% if resume_override %}
-          {{ resume_override }}
-        {% elif cr and cr.conclusion %}
-          {{ cr.conclusion }}
-        {% else %}
-          Prise en charge en r&#233;&#233;ducation post-op&#233;ratoire au Centre Europ&#233;en de R&#233;&#233;ducation du Sportif (CERS Capbreton &mdash; Groupe Ramsay Sant&#233;). Programme individualis&#233; comprenant&#160;: kin&#233;sith&#233;rapie intensive (renforcement musculaire progressif, travail proprioceptif, gain d&#8217;amplitude articulaire), pr&#233;paration physique adapt&#233;e (travail cardiovasculaire, gainage, pliom&#233;trie) et suivi psychologique avec &#233;valuation ACL-RSI. Reprise progressive des appuis et de la course. &#201;valuation isocin&#233;tique Biodex en entr&#233;e et sortie de s&#233;jour.
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- RÉCAPITULATIF PROGRESSIONS BIODEX -->
-    {% if remarques and remarques.progression %}
-    <div style="background:#eef3fa; border-left:4px solid #1c3f6e; padding:7px 12px; margin-bottom:8px; border-radius:0 4px 4px 0; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-      <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">&#9650; Progressions objectiv&#233;es &#8212; Bilan isocin&#233;tique Biodex</div>
-      <div style="display:table; width:100%; table-layout:fixed;">
-        {% for p in remarques.progression %}
-        <div style="display:table-row;">
-          <div style="display:table-cell; font-size:7.5pt; color:#1c3f6e; line-height:1.5; padding:1px 0;">&#9656; {{ p }}</div>
-        </div>
-        {% endfor %}
+        {% if resume_override %}{{ resume_override }}{% else %}{{ cr.conclusion }}{% endif %}
       </div>
     </div>
     {% endif %}
 
-    <!-- PROGRAMMES KINÉ + PRÉPA (manuel ou extrait du CR) -->
-    {% if eff_kine or eff_prepa %}
-    <div style="display:table; width:100%; table-layout:fixed; margin-bottom:8px; flex-shrink:0;">
-
-      <!-- PROGRAMME KINÉSITHÉRAPIE -->
-      {% if eff_kine %}
-      {% if eff_prepa %}
-      <div style="display:table-cell; width:50%; vertical-align:top; padding-right:6px; border-right:1px solid #dde8f2;">
-      {% else %}
-      <div style="display:table-cell; width:100%; vertical-align:top;">
-      {% endif %}
-        <div style="background:#1c3f6e; color:white; font-size:8pt; font-weight:bold; padding:4px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-          Programme Kin&#233;sith&#233;rapie
-        </div>
-        <div style="border:1px solid #1c3f6e; border-top:none; border-radius:0 0 3px 3px; padding:6px 10px; background:#f5f8fc;">
-          {% for ligne in eff_kine.split('\n') %}{% if ligne.strip() %}
-          {% set parts = ligne.strip().split(':') %}
-          {% if parts|length > 1 %}
-          <div style="display:table; width:100%; margin-bottom:3px;">
-            <div style="display:table-cell; width:32%; font-size:7.5pt; font-weight:bold; color:#1c3f6e; vertical-align:top; padding-right:6px; line-height:1.4;">{{ parts[0].strip() }}</div>
-            <div style="display:table-cell; font-size:7.5pt; color:#333; vertical-align:top; line-height:1.4; border-left:2px solid #c8d4e8; padding-left:6px;">{{ parts[1:]|join(':')|trim }}</div>
-          </div>
-          {% else %}
-          <div style="font-size:7.5pt; color:#333; line-height:1.4; margin-bottom:2px;">&#9656; {{ ligne.strip() }}</div>
-          {% endif %}
-          {% endif %}{% endfor %}
-        </div>
+    <!-- PROGRAMME DE RÉÉDUCATION — tableau 2 colonnes extrait du CR -->
+    {% if eff_kine_lines or eff_prepa_lines %}
+    <div style="margin-bottom:8px; flex-shrink:0;">
+      <div style="font-size:9pt; font-weight:bold; color:#ffffff; background:#1c3f6e; padding:4px 10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+        PROGRAMME DE R&#201;&#201;DUCATION &mdash; &#201;quipe Pluridisciplinaire
       </div>
-      {% endif %}
-
-      <!-- PROGRAMME PRÉPARATION PHYSIQUE -->
-      {% if eff_prepa %}
-      {% if eff_kine %}
-      <div style="display:table-cell; width:50%; vertical-align:top; padding-left:6px;">
-      {% else %}
-      <div style="display:table-cell; width:100%; vertical-align:top;">
-      {% endif %}
-        <div style="background:#2176c7; color:white; font-size:8pt; font-weight:bold; padding:4px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-          Programme Pr&#233;paration Physique
-        </div>
-        <div style="border:1px solid #2176c7; border-top:none; border-radius:0 0 3px 3px; padding:6px 10px; background:#f0f7ff;">
-          {% for ligne in eff_prepa.split('\n') %}{% if ligne.strip() %}
-          {% set parts = ligne.strip().split(':') %}
-          {% if parts|length > 1 %}
-          <div style="display:table; width:100%; margin-bottom:3px;">
-            <div style="display:table-cell; width:32%; font-size:7.5pt; font-weight:bold; color:#2176c7; vertical-align:top; padding-right:6px; line-height:1.4;">{{ parts[0].strip() }}</div>
-            <div style="display:table-cell; font-size:7.5pt; color:#333; vertical-align:top; line-height:1.4; border-left:2px solid #99c4ea; padding-left:6px;">{{ parts[1:]|join(':')|trim }}</div>
-          </div>
+      <div style="display:table; width:100%; table-layout:fixed; border:1px solid #ccc; border-top:none;">
+        {% if eff_kine_lines %}
+          {% if eff_prepa_lines %}
+          <div style="display:table-cell; width:50%; vertical-align:top; padding:8px 10px; border-right:1px solid #ddd;">
           {% else %}
-          <div style="font-size:7.5pt; color:#333; line-height:1.4; margin-bottom:2px;">&#9656; {{ ligne.strip() }}</div>
+          <div style="display:table-cell; width:100%; vertical-align:top; padding:8px 10px;">
           {% endif %}
-          {% endif %}{% endfor %}
-        </div>
+            <div style="font-size:8pt; font-weight:bold; color:#1c3f6e; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
+              Kin&#233;sith&#233;rapie
+            </div>
+            {% for ligne in eff_kine_lines %}{% if ligne.strip() %}
+            <div style="font-size:8pt; color:#333; line-height:1.6; padding-left:8px; border-left:2px solid #1c3f6e; margin-bottom:3px;">{{ ligne }}</div>
+            {% endif %}{% endfor %}
+          </div>
+        {% endif %}
+        {% if eff_prepa_lines %}
+          {% if eff_kine_lines %}
+          <div style="display:table-cell; width:50%; vertical-align:top; padding:8px 10px;">
+          {% else %}
+          <div style="display:table-cell; width:100%; vertical-align:top; padding:8px 10px;">
+          {% endif %}
+            <div style="font-size:8pt; font-weight:bold; color:#2176c7; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
+              Pr&#233;paration Physique
+            </div>
+            {% for ligne in eff_prepa_lines %}{% if ligne.strip() %}
+            <div style="font-size:8pt; color:#333; line-height:1.6; padding-left:8px; border-left:2px solid #2176c7; margin-bottom:3px;">{{ ligne }}</div>
+            {% endif %}{% endfor %}
+          </div>
+        {% endif %}
       </div>
-      {% endif %}
-
     </div>
     {% endif %}
 
@@ -1942,14 +1667,14 @@ body {
         </div>
         <div style="display:table; width:100%; table-layout:fixed; margin-bottom:8px;">
 
-          <!-- Kiné : programme saisi OU extrait CR OU bullets génériques -->
+          <!-- Kiné : programme extrait CR ou manuel ou bullets génériques -->
           <div style="display:table-cell; width:50%; vertical-align:top; padding-right:10px; border-right:1px solid #e0e8f2;">
             <div style="font-size:7.5pt; font-weight:bold; color:#1c3f6e; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px; padding-bottom:2px; border-bottom:1px solid #c8d4e8;">
               Kin&#233;sith&#233;rapie
             </div>
-            {% if eff_kine %}
+            {% if eff_kine_lines %}
             <div style="font-size:7.5pt; color:#374151; line-height:1.6;">
-              {% for ligne in eff_kine.split('\n') %}{% if ligne.strip() %}
+              {% for ligne in eff_kine_lines %}{% if ligne.strip() %}
               {% set parts = ligne.strip().split(':') %}
               {% if parts|length > 1 %}
               <div style="margin-bottom:2px;"><span style="font-weight:700; color:#1c3f6e;">{{ parts[0].strip() }} :</span> {{ parts[1:]|join(':')|trim }}</div>
@@ -1969,14 +1694,14 @@ body {
             {% endif %}
           </div>
 
-          <!-- Prépa : programme saisi OU extrait CR OU bullets génériques -->
+          <!-- Prépa : programme extrait CR ou manuel ou bullets génériques -->
           <div style="display:table-cell; width:50%; vertical-align:top; padding-left:10px;">
             <div style="font-size:7.5pt; font-weight:bold; color:#2176c7; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px; padding-bottom:2px; border-bottom:1px solid #99c4ea;">
               Pr&#233;paration Physique
             </div>
-            {% if eff_prepa %}
+            {% if eff_prepa_lines %}
             <div style="font-size:7.5pt; color:#374151; line-height:1.6;">
-              {% for ligne in eff_prepa.split('\n') %}{% if ligne.strip() %}
+              {% for ligne in eff_prepa_lines %}{% if ligne.strip() %}
               {% set parts = ligne.strip().split(':') %}
               {% if parts|length > 1 %}
               <div style="margin-bottom:2px;"><span style="font-weight:700; color:#2176c7;">{{ parts[0].strip() }} :</span> {{ parts[1:]|join(':')|trim }}</div>

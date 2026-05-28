@@ -55,21 +55,36 @@ def parse_compte_rendu(pdf_source) -> dict:
             return None
 
         def slice_text(text, start_patterns, end_patterns):
-            """Extrait une zone entre start et end patterns."""
+            """
+            Extrait une zone entre start et end patterns.
+            Trouve la position de fin la PLUS PROCHE parmi tous les end_patterns
+            (pas seulement le premier qui matche).
+            """
             start = None
             for pat in start_patterns:
-                m = re.search(pat, text, re.IGNORECASE)
-                if m:
-                    start = m.start()
-                    break
+                try:
+                    m = re.search(pat, text, re.IGNORECASE)
+                    if m:
+                        start = m.start()
+                        break
+                except Exception:
+                    continue
             if start is None:
                 return None
+
             end = len(text)
             for pat in end_patterns:
-                m = re.search(pat, text[start:], re.IGNORECASE)
-                if m:
-                    end = start + m.start()
-                    break
+                try:
+                    if pat == r"\Z":
+                        continue  # garder len(text) comme fallback
+                    m = re.search(pat, text[start:], re.IGNORECASE)
+                    if m:
+                        candidate = start + m.start()
+                        # Doit être APRÈS le début (pas à 0 = la ligne start elle-même)
+                        if candidate > start and candidate < end:
+                            end = candidate
+                except Exception:
+                    continue
             return text[start:end]
 
         # ────────────────────────────────────────
@@ -80,8 +95,6 @@ def parse_compte_rendu(pdf_source) -> dict:
             r"(?:Monsieur|Madame)\s+([A-Z][A-Z\s\-]+?)\s*\n",
             r"(?:Monsieur|Madame)\s+([A-Z][A-Z\s\-]+?)\s*\(",
         )
-        # Nettoyer : supprimer la répétition entre parenthèses
-        # ex: "DELLA SCHIAVA (DELLA SCHIAVA) Noe" -> "DELLA SCHIAVA Noe"
         if nom_complet:
             nom_complet = re.sub(r"\s*\([^)]*\)\s*", " ", nom_complet)
             nom_complet = " ".join(nom_complet.split())
@@ -98,7 +111,6 @@ def parse_compte_rendu(pdf_source) -> dict:
             r"par\s+[Dd]octeur\s+([A-Z][A-Za-z]+\s+[A-Z][A-Za-z]+)",
         )
         if medecin_responsable:
-            # Vérifier que ce n'est pas la date
             if any(x in medecin_responsable for x in ["Fait", "CAPBRETON", "/"]):
                 medecin_responsable = find(
                     r"par\s+[Dd]octeur\s+([A-Z]{2,}\s+[A-Z][a-z]{2,})"
@@ -119,9 +131,7 @@ def parse_compte_rendu(pdf_source) -> dict:
         if club:
             club = club.strip().rstrip("·").strip()
 
-        niveau = find(
-            r"[Nn]iveau\s*:\s*(.+?)(?:\n|$)",
-        )
+        niveau = find(r"[Nn]iveau\s*:\s*(.+?)(?:\n|$)")
 
         # ────────────────────────────────────────
         # DATES SÉJOUR
@@ -160,9 +170,7 @@ def parse_compte_rendu(pdf_source) -> dict:
             r"[Aa]ccident.{0,40}le\s+(\d{2}/\d{2}/\d{4})",
         )
 
-        mecanisme = find(
-            r"[Mm][ée]canisme\s*:\s*(.+?)(?:\n|$)",
-        )
+        mecanisme = find(r"[Mm][ée]canisme\s*:\s*(.+?)(?:\n|$)")
 
         intervention = find(
             r"INTERVENTION\s*:\s*(.+?)(?:\n|Geste)",
@@ -197,7 +205,7 @@ def parse_compte_rendu(pdf_source) -> dict:
         ant_block = slice_text(
             full_text,
             [r"[Mm][ée]dicaux\s*/\s*chirurgicaux\s*:"],
-            [r"[Aa]llergies", r"\n\n\n"]
+            [r"\n[Aa]llergies", r"\n\n\n"]
         )
         if ant_block:
             for line in ant_block.split("\n"):
@@ -208,23 +216,28 @@ def parse_compte_rendu(pdf_source) -> dict:
 
         # ────────────────────────────────────────
         # ZONES ENTRÉE ET SORTIE
+        # Utiliser \n prefix pour cibler les TITRES de section
         # ────────────────────────────────────────
 
         zone_entree = slice_text(
             full_text,
             [r"EXAMEN CLINIQUE D.ENTR[EÉ]E", r"EXAMEN D.ENTR[EÉ]E"],
-            [r"VISITES HEBDOMADAIRES",
-             r"EXAMEN CLINIQUE DE SORTIE",
-             r"PROGRAMME DE R"]
+            [r"\nVISITES HEBDOMADAIRES",
+             r"\nEXAMEN CLINIQUE DE SORTIE",
+             r"\nPROGRAMME DE R",
+             r"\nEVALUATIONS ISOCIN",
+             r"\nBILAN ISOCIN"]
         )
 
         zone_sortie = slice_text(
             full_text,
             [r"EXAMEN CLINIQUE DE SORTIE", r"EXAMEN DE SORTIE"],
-            [r"EVALUATIONS ISOCIN",
-             r"RISQUES LI[EÉ]S",
-             r"ORGANISATION DE LA",
-             r"CONCLUSION"]
+            [r"\nEVALUATIONS ISOCIN",
+             r"\nBILAN ISOCIN",
+             r"\nRISQUES LI[EÉ]S",
+             r"\nORGANISATION DE LA",
+             r"\nCONCLUSION",
+             r"\nPROGRAMME DE R"]
         )
 
         # ────────────────────────────────────────
@@ -240,87 +253,62 @@ def parse_compte_rendu(pdf_source) -> dict:
         def parse_fonctionnel_ligne(zone):
             """
             Parse la ligne fonctionnelle CERS qui contient
-            Marche + Squat + Sauts sur la même ligne.
+            Marche + Squat + Sauts sur la même ligne PDF.
             Retourne dict avec marche, squat, saut, appui.
             """
-            result = {
-                "marche": None,
-                "squat": None,
-                "saut": None,
-                "appui": None,
-            }
+            result = {"marche": None, "squat": None, "saut": None, "appui": None}
             if not zone:
                 return result
 
-            # Chercher la ligne qui contient "Marche :" et "Unipodal :"
-            # Ces lignes peuvent être fusionnées par pdfplumber
-            # Pattern : "Marche : VALUE Unipodal : VALUE Unipodal : VALUE"
-            # ou sur plusieurs lignes
-
-            # Reconstituer le bloc fonctionnel
-            fonc_start = re.search(
-                r"FONCTIONNEL\s*\n", zone, re.IGNORECASE
-            )
+            # Localiser le début du bloc fonctionnel
+            fonc_start = re.search(r"FONCTIONNEL\s*\n", zone, re.IGNORECASE)
             if not fonc_start:
-                # Chercher directement la ligne avec Marche :
-                fonc_start = re.search(
-                    r"Marche\s+Squat\s+Sauts", zone, re.IGNORECASE
-                )
-                if not fonc_start:
-                    fonc_start = re.search(
-                        r"Marche\s*:", zone, re.IGNORECASE
-                    )
-
+                fonc_start = re.search(r"Marche\s+Squat\s+Sauts", zone, re.IGNORECASE)
+            if not fonc_start:
+                fonc_start = re.search(r"Marche\s*:", zone, re.IGNORECASE)
             if not fonc_start:
                 return result
 
-            # Extraire les 400 chars après le début du fonctionnel
-            bloc = zone[fonc_start.start():fonc_start.start()+400]
+            # Extraire 500 chars après le début du fonctionnel
+            bloc = zone[fonc_start.start():fonc_start.start() + 500]
 
-            # Marche : chercher "Marche : VALUE" où VALUE s'arrête
-            # avant le prochain label ou saut de ligne
+            # Marche
             m_marche = re.search(
-                r"[Mm]arche\s*:\s*([A-Za-zÀ-ÿ\s,]+?)(?:\s{2,}|Unipodal|Appui|\n)",
+                r"[Mm]arche\s*:\s*([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s,\-]+?)(?:\s{2,}|[Uu]nipodal|[Aa]ppui|\n|$)",
                 bloc
             )
             if m_marche:
-                result["marche"] = m_marche.group(1).strip().rstrip(",")
+                result["marche"] = m_marche.group(1).strip().rstrip(",").strip()
 
-            # Squat : "Unipodal : VALUE" (premier)
+            # Tous les "Unipodal : VALUE" sur la même ligne
             unipodaux = re.findall(
-                r"[Uu]nipodal\s*:\s*([A-Za-zÀ-ÿ\s,]+?)(?:\s{2,}|Unipodal|Appui|\n|$)",
+                r"[Uu]nipodal\s*:\s*([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s,\-]+?)(?:\s{2,}|[Uu]nipodal|[Aa]ppui|\n|$)",
                 bloc
             )
+
             if len(unipodaux) >= 1:
-                # Nettoyer et assembler si coupé sur ligne suivante
-                val = unipodaux[0].strip().rstrip(",").strip()
-                result["squat"] = val
+                result["squat"] = unipodaux[0].strip().rstrip(",").strip()
 
             if len(unipodaux) >= 2:
                 val = unipodaux[1].strip().rstrip(",").strip()
-                # Parfois la fin est sur la ligne suivante
-                # Chercher si la suite est sur la ligne d'après
+                # Chercher si la suite est coupée sur la ligne suivante
                 m_suite = re.search(
-                    r"[Uu]nipodal\s*:[^U\n]+\n([A-Za-zÀ-ÿ\s]{3,50})(?:\n|Appui)",
+                    r"[Uu]nipodal\s*:[^\n]+\n([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s,\-]{2,40})(?:\n|[Aa]ppui)",
                     bloc
                 )
                 if m_suite:
                     suite = m_suite.group(1).strip()
-                    if len(suite) > 2 and suite not in ["Appui monopodal"]:
+                    if suite and suite not in ["Appui monopodal", "Appui"] and len(suite) > 2:
                         val = val + " " + suite
                 result["saut"] = val.strip()
 
             # Appui monopodal
-            m_appui = re.search(
-                r"[Bb]ilan\s+de\s+l.[ée]quilibre\s*:\s*([^\n]+)",
-                bloc
-            )
+            m_appui = re.search(r"[Bb]ilan\s+de\s+l.[ée]quilibre\s*:\s*([^\n]+)", bloc)
             if m_appui:
                 result["appui"] = m_appui.group(1).strip()
             else:
                 m_appui2 = re.search(
-                    r"[Aa]ppui\s+monopodal[^\n]*\n\s*([^\n]{3,50})",
-                    bloc
+                    r"[Aa]ppui\s+monopodal[^\n]*\n\s*([A-Za-zÀ-ÿ][^\n]{2,50})", bloc
                 )
                 if m_appui2:
                     result["appui"] = m_appui2.group(1).strip()
@@ -358,29 +346,20 @@ def parse_compte_rendu(pdf_source) -> dict:
 
         # ────────────────────────────────────────
         # PROGRAMME DE RÉÉDUCATION
-        # Structure réelle :
-        # "PROGRAMME DE REEDUCATION"
-        # "KINESITHERAPIE"
-        # "- Contenu de Travail :"
-        # "• item1"
-        # "PREPARATION PHYSIQUE"
-        # "-Travail Cardiovasculaire :"
-        # "• item1"
         # ────────────────────────────────────────
 
         prog_block = slice_text(
             full_text,
             [r"PROGRAMME DE R[EÉ][EÉ]DUCATION"],
-            [r"EXAMEN CLINIQUE DE SORTIE",
-             r"RISQUES LI[EÉ]S",
-             r"CONCLUSION A LA SORTIE"]
+            [r"\nEXAMEN CLINIQUE DE SORTIE",
+             r"\nRISQUES LI[EÉ]S",
+             r"\nCONCLUSION"]
         )
 
         programme_kine  = None
         programme_prepa = None
 
         if prog_block:
-            # Zone kiné : de KINESITHERAPIE jusqu'à PREPARATION PHYSIQUE
             kine_block = slice_text(
                 prog_block,
                 [r"KINESITHERAPIE", r"KIN[EÉ]SITH[EÉ]RAPIE"],
@@ -391,75 +370,82 @@ def parse_compte_rendu(pdf_source) -> dict:
                 for line in kine_block.split("\n"):
                     l = line.strip()
                     l = re.sub(r"^[-•▸□◦·•oO]\s*", "", l).strip()
-                    l = re.sub(r"^KINESITHERAPIE$", "", l, flags=re.I).strip()
+                    l = re.sub(r"^KIN[EÉ]SITH[EÉ]RAPIE$", "", l, flags=re.I).strip()
                     if l and len(l) > 4:
                         lines.append(l)
                 programme_kine = lines if lines else None
 
-            # Zone prépa : de PREPARATION PHYSIQUE jusqu'à la fin du bloc
             prepa_block = slice_text(
                 prog_block,
                 [r"PREPARATION PHYSIQUE", r"PR[EÉ]PARATION PHYSIQUE"],
-                [r"\Z"]  # fin du bloc
+                [r"\nRISQUES", r"\nCONCLUSION"]
             )
             if prepa_block:
                 lines = []
                 for line in prepa_block.split("\n"):
                     l = line.strip()
                     l = re.sub(r"^[-•▸□◦·•oO]\s*", "", l).strip()
-                    l = re.sub(r"^PR[EÉ]PARATION\s+PHYSIQUE$", "",
-                               l, flags=re.I).strip()
+                    l = re.sub(r"^PR[EÉ]PARATION\s+PHYSIQUE$", "", l, flags=re.I).strip()
                     if l and len(l) > 4:
                         lines.append(l)
                 programme_prepa = lines if lines else None
 
         # ────────────────────────────────────────
-        # CONCLUSION — concaténer toutes les pages
-        # pour éviter la coupure en fin de page
+        # CONCLUSION — CORRECTION COUPURE
+        #
+        # Problèmes connus :
+        # 1. len(l) > 10 dropait les courtes continuations de mots coupés
+        # 2. "RISQUES LIÉS" peut apparaître dans le corps du texte
+        #    → utiliser \n prefix pour cibler les TITRES de section
+        # 3. Mots coupés par trait d'union entre pages/colonnes
         # ────────────────────────────────────────
 
         conc_block = slice_text(
             full_text,
-            [r"CONCLUSION A LA SORTIE", r"CONCLUSION\s+A\s+LA"],
-            [r"RISQUES LI[EÉ]S",
-             r"ORGANISATION DE LA CONTINUIT[EÉ]",
-             r"\Z"]
+            [r"CONCLUSION\s+A\s+LA\s+SORTIE",
+             r"CONCLUSION\s+DE\s+SORTIE",
+             r"BILAN\s+DE\s+SORTIE\s*:"],
+            [r"\nRISQUES\s+LI[EÉ]S",
+             r"\nORGANISATION\s+DE\s+LA\s+CONTINUIT[EÉ]"]
         )
 
         conclusion = None
         if conc_block:
-            # Nettoyer les en-têtes de page répétés (nom patient, IPP)
             lines = []
             for line in conc_block.split("\n"):
                 l = line.strip()
-                # Ignorer les lignes d'en-tête de page PDF
-                if re.match(
-                    r"(Monsieur|Madame|IPP\s*:|CONCLUSION A LA)", l, re.I
-                ):
+                # Ignorer les lignes d'en-tête de page PDF répétées
+                if re.match(r"^(Monsieur|Madame|IPP\s*:|CONCLUSION)", l, re.I):
                     continue
-                if l and len(l) > 10:
+                if l and len(l) > 2:  # seuil bas pour ne pas perdre les courtes suites
                     lines.append(l)
+
+            # Joindre les lignes en fusionnant les mots coupés par trait d'union
             conclusion = " ".join(lines)
-            # Supprimer les doublons de mots liés aux sauts de ligne PDF
+            # "déséquili- bre" → "déséquilibre"
+            conclusion = re.sub(r"(\w)-\s+(\w)", r"\1\2", conclusion)
             conclusion = re.sub(r"\s{2,}", " ", conclusion)
-            # Limiter à 900 chars mais sans couper au milieu d'un mot
             if len(conclusion) > 900:
                 conclusion = conclusion[:900].rsplit(" ", 1)[0] + "…"
+            if len(conclusion) < 10:
+                conclusion = None
 
         # ────────────────────────────────────────
-        # DEBUG
+        # DEBUG — visible dans les logs Streamlit Cloud
         # ────────────────────────────────────────
 
         print(f"CR nom={nom_complet!r}")
         print(f"CR naissance={date_naissance!r} sport={sport!r} club={club!r}")
         print(f"CR diagnostic={diagnostic!r}")
+        print(f"CR zone_entree={'OK '+str(len(zone_entree))+' chars' if zone_entree else 'VIDE'}")
+        print(f"CR zone_sortie={'OK '+str(len(zone_sortie))+' chars' if zone_sortie else 'VIDE'}")
         print(f"CR marche_e={marche_entree!r} marche_s={marche_sortie!r}")
         print(f"CR squat_e={squat_entree!r} squat_s={squat_sortie!r}")
         print(f"CR saut_e={saut_entree!r} saut_s={saut_sortie!r}")
         print(f"CR appui_e={appui_mono_entree!r} appui_s={appui_mono_sortie!r}")
         print(f"CR kine={len(programme_kine) if programme_kine else 0} lignes")
         print(f"CR prepa={len(programme_prepa) if programme_prepa else 0} lignes")
-        print(f"CR conclusion={len(conclusion) if conclusion else 0} chars")
+        print(f"CR conclusion={len(conclusion) if conclusion else 0} chars, extrait={repr(conclusion[:80]) if conclusion else 'VIDE'}")
 
         return {
             "nom_complet":           nom_complet,

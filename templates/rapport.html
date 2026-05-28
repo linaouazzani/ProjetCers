@@ -839,48 +839,61 @@ body {
     {% endif %}
   </div>
 
-  <!-- ── BILAN FONCTIONNEL : comparatif entrée / sortie ──────────── -->
+  <!-- ── BILAN FONCTIONNEL : tableau HORIZONTAL (tests en colonnes) ── -->
   {% set has_fonctionnel = cr and (cr.marche_entree or cr.squat_entree or cr.saut_entree or cr.appui_mono_entree or cr.marche_sortie or cr.squat_sortie or cr.saut_sortie or cr.appui_mono_sortie) %}
   {% if has_fonctionnel %}
   <div style="padding:0 18px 10px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
-    <div style="font-size:7pt; font-weight:bold; color:#ffffff; background:#1c3f6e; padding:3px 8px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-      BILAN FONCTIONNEL &mdash; Entr&#233;e vs Sortie
+    <div style="font-size:7.5pt; font-weight:700; color:#ffffff; background:#1c3f6e; padding:4px 8px; margin-bottom:4px; -webkit-print-color-adjust:exact; print-color-adjust:exact; letter-spacing:0.4px;">
+      &#9654; BILAN FONCTIONNEL &mdash; Comparatif Entr&#233;e / Sortie
     </div>
-    <table style="width:100%; border-collapse:collapse; font-size:8pt; table-layout:fixed;">
-      <tr style="background:#dde8f2; font-weight:bold; color:#1c3f6e; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-        <td style="border:1px solid #c8d4e8; padding:3px 6px; width:28%;">TEST FONCTIONNEL</td>
-        <td style="border:1px solid #c8d4e8; padding:3px 6px; width:36%; text-align:center;">ENTR&#201;E</td>
-        <td style="border:1px solid #c8d4e8; padding:3px 6px; text-align:center;">SORTIE</td>
+    <table style="width:100%; border-collapse:collapse; font-size:7.5pt; table-layout:fixed;">
+      <!-- EN-TÊTES : une colonne par test -->
+      <tr style="-webkit-print-color-adjust:exact; print-color-adjust:exact;">
+        <td style="border:1px solid #c8d4e8; padding:4px 6px; width:13%; background:#dde8f2; font-weight:700; color:#1c3f6e; font-size:7pt; text-transform:uppercase;"></td>
+        <td style="border:1px solid #c8d4e8; padding:4px 6px; width:21%; background:#dde8f2; font-weight:700; color:#1c3f6e; text-align:center; font-size:7.5pt;">
+          Marche
+        </td>
+        <td style="border:1px solid #c8d4e8; padding:4px 6px; width:22%; background:#dde8f2; font-weight:700; color:#1c3f6e; text-align:center; font-size:7.5pt;">
+          Squat<br><span style="font-size:6.5pt; font-weight:400;">(Unipodal)</span>
+        </td>
+        <td style="border:1px solid #c8d4e8; padding:4px 6px; width:22%; background:#dde8f2; font-weight:700; color:#1c3f6e; text-align:center; font-size:7.5pt;">
+          Sauts<br><span style="font-size:6.5pt; font-weight:400;">(Unipodaux)</span>
+        </td>
+        <td style="border:1px solid #c8d4e8; padding:4px 6px; width:22%; background:#dde8f2; font-weight:700; color:#1c3f6e; text-align:center; font-size:7.5pt;">
+          Appui<br><span style="font-size:6.5pt; font-weight:400;">(Monopodal)</span>
+        </td>
       </tr>
-      {% if cr.marche_entree or cr.marche_sortie %}
-      <tr>
-        <td style="border:1px solid #dde8f2; padding:3px 6px; font-weight:bold; color:#1c3f6e;">Marche</td>
-        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#1c3f6e; font-weight:600;">{{ cr.marche_entree or "&mdash;" }}</td>
-        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#2a8a36; font-weight:600;">{{ cr.marche_sortie or "&mdash;" }}</td>
+      <!-- LIGNE ENTRÉE -->
+      <tr style="-webkit-print-color-adjust:exact; print-color-adjust:exact;">
+        <td style="border:1px solid #dde8f2; padding:4px 6px; background:#1c3f6e; color:#ffffff; font-weight:700; font-size:7pt; text-align:center; letter-spacing:0.3px;">ENTR&#201;E</td>
+        <td style="border:1px solid #dde8f2; padding:4px 6px; text-align:center; color:#1c3f6e; font-weight:600; line-height:1.3;">{{ cr.marche_entree or "&mdash;" }}</td>
+        <td style="border:1px solid #dde8f2; padding:4px 6px; text-align:center; color:#1c3f6e; font-weight:600; line-height:1.3;">{{ cr.squat_entree or "&mdash;" }}</td>
+        <td style="border:1px solid #dde8f2; padding:4px 6px; text-align:center; color:#1c3f6e; font-weight:600; line-height:1.3;">{{ cr.saut_entree or "&mdash;" }}</td>
+        <td style="border:1px solid #dde8f2; padding:4px 6px; text-align:center; color:#1c3f6e; font-weight:600; line-height:1.3;">{{ cr.appui_mono_entree or "&mdash;" }}</td>
       </tr>
-      {% endif %}
-      {% if cr.squat_entree or cr.squat_sortie %}
-      <tr style="background:#f8fafd;">
-        <td style="border:1px solid #dde8f2; padding:3px 6px; font-weight:bold; color:#1c3f6e;">Squat unipodal</td>
-        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#1c3f6e; font-weight:600;">{{ cr.squat_entree or "&mdash;" }}</td>
-        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#2a8a36; font-weight:600;">{{ cr.squat_sortie or "&mdash;" }}</td>
+      <!-- LIGNE SORTIE -->
+      <tr style="background:#f0faf4; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+        <td style="border:1px solid #dde8f2; padding:4px 6px; background:#2a8a36; color:#ffffff; font-weight:700; font-size:7pt; text-align:center; letter-spacing:0.3px;">SORTIE</td>
+        <td style="border:1px solid #dde8f2; padding:4px 6px; text-align:center; color:#1a6e28; font-weight:700; line-height:1.3;">{{ cr.marche_sortie or "&mdash;" }}</td>
+        <td style="border:1px solid #dde8f2; padding:4px 6px; text-align:center; color:#1a6e28; font-weight:700; line-height:1.3;">{{ cr.squat_sortie or "&mdash;" }}</td>
+        <td style="border:1px solid #dde8f2; padding:4px 6px; text-align:center; color:#1a6e28; font-weight:700; line-height:1.3;">{{ cr.saut_sortie or "&mdash;" }}</td>
+        <td style="border:1px solid #dde8f2; padding:4px 6px; text-align:center; color:#1a6e28; font-weight:700; line-height:1.3;">{{ cr.appui_mono_sortie or "&mdash;" }}</td>
       </tr>
-      {% endif %}
-      {% if cr.saut_entree or cr.saut_sortie %}
-      <tr>
-        <td style="border:1px solid #dde8f2; padding:3px 6px; font-weight:bold; color:#1c3f6e;">Sauts unipodaux</td>
-        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#1c3f6e; font-weight:600;">{{ cr.saut_entree or "&mdash;" }}</td>
-        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#2a8a36; font-weight:600;">{{ cr.saut_sortie or "&mdash;" }}</td>
-      </tr>
-      {% endif %}
-      {% if cr.appui_mono_entree or cr.appui_mono_sortie %}
-      <tr style="background:#f8fafd;">
-        <td style="border:1px solid #dde8f2; padding:3px 6px; font-weight:bold; color:#1c3f6e;">Appui monopodal</td>
-        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#1c3f6e; font-weight:600;">{{ cr.appui_mono_entree or "&mdash;" }}</td>
-        <td style="border:1px solid #dde8f2; padding:3px 6px; text-align:center; color:#2a8a36; font-weight:600;">{{ cr.appui_mono_sortie or "&mdash;" }}</td>
-      </tr>
-      {% endif %}
     </table>
+  </div>
+  {% endif %}
+
+  <!-- ── RESSENTI DU JOUEUR / AVIS CLINIQUE ────────────────────────── -->
+  {% if ressenti and ressenti | trim %}
+  <div style="padding:0 18px 10px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
+    <div style="background:#fff8e6; border:2px solid #e07b00; border-radius:6px; padding:10px 14px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+      <div style="font-size:9pt; font-weight:800; color:#b85c00; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; padding-bottom:5px; border-bottom:1.5px solid #f0c070;">
+        &#128172; Ressenti du joueur &amp; avis clinique &mdash; Retour au sport
+      </div>
+      <div style="font-size:9pt; color:#5c3800; line-height:1.6; font-style:italic;">
+        {{ ressenti }}
+      </div>
+    </div>
   </div>
   {% endif %}
 

@@ -311,6 +311,7 @@ def construire_contexte(
     programme_kine: str = "",
     programme_prepa: str = "",
     conclusion_sortie: str = "",
+    ressenti: str = "",
 ) -> dict:
 
     poids        = entree.poids_kg or sortie.poids_kg or 101.0
@@ -701,6 +702,7 @@ def construire_contexte(
         "programme_kine":         programme_kine,
         "programme_prepa":        programme_prepa,
         "conclusion_sortie":      conclusion_sortie,
+        "ressenti":               ressenti,
     }
 
 
@@ -829,6 +831,7 @@ def generer_rapport_biodex(
     programme_kine:          str = "",
     programme_prepa:         str = "",
     conclusion_sortie:       str = "",
+    ressenti:                str = "",
 ) -> dict:
 
     print("\n" + "█" * 60)
@@ -899,6 +902,7 @@ def generer_rapport_biodex(
         programme_kine=programme_kine,
         programme_prepa=programme_prepa,
         conclusion_sortie=conclusion_sortie,
+        ressenti=ressenti,
     )
     print("  ✅ Contexte prêt")
 

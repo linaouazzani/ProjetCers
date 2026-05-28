@@ -538,6 +538,7 @@ with col_left:
     programme_kine    = ""
     programme_prepa   = ""
     conclusion_sortie = ""
+    ressenti          = ""
 
     # 2. Informations complémentaires patient — A2 (placeholder mis à jour)
     with st.expander("⚙️ Informations complémentaires patient", expanded=False):
@@ -614,6 +615,14 @@ with col_left:
             "Conclusion de sortie / Recommandations (optionnel)",
             placeholder="Conclusion médicale personnalisée et recommandations pour la suite de la rééducation à domicile...",
             height=65, key="conclusion_sortie"
+        )
+
+        st.markdown("---")
+        st.caption("🩺 Ressenti du joueur & avis clinique — retour au sport (apparaît en page de garde)")
+        ressenti = st.text_area(
+            "Ressenti du joueur / Avis clinique (optionnel)",
+            placeholder="Ex : Le joueur se sent prêt à reprendre l'entraînement collectif. Bonne confiance dans le genou. Appréhension légère sur les changements de direction...\nOu : Nécessite encore 3 semaines de rééducation avant retour au club.",
+            height=80, key="ressenti_joueur"
         )
 
     # Variables avec valeurs par défaut
@@ -938,6 +947,7 @@ with col_right:
                 programme_kine          = programme_kine,
                 programme_prepa         = programme_prepa,
                 conclusion_sortie       = conclusion_sortie,
+                ressenti                = ressenti,
             )
 
             progress.progress(90, text="📄 Traitement du résultat...")

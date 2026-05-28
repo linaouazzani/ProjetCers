@@ -194,37 +194,83 @@ def parse_compte_rendu(pdf_source) -> dict:
                 pass
 
         # ── Bilan fonctionnel ─────────────────────────────────
+        # Extraire d'abord les blocs "entrée" et "sortie" séparément
+        entree_block = find_block(
+            r"EXAMEN\s+CLINIQUE\s+D.ENTR[EÉ]E",
+            end_patterns=[
+                r"\nEXAMEN\s+CLINIQUE\s+DE\s+SORTIE",
+                r"\nBILAN\s+ISOCIN",
+                r"\nPROGRAMME",
+                r"\nCONCLUSION",
+                r"\nRISQUES",
+            ]
+        )
+        sortie_block = find_block(
+            r"EXAMEN\s+CLINIQUE\s+DE\s+SORTIE",
+            end_patterns=[
+                r"\nBILAN\s+ISOCIN",
+                r"\nPROGRAMME",
+                r"\nCONCLUSION",
+                r"\nRISQUES",
+                r"\n[A-Z]{4,}\s*\n",
+            ]
+        )
+
+        # Valeurs d'entrée (dans le bloc entrée, sinon texte complet)
+        _entree_txt = entree_block if entree_block else full_text
         marche_entree = find(
-            r"EXAMEN CLINIQUE D.ENTREE.*?Marche\s*\n\s*Marche\s*:\s*([^\n]+)",
-            r"Marche\s*:\s*([^\n]+?)(?:\n|Appui)",
+            r"Marche\s*\n\s*Marche\s*:\s*([^\n]+)",
+            r"Marche\s*:\s*([^\n]+?)(?:\n|Appui|$)",
+            text=_entree_txt,
         )
-        marche_sortie = find(
-            r"EXAMEN CLINIQUE DE SORTIE.*?Marche\s*\n\s*Marche\s*:\s*([^\n]+)",
-        )
-
         squat_entree = find(
-            r"EXAMEN CLINIQUE D.ENTREE.*?Squat\s*\nUnipodal\s*:\s*([^\n]+)",
             r"Squat\s*\nUnipodal\s*:\s*([^\n]+)",
+            r"Squat\s+[Uu]nipodal\s*:\s*([^\n]+)",
+            r"Squat\s*:\s*([^\n]+)",
+            text=_entree_txt,
         )
-        squat_sortie = find(
-            r"EXAMEN CLINIQUE DE SORTIE.*?Squat\s*\nUnipodal\s*:\s*([^\n]+)",
-        )
-
         saut_entree = find(
-            r"EXAMEN CLINIQUE D.ENTREE.*?Sauts\s*\nUnipodal\s*:\s*([^\n]+)",
-            r"Sauts\s*\nUnipodal\s*:\s*([^\n]+)",
+            r"Sauts?\s*\n[Uu]nipodal\s*:\s*([^\n]+)",
+            r"Sauts?\s+[Uu]nipodal\s*:\s*([^\n]+)",
+            r"Sauts?\s*:\s*([^\n]+)",
+            text=_entree_txt,
         )
-        saut_sortie = find(
-            r"EXAMEN CLINIQUE DE SORTIE.*?Sauts\s*\nUnipodal\s*:\s*([^\n]+)",
+        appui_mono_entree = find(
+            r"[Ee]quilibre\s*:\s*([^\n]+)",
+            r"[Aa]ppui\s+mono\w*\s*:\s*([^\n]+)",
+            r"[Bb]ilan\s+de\s+l.[ée]quilibre\s*:\s*([^\n]+)",
+            text=_entree_txt,
         )
 
-        appui_mono_entree = find(
-            r"EXAMEN CLINIQUE D.ENTREE.*?[Ee]quilibre\s*:\s*([^\n]+)",
-            r"[Bb]ilan\s+de\s+l.[ée]quilibre\s*:\s*([^\n]+)",
-        )
-        appui_mono_sortie = find(
-            r"EXAMEN CLINIQUE DE SORTIE.*?[Ee]quilibre\s*:\s*([^\n]+)",
-        )
+        # Valeurs de sortie (dans le bloc sortie si trouvé, sinon None)
+        if sortie_block:
+            marche_sortie = find(
+                r"Marche\s*\n\s*Marche\s*:\s*([^\n]+)",
+                r"Marche\s*:\s*([^\n]+?)(?:\n|Appui|$)",
+                text=sortie_block,
+            )
+            squat_sortie = find(
+                r"Squat\s*\nUnipodal\s*:\s*([^\n]+)",
+                r"Squat\s+[Uu]nipodal\s*:\s*([^\n]+)",
+                r"Squat\s*:\s*([^\n]+)",
+                text=sortie_block,
+            )
+            saut_sortie = find(
+                r"Sauts?\s*\n[Uu]nipodal\s*:\s*([^\n]+)",
+                r"Sauts?\s+[Uu]nipodal\s*:\s*([^\n]+)",
+                r"Sauts?\s*:\s*([^\n]+)",
+                text=sortie_block,
+            )
+            appui_mono_sortie = find(
+                r"[Ee]quilibre\s*:\s*([^\n]+)",
+                r"[Aa]ppui\s+mono\w*\s*:\s*([^\n]+)",
+                text=sortie_block,
+            )
+        else:
+            marche_sortie = None
+            squat_sortie = None
+            saut_sortie = None
+            appui_mono_sortie = None
 
         douleur_entree = find(
             r"EXAMEN CLINIQUE D.ENTREE.*?[Mm][ée]canique[^:]*:\s*([\d/]+)",

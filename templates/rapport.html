@@ -191,13 +191,14 @@ body {
   color: #ffffff;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 5px 12px;
+  padding: 7px 14px;
   margin: 6px 0 4px 0;
   border-radius: 3px;
   flex-shrink: 0;
   text-align: center;
+  letter-spacing: 0.3px;
 }
 
 /* ====== TABLEAUX ====== */
@@ -293,9 +294,9 @@ body {
   border: 1px solid #aaaaaa;
   flex-shrink: 0;
 }
-.legende .lr { flex: 1; padding: 2px 4px; text-align: center; font-size: 7px; font-weight: 700; color: #ffffff; background: #c0392b; }
-.legende .lo { flex: 1; padding: 2px 4px; text-align: center; font-size: 7px; font-weight: 700; color: #ffffff; background: #e07b00; }
-.legende .lv { flex: 1; padding: 2px 4px; text-align: center; font-size: 7px; font-weight: 700; color: #ffffff; background: #2a8a36; }
+.legende .lr { flex: 1; padding: 3px 4px; text-align: center; font-size: 8.5px; font-weight: 700; color: #ffffff; background: #c0392b; }
+.legende .lo { flex: 1; padding: 3px 4px; text-align: center; font-size: 8.5px; font-weight: 700; color: #ffffff; background: #e07b00; }
+.legende .lv { flex: 1; padding: 3px 4px; text-align: center; font-size: 8.5px; font-weight: 700; color: #ffffff; background: #2a8a36; }
 
 /* ====== REMARQUES ====== */
 .rem-block {
@@ -428,8 +429,8 @@ body {
 }
 .footer-logo img { height: 16px; }
 .footer-logo-text { font-size: 8px; font-weight: 700; color: #1c3f6e; }
-.footer-mention { font-size: 6px; color: #777777; font-style: italic; text-align: center; flex: 1; padding: 0 8px; }
-.footer-page { font-size: 7px; color: #999999; white-space: nowrap; }
+.footer-mention { font-size: 7px; color: #777777; font-style: italic; text-align: center; flex: 1; padding: 0 8px; }
+.footer-page { font-size: 8px; color: #999999; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -448,7 +449,7 @@ body {
     {% set norm_ext_rp = 3.0 if vitesse_num == 60 else 2.2 %}
     {% set norm_flex_rp = 1.8 if vitesse_num == 60 else 1.5 %}
     {% set norme_iq = "0,50–0,70" if vitesse_num == 60 else "0,70–0,90" %}
-    <div style="background:#1c3f6e; color:white; font-size:8.5px; font-weight:700; text-align:center; padding:2.5px 0; border-radius:2px 2px 0 0; margin-bottom:0;">{{ titre }}</div>
+    <div style="background:#1c3f6e; color:white; font-size:10.5px; font-weight:700; text-align:center; padding:5px 6px; border-radius:2px 2px 0 0; margin-bottom:0; letter-spacing:0.2px;">{{ titre }}</div>
     <table class="mt">
       <thead>
         <tr>
@@ -885,16 +886,19 @@ body {
 
   <!-- ── PROGRESSIONS BIODEX CLÉS ────────────────────────────────── -->
   {% if remarques and remarques.progression %}
-  <div style="padding:5px 18px 6px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
-    <div style="background:#eef3fa; border-left:3px solid #1c3f6e; padding:5px 12px; border-radius:0 3px 3px 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-      <div style="font-size:7pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:3px;">&#9650; Progressions objectiv&#233;es &mdash; Bilan isocin&#233;tique Biodex</div>
-      <div style="display:table; width:100%; table-layout:fixed;">
-        {% for p in remarques.progression %}
-        <div style="display:table-row;">
-          <div style="display:table-cell; font-size:7pt; color:#1c3f6e; line-height:1.4; padding:0.5px 0;">&#9656; {{ p }}</div>
-        </div>
-        {% endfor %}
+  <div style="padding:8px 18px 10px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
+    <div style="background:#f0faf2; border:2.5px solid #2a8a36; border-radius:6px; padding:10px 16px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+      <div style="font-size:10pt; color:#1a6e28; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px; padding-bottom:5px; border-bottom:1.5px solid #c3e6cb;">
+        &#9650; Progressions objectiv&#233;es &mdash; Bilan isocin&#233;tique Biodex
       </div>
+      {% for p in remarques.progression %}
+      <div style="display:table; width:100%; margin-bottom:4px;">
+        <div style="display:table-cell; vertical-align:middle; width:20px; text-align:center;">
+          <span style="font-size:13pt; color:#2a8a36; font-weight:900; line-height:1;">&#9650;</span>
+        </div>
+        <div style="display:table-cell; vertical-align:middle; font-size:10pt; font-weight:700; color:#1a6e28; line-height:1.4; padding-left:6px;">{{ p }}</div>
+      </div>
+      {% endfor %}
     </div>
   </div>
   {% endif %}
@@ -969,7 +973,7 @@ body {
   <div class="page-content">
 
     <div class="bilan-title">BILAN ISOCINETIQUE — Genou {{ entree.lese }} — 60&#176;/s</div>
-    <div style="font-size:7.5pt; color:#555; text-align:center; margin:0 0 3px 0; padding:2px 0; flex-shrink:0;">
+    <div style="font-size:9.5pt; color:#374151; text-align:center; margin:0 0 4px 0; padding:3px 0; flex-shrink:0; font-weight:500;">
       Protocole : Concentrique / Concentrique &nbsp;&#183;&nbsp; Vitesse 60&#176;/s &nbsp;&#183;&nbsp; Genou {{ entree.lese }}
     </div>
 
@@ -981,8 +985,8 @@ body {
       <div class="lv">Deficit 1-10% — Normal</div>
     </div>
 
-    <div style="background:#1c3f6e; color:#ffffff; font-size:7px; font-weight:700; padding:2px 10px; border-radius:3px; margin:4px 0 2px 0; text-align:center; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-      COURBES ISOCINETIQUES 60&#176;/s &#8212; Sain D (plein) vs Les&#233; G (pointill&#233;)
+    <div style="background:#1c3f6e; color:#ffffff; font-size:9px; font-weight:700; padding:4px 10px; border-radius:3px; margin:4px 0 2px 0; text-align:center; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+      COURBES ISOCIN&#201;TIQUES 60&#176;/s &#8212; Sain D (plein) vs L&#233;s&#233; G (pointill&#233;)
     </div>
     <div style="display:table; width:100%; border-collapse:collapse; flex:1; flex-shrink:0;">
       <div style="display:table-row;">
@@ -1084,7 +1088,7 @@ body {
   <div class="page-content">
 
     <div class="bilan-title">BILAN ISOCINETIQUE — Genou {{ entree.lese }} — 240&#176;/s</div>
-    <div style="font-size:7.5pt; color:#555; text-align:center; margin:0 0 3px 0; padding:2px 0; flex-shrink:0;">
+    <div style="font-size:9.5pt; color:#374151; text-align:center; margin:0 0 4px 0; padding:3px 0; flex-shrink:0; font-weight:500;">
       Protocole : Concentrique / Concentrique &nbsp;&#183;&nbsp; Vitesse 240&#176;/s &nbsp;&#183;&nbsp; Genou {{ entree.lese }}
     </div>
 
@@ -1096,8 +1100,8 @@ body {
       <div class="lv">Deficit 1-10% — Normal</div>
     </div>
 
-    <div style="background:#1c3f6e; color:#ffffff; font-size:7px; font-weight:700; padding:2px 10px; border-radius:3px; margin:4px 0 2px 0; text-align:center; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-      COURBES ISOCINETIQUES 240&#176;/s &#8212; Sain D (plein) vs Les&#233; G (pointill&#233;)
+    <div style="background:#1c3f6e; color:#ffffff; font-size:9px; font-weight:700; padding:4px 10px; border-radius:3px; margin:4px 0 2px 0; text-align:center; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+      COURBES ISOCIN&#201;TIQUES 240&#176;/s &#8212; Sain D (plein) vs L&#233;s&#233; G (pointill&#233;)
     </div>
     <div style="display:table; width:100%; border-collapse:collapse; flex:1; flex-shrink:0;">
       <div style="display:table-row;">
@@ -1196,7 +1200,7 @@ body {
   </div>
   <div style="height:4px;min-height:4px;background:#1c3f6e;margin-bottom:6px;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
 
-  <div class="page-content">
+  <div class="page-content" style="overflow:visible !important;">
 
     <!-- SCORE ACL-RSI -->
     {% if acl_rsi_score %}
@@ -1320,10 +1324,10 @@ body {
 
     <!-- REMARQUES MÉDICALES (pleine largeur) — uniquement si renseignées -->
     {% if remarques_medecin and remarques_medecin | trim and remarques_medecin | trim != "" %}
-    <div data-section="remarques-medicales" style="flex-shrink:0; margin-bottom:3px;">
-      <div style="background:#374151; color:white; font-size:7.5px; font-weight:700; padding:3px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">&#9656; REMARQUES M&#201;DICALES</div>
-      <div style="border:1.5px solid #374151; border-top:none; border-radius:0 0 3px 3px; padding:6px 12px; background:#f9fafb; min-height:40px; width:100%;">
-        <div style="font-size:8pt; color:#374151; line-height:1.6; overflow-wrap:anywhere; white-space:pre-wrap;"><span data-remarques-content>{{ remarques_medecin }}</span></div>
+    <div data-section="remarques-medicales" style="flex-shrink:0; margin-top:4px; margin-bottom:4px;">
+      <div style="background:#374151; color:white; font-size:9px; font-weight:700; padding:5px 12px; border-radius:4px 4px 0 0; letter-spacing:0.3px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">&#9656; REMARQUES M&#201;DICALES</div>
+      <div style="border:2px solid #374151; border-top:none; border-radius:0 0 4px 4px; padding:8px 14px; background:#f9fafb; width:100%; overflow:visible;">
+        <div style="font-size:9pt; color:#374151; line-height:1.7; overflow-wrap:anywhere; white-space:pre-wrap;"><span data-remarques-content>{{ remarques_medecin }}</span></div>
       </div>
     </div>
     {% endif %}
@@ -1593,149 +1597,120 @@ body {
       Synth&#232;se du S&#233;jour &mdash; Programme de R&#233;&#233;ducation &amp; Conclusion
     </div>
 
+    <!-- ══ ANTÉCÉDENTS MÉDICAUX (avant résumé) ══ -->
+    {% if cr and cr.antecedents and cr.antecedents | length > 0 %}
+    <div style="border:2px solid #1c3f6e; border-radius:6px; overflow:hidden; margin-bottom:10px; flex-shrink:0;">
+      <div style="background:#1c3f6e; color:#ffffff; font-size:9.5pt; font-weight:700; padding:5px 12px; letter-spacing:0.3px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+        &#9656; Ant&#233;c&#233;dents m&#233;dicaux / chirurgicaux
+      </div>
+      <div style="padding:8px 14px; background:#f5f8fc;">
+        {% for atcd in cr.antecedents %}
+        <div style="font-size:9pt; color:#1c3f6e; line-height:1.6; margin-bottom:2px;">
+          <span style="font-weight:700; color:#1c3f6e;">&#9656;</span> {{ atcd }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
     <!-- ══ RÉSUMÉ DU SÉJOUR ══ -->
     {% if resume_override or (cr and cr.conclusion and cr.conclusion | trim) %}
-    <div style="border:1.5px solid #1c3f6e; border-radius:4px; overflow:hidden; margin-bottom:8px; flex-shrink:0;">
-      <div style="background:#1c3f6e; color:#ffffff; font-size:8.5pt; font-weight:700; padding:3px 10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+    <div style="border:1.5px solid #1c3f6e; border-radius:4px; overflow:hidden; margin-bottom:10px; flex-shrink:0;">
+      <div style="background:#1c3f6e; color:#ffffff; font-size:9.5pt; font-weight:700; padding:5px 12px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
         R&#233;sum&#233; du s&#233;jour au CERS &mdash; Prise en charge &amp; &#233;volution
       </div>
-      <div style="padding:7px 12px; background:#f5f8fc; font-size:8.5pt; color:#333; line-height:1.7;">
+      <div style="padding:8px 14px; background:#f5f8fc; font-size:9pt; color:#333; line-height:1.7;">
         {% if resume_override %}{{ resume_override }}{% else %}{{ cr.conclusion }}{% endif %}
       </div>
     </div>
     {% endif %}
 
-    <!-- PROGRAMME DE RÉÉDUCATION — tableau 2 colonnes extrait du CR -->
-    {% if eff_kine_lines or eff_prepa_lines %}
-    <div style="margin-bottom:8px; flex-shrink:0;">
-      <div style="font-size:9pt; font-weight:bold; color:#ffffff; background:#1c3f6e; padding:4px 10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-        PROGRAMME DE R&#201;&#201;DUCATION &mdash; &#201;quipe Pluridisciplinaire
+    <!-- ══ ENGAGEMENT DE L'ÉQUIPE PLURIDISCIPLINAIRE ══ -->
+    <div style="flex-shrink:0; margin-bottom:8px; border:2px solid #1c3f6e; border-radius:8px; overflow:hidden;">
+
+      <!-- Bandeau titre -->
+      <div style="background:#1c3f6e; color:white; padding:8px 16px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+        <div style="font-size:10.5pt; font-weight:800; letter-spacing:0.3px;">&#9733; &#201;quipe Pluridisciplinaire &mdash; Programme de R&#233;&#233;ducation</div>
+        <div style="font-size:8pt; color:#a8c4e0; margin-top:2px; font-style:italic;">CERS Capbreton &middot; Groupe Ramsay Sant&#233;</div>
       </div>
-      <div style="display:table; width:100%; table-layout:fixed; border:1px solid #ccc; border-top:none;">
-        {% if eff_kine_lines %}
-          {% if eff_prepa_lines %}
-          <div style="display:table-cell; width:50%; vertical-align:top; padding:8px 10px; border-right:1px solid #ddd;">
-          {% else %}
-          <div style="display:table-cell; width:100%; vertical-align:top; padding:8px 10px;">
-          {% endif %}
-            <div style="font-size:8pt; font-weight:bold; color:#1c3f6e; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
-              Kin&#233;sith&#233;rapie
-            </div>
-            {% for ligne in eff_kine_lines %}{% if ligne.strip() %}
-            <div style="font-size:8pt; color:#333; line-height:1.6; padding-left:8px; border-left:2px solid #1c3f6e; margin-bottom:3px;">{{ ligne }}</div>
-            {% endif %}{% endfor %}
+
+      <!-- Intro -->
+      <div style="background:#eef3fa; padding:6px 16px; border-bottom:1px solid #c8d4e8; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+        <div style="font-size:8.5pt; color:#1c3f6e; font-weight:600; font-style:italic; line-height:1.5;">
+          Ces progr&#232;s ont &#233;t&#233; rendus possibles gr&#226;ce &#224; la collaboration de l&#8217;&#233;quipe pluridisciplinaire du CERS Capbreton.
+        </div>
+      </div>
+
+      <!-- 2 colonnes Kiné / Prépa -->
+      <div style="display:table; width:100%; table-layout:fixed; padding:10px 16px; box-sizing:border-box; background:#ffffff;">
+
+        <!-- Colonne Kinésithérapie -->
+        <div style="display:table-cell; width:50%; vertical-align:top; padding-right:12px; border-right:2px solid #dde8f2;">
+          <div style="font-size:9pt; font-weight:800; color:#1c3f6e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; padding-bottom:4px; border-bottom:2px solid #1c3f6e;">
+            &#9474; Kin&#233;sith&#233;rapie
           </div>
-        {% endif %}
-        {% if eff_prepa_lines %}
           {% if eff_kine_lines %}
-          <div style="display:table-cell; width:50%; vertical-align:top; padding:8px 10px;">
-          {% else %}
-          <div style="display:table-cell; width:100%; vertical-align:top; padding:8px 10px;">
-          {% endif %}
-            <div style="font-size:8pt; font-weight:bold; color:#2176c7; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
-              Pr&#233;paration Physique
+          <div style="font-size:8.5pt; color:#222; line-height:1.65;">
+            {% for ligne in eff_kine_lines %}{% if ligne.strip() %}
+            {% set parts = ligne.strip().split(':') %}
+            {% if parts|length > 1 %}
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">
+              <span style="font-weight:700; color:#1c3f6e;">{{ parts[0].strip() }} :</span> {{ parts[1:]|join(':')|trim }}
             </div>
-            {% for ligne in eff_prepa_lines %}{% if ligne.strip() %}
-            <div style="font-size:8pt; color:#333; line-height:1.6; padding-left:8px; border-left:2px solid #2176c7; margin-bottom:3px;">{{ ligne }}</div>
+            {% else %}
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">&#9656; {{ ligne.strip() }}</div>
+            {% endif %}
             {% endif %}{% endfor %}
           </div>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
-
-    <!-- CONCLUSION DE SORTIE (personnalisée OU extraite du CR) -->
-    {% if conclusion_sortie or (cr and cr.conclusion) %}
-    <div style="flex-shrink:0; margin-bottom:8px;">
-      <div style="background:#2a8a36; color:white; font-size:8pt; font-weight:bold; padding:4px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-        &#9656; Conclusion de Sortie &amp; Recommandations
-      </div>
-      <div style="border:1.5px solid #2a8a36; border-top:none; border-radius:0 0 3px 3px; padding:8px 12px; background:#f0faf2;">
-        <div style="font-size:8pt; color:#1a3a1a; line-height:1.65; overflow-wrap:anywhere; white-space:pre-wrap;">{{ conclusion_sortie if conclusion_sortie else cr.conclusion }}</div>
-      </div>
-    </div>
-    {% endif %}
-
-    <!-- ENGAGEMENT DE L'ÉQUIPE PLURIDISCIPLINAIRE -->
-    <div style="flex-shrink:0; margin-bottom:6px;">
-      <div style="background:#374151; color:white; font-size:8pt; font-weight:bold; padding:4px 10px; border-radius:3px 3px 0 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-        &#9733; Engagement de l&#8217;&#201;quipe Pluridisciplinaire du CERS Capbreton
-      </div>
-      <div style="border:1.5px solid #374151; border-top:none; border-radius:0 0 3px 3px; padding:10px 14px; background:#f9fafb;">
-        <div style="font-size:8.5pt; color:#1c3f6e; font-weight:bold; margin-bottom:7px;">
-          Ces progr&#232;s ont &#233;t&#233; rendus possibles gr&#226;ce au travail de l&#8217;&#233;quipe pluridisciplinaire du CERS Capbreton (Groupe Ramsay Sant&#233;).
+          {% else %}
+          <div style="font-size:8.5pt; color:#374151; line-height:1.7;">
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">&#9656; Renforcement musculaire progressif et analytique</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">&#9656; Travail proprioceptif et stabilisation articulaire</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">&#9656; R&#233;cup&#233;ration des amplitudes articulaires</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">&#9656; R&#233;&#233;ducation fonctionnelle et r&#233;int&#233;gration gestuelle</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">&#9656; Suivi et &#233;valuation continue du membre l&#233;s&#233;</div>
+          </div>
+          {% endif %}
         </div>
-        <div style="display:table; width:100%; table-layout:fixed; margin-bottom:8px;">
 
-          <!-- Kiné : programme extrait CR ou manuel ou bullets génériques -->
-          <div style="display:table-cell; width:50%; vertical-align:top; padding-right:10px; border-right:1px solid #e0e8f2;">
-            <div style="font-size:7.5pt; font-weight:bold; color:#1c3f6e; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px; padding-bottom:2px; border-bottom:1px solid #c8d4e8;">
-              Kin&#233;sith&#233;rapie
-            </div>
-            {% if eff_kine_lines %}
-            <div style="font-size:7.5pt; color:#374151; line-height:1.6;">
-              {% for ligne in eff_kine_lines %}{% if ligne.strip() %}
-              {% set parts = ligne.strip().split(':') %}
-              {% if parts|length > 1 %}
-              <div style="margin-bottom:2px;"><span style="font-weight:700; color:#1c3f6e;">{{ parts[0].strip() }} :</span> {{ parts[1:]|join(':')|trim }}</div>
-              {% else %}
-              <div style="margin-bottom:2px;">&#9656; {{ ligne.strip() }}</div>
-              {% endif %}
-              {% endif %}{% endfor %}
+        <!-- Colonne Préparation Physique -->
+        <div style="display:table-cell; width:50%; vertical-align:top; padding-left:12px;">
+          <div style="font-size:9pt; font-weight:800; color:#2176c7; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; padding-bottom:4px; border-bottom:2px solid #2176c7;">
+            &#9474; Pr&#233;paration Physique
+          </div>
+          {% if eff_prepa_lines %}
+          <div style="font-size:8.5pt; color:#222; line-height:1.65;">
+            {% for ligne in eff_prepa_lines %}{% if ligne.strip() %}
+            {% set parts = ligne.strip().split(':') %}
+            {% if parts|length > 1 %}
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">
+              <span style="font-weight:700; color:#2176c7;">{{ parts[0].strip() }} :</span> {{ parts[1:]|join(':')|trim }}
             </div>
             {% else %}
-            <div style="font-size:7.5pt; color:#374151; line-height:1.65;">
-              &#9656; Renforcement musculaire progressif et analytique<br>
-              &#9656; Travail proprioceptif et stabilisation articulaire<br>
-              &#9656; R&#233;cup&#233;ration des amplitudes articulaires compl&#232;tes<br>
-              &#9656; R&#233;&#233;ducation fonctionnelle et r&#233;int&#233;gration gestuelle<br>
-              &#9656; Suivi et &#233;valuation continue du membre l&#233;s&#233;
-            </div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">&#9656; {{ ligne.strip() }}</div>
             {% endif %}
+            {% endif %}{% endfor %}
           </div>
-
-          <!-- Prépa : programme extrait CR ou manuel ou bullets génériques -->
-          <div style="display:table-cell; width:50%; vertical-align:top; padding-left:10px;">
-            <div style="font-size:7.5pt; font-weight:bold; color:#2176c7; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px; padding-bottom:2px; border-bottom:1px solid #99c4ea;">
-              Pr&#233;paration Physique
-            </div>
-            {% if eff_prepa_lines %}
-            <div style="font-size:7.5pt; color:#374151; line-height:1.6;">
-              {% for ligne in eff_prepa_lines %}{% if ligne.strip() %}
-              {% set parts = ligne.strip().split(':') %}
-              {% if parts|length > 1 %}
-              <div style="margin-bottom:2px;"><span style="font-weight:700; color:#2176c7;">{{ parts[0].strip() }} :</span> {{ parts[1:]|join(':')|trim }}</div>
-              {% else %}
-              <div style="margin-bottom:2px;">&#9656; {{ ligne.strip() }}</div>
-              {% endif %}
-              {% endif %}{% endfor %}
-            </div>
-            {% else %}
-            <div style="font-size:7.5pt; color:#374151; line-height:1.65;">
-              &#9656; Travail cardio-vasculaire adapt&#233; et progressif<br>
-              &#9656; Renforcement global, gainage et stabilit&#233;<br>
-              &#9656; Pliom&#233;trie progressive et travail explosif<br>
-              &#9656; R&#233;int&#233;gration dans les exercices sportifs sp&#233;cifiques<br>
-              &#9656; Pr&#233;paration au retour au sport comp&#233;titif
-            </div>
-            {% endif %}
+          {% else %}
+          <div style="font-size:8.5pt; color:#374151; line-height:1.7;">
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">&#9656; Travail cardio-vasculaire adapt&#233; et progressif</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">&#9656; Renforcement global, gainage et stabilit&#233; du tronc</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">&#9656; Pliom&#233;trie progressive et travail explosif</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">&#9656; R&#233;int&#233;gration des exercices sportifs sp&#233;cifiques</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">&#9656; Pr&#233;paration au retour au sport comp&#233;titif</div>
           </div>
-
+          {% endif %}
         </div>
 
-        {% if cr and cr.antecedents and cr.antecedents | length > 0 %}
-        <div style="margin-bottom:6px; padding:5px 8px; background:#eef3fa; border-left:2px solid #1c3f6e; border-radius:0 3px 3px 0;">
-          <div style="font-size:7pt; font-weight:700; color:#1c3f6e; text-transform:uppercase; margin-bottom:2px;">Ant&#233;c&#233;dents m&#233;dicaux / chirurgicaux :</div>
-          <div style="font-size:7.5pt; color:#374151; line-height:1.5;">
-            {% for atcd in cr.antecedents %}&#9656; {{ atcd }}{% if not loop.last %} &nbsp;&middot;&nbsp; {% endif %}{% endfor %}
-          </div>
-        </div>
-        {% endif %}
+      </div>
 
-        <div style="font-size:7.5pt; color:#555; line-height:1.6; font-style:italic; border-top:1px solid #e0e8f2; padding-top:6px;">
-          Le suivi individualis&#233; et la synergie entre les diff&#233;rents professionnels ont permis une prise en charge optimale, garantissant une progression s&#233;curis&#233;e et adapt&#233;e aux objectifs de retour au sport du patient. Ce document synth&#233;tise l&#8217;int&#233;gralit&#233; du travail r&#233;alis&#233; au cours du s&#233;jour, &#224; destination des professionnels de sant&#233; assurant le suivi ult&#233;rieur.
+      <!-- Pied de bloc -->
+      <div style="background:#f0f4f8; border-top:1px solid #c8d4e8; padding:6px 16px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+        <div style="font-size:8pt; color:#555; line-height:1.6; font-style:italic;">
+          Le suivi individualis&#233; et la synergie entre les diff&#233;rents professionnels ont permis une prise en charge optimale, garantissant une progression s&#233;curis&#233;e et adapt&#233;e aux objectifs de retour au sport du patient.
         </div>
       </div>
+
     </div>
 
     <!-- FOOTER PAGE FINALE -->

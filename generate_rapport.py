@@ -650,6 +650,18 @@ def construire_contexte(
 
     has_vald = bool(vald_ctx)
 
+    # ── Remarques par vitesse (calculées avant le return pour all_progressions) ──
+    rem60_data  = _generer_remarques_vitesse(e60,  s60p,  "60°/s")
+    rem240_data = _generer_remarques_vitesse(e240, s240p, "240°/s")
+
+    # ── all_progressions : combine prog_list + positif 60 + positif 240
+    #    Visible sur page de garde même sans PDF comparatif ──────────────
+    _ap = list(remarques.get("progression", []))
+    for _p in (rem60_data.get("positif") or []) + (rem240_data.get("positif") or []):
+        if _p not in _ap:
+            _ap.append(_p)
+    all_progressions = [_sanitiser_emojis(p) for p in _ap[:8]]
+
     return {
         "patient": sortie, "entree": entree, "sortie": sortie,
         "s60": s60, "s240": s240,
@@ -689,8 +701,9 @@ def construire_contexte(
         "has_vald":         has_vald,
         "cr":               cr_data or {},
         "conclusion_auto":  _generer_conclusion_auto(remarques, entree, sortie),
-        "remarques_60":     _generer_remarques_vitesse(e60, s60p, "60°/s"),
-        "remarques_240":    _generer_remarques_vitesse(e240, s240p, "240°/s"),
+        "remarques_60":     rem60_data,
+        "remarques_240":    rem240_data,
+        "all_progressions": all_progressions,
         "titre_rapport":    titre_rapport or "Bilan Complet du Patient",
         "notes_seance":     notes_seance,
         "diagnostic_override":    diagnostic_override,
@@ -838,6 +851,16 @@ def generer_rapport_biodex(
     print("  RAPPORT BIODEX v6 — PDF avec couleurs")
     print("  Plateforme : " + platform.system())
     print("█" * 60)
+
+    # ── Fallback : si un seul PDF est fourni, utiliser l'autre comme base ──
+    if not pdf_entree and not pdf_sortie:
+        raise ValueError("Au moins un PDF Biodex (Entrée ou Sortie) est requis.")
+    if not pdf_entree:
+        pdf_entree = pdf_sortie
+        print("  ⚠️  PDF Entrée absent — utilisation du PDF Sortie comme référence")
+    elif not pdf_sortie:
+        pdf_sortie = pdf_entree
+        print("  ⚠️  PDF Sortie absent — utilisation du PDF Entrée comme référence")
 
     print("\n📄 Parsing PDFs...")
     entree = parse_biodex_pdf(pdf_entree)

@@ -402,26 +402,33 @@ with col_left:
     col_e, col_s = st.columns(2)
     with col_e:
         pdf_entree = st.file_uploader(
-            "📥 Test d'ENTRÉE (obligatoire)", type=["pdf"], key="up_entree"
+            "📥 Test d'ENTRÉE (optionnel si Sortie fournie)", type=["pdf"], key="up_entree"
         )
     with col_s:
         pdf_sortie = st.file_uploader(
-            "📤 Test de SORTIE (obligatoire)", type=["pdf"], key="up_sortie"
+            "📤 Test de SORTIE (optionnel si Entrée fournie)", type=["pdf"], key="up_sortie"
         )
+
+    if not pdf_entree and not pdf_sortie:
+        st.info("💡 Fournissez au moins un PDF Biodex (Entrée **ou** Sortie) pour générer le rapport.")
+    elif not pdf_entree:
+        st.warning("⚠️ PDF Entrée absent — le PDF Sortie sera utilisé comme référence unique (progression = 0%).")
+    elif not pdf_sortie:
+        st.warning("⚠️ PDF Sortie absent — le PDF Entrée sera utilisé comme référence unique (progression = 0%).")
 
     with st.expander("📎 PDFs optionnels"):
         co1, co2, co3, co4 = st.columns(4)
         with co1:
+            pdf_exc = st.file_uploader(
+                "Excentrique 30°/s", type=["pdf"], key="up_exc"
+            )
+        with co2:
             pdf_comp = st.file_uploader(
                 "Comparatif Lésé", type=["pdf"], key="up_comp"
             )
-        with co2:
+        with co3:
             pdf_comp_sain = st.file_uploader(
                 "Comparatif Sain", type=["pdf"], key="up_comp_sain"
-            )
-        with co3:
-            pdf_exc = st.file_uploader(
-                "Excentrique 30°/s", type=["pdf"], key="up_exc"
             )
         with co4:
             pdf_cr = st.file_uploader(
@@ -432,11 +439,11 @@ with col_left:
 
     cols_b = st.columns(6)
     statuts = [
-        (pdf_entree,    "Entrée",      True),
-        (pdf_sortie,    "Sortie",      True),
+        (pdf_entree,    "Entrée",      False),
+        (pdf_sortie,    "Sortie",      False),
+        (pdf_exc,       "Excentrique", False),
         (pdf_comp,      "Comp.Lésé",   False),
         (pdf_comp_sain, "Comp.Sain",   False),
-        (pdf_exc,       "Excentrique", False),
         (pdf_cr,        "Compte-rendu",False),
     ]
     for col, (pdf, label, obligatoire) in zip(cols_b, statuts):
@@ -778,20 +785,25 @@ with col_right:
     entree_data = None
     sortie_data = None
 
-    if pdf_entree and pdf_sortie:
+    if pdf_entree or pdf_sortie:
         with st.spinner("Lecture des PDFs..."):
             try:
                 from biodex_parser import parse_biodex_pdf
 
+                pdf_a = pdf_entree or pdf_sortie
+                pdf_b = pdf_sortie or pdf_entree
+
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                    f.write(pdf_entree.getvalue()); path_e_prev = f.name
+                    f.write(pdf_a.getvalue()); path_e_prev = f.name
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                    f.write(pdf_sortie.getvalue()); path_s_prev = f.name
+                    f.write(pdf_b.getvalue()); path_s_prev = f.name
 
                 entree_data = parse_biodex_pdf(path_e_prev)
                 sortie_data = parse_biodex_pdf(path_s_prev)
                 os.unlink(path_e_prev); os.unlink(path_s_prev)
 
+                lbl_e = "Entrée" if pdf_entree else "Sortie (utilisée comme référence)"
+                lbl_s = "Sortie" if pdf_sortie else "Entrée (utilisée comme référence)"
                 st.success(f"✅ {entree_data.nom} — PDFs lus avec succès")
 
                 c_nom, c_infos = st.columns([1.2, 1])
@@ -839,8 +851,8 @@ with col_right:
     st.markdown('<div class="card"><div class="card-title">🚀 Générer le Rapport PDF</div>', unsafe_allow_html=True)
 
     erreurs = []
-    if not pdf_entree: erreurs.append("PDF Entrée manquant")
-    if not pdf_sortie: erreurs.append("PDF Sortie manquant")
+    if not pdf_entree and not pdf_sortie:
+        erreurs.append("Au moins un PDF Biodex requis (Entrée ou Sortie)")
     if not st.session_state.get("club_selectionne") and not st.session_state.get("nom_club_cache"):
         erreurs.append("Club non sélectionné")
 
@@ -850,8 +862,8 @@ with col_right:
     btn_gen = st.button("🔄  Générer le Rapport PDF Complet", disabled=bool(erreurs), use_container_width=True)
 
     if btn_gen:
-        if not pdf_entree or not pdf_sortie:
-            st.error("❌ Les fichiers PDF ne sont plus disponibles — veuillez les re-uploader.")
+        if not pdf_entree and not pdf_sortie:
+            st.error("❌ Aucun PDF Biodex disponible — veuillez uploader au moins un PDF (Entrée ou Sortie).")
             st.stop()
 
         club = st.session_state.get("club_selectionne")
@@ -863,11 +875,16 @@ with col_right:
 
             progress.progress(10, text="📄 Sauvegarde des fichiers...")
 
-            # Sauvegarder PDFs Biodex
-            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                f.write(pdf_entree.getvalue()); path_e = f.name
-            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                f.write(pdf_sortie.getvalue()); path_s = f.name
+            # Sauvegarder PDFs Biodex (gestion des PDFs manquants — fallback dans generate_rapport.py)
+            path_e = None
+            if pdf_entree:
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(pdf_entree.getvalue()); path_e = f.name
+
+            path_s = None
+            if pdf_sortie:
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(pdf_sortie.getvalue()); path_s = f.name
 
             path_comp = None
             if pdf_comp:
@@ -973,7 +990,8 @@ with col_right:
 
             progress.progress(100, text="✅ Rapport prêt !")
 
-            nom_patient  = (entree_data.nom.replace(" ", "_").replace(".", "") if entree_data else "patient")
+            _primary_data = entree_data or sortie_data
+            nom_patient  = (_primary_data.nom.replace(" ", "_").replace(".", "") if _primary_data else "patient")
             nom_club_safe = (nom_club or "club").replace(" ", "_")
             nom_base     = f"Rapport_{nom_patient}_{nom_club_safe}"
 

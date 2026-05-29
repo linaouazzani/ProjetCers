@@ -425,8 +425,7 @@ def parse_compte_rendu(pdf_source) -> dict:
             # "déséquili- bre" → "déséquilibre"
             conclusion = re.sub(r"(\w)-\s+(\w)", r"\1\2", conclusion)
             conclusion = re.sub(r"\s{2,}", " ", conclusion)
-            if len(conclusion) > 900:
-                conclusion = conclusion[:900].rsplit(" ", 1)[0] + "…"
+            # NE PAS couper le paragraphe : on affiche tout le texte extrait
             if len(conclusion) < 10:
                 conclusion = None
 

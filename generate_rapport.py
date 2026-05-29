@@ -478,8 +478,8 @@ def construire_contexte(
     serie60_meta  = serie_meta(e60,  s60p)
     serie240_meta = serie_meta(e240, s240p)
 
-    # Remarques
-    att, pos, prog_list = [], [], []
+    # Remarques — attention + progression
+    att, prog_list = [], []
     for _, row in df_comp.iterrows():
         if row["metrique"] == "Ratio I/Q": continue
         c = row.get("couleur_deficit_sortie", "gray")
@@ -488,10 +488,24 @@ def construire_contexte(
         label_d = f"{label} : {d:.1f}%" if d is not None else label
         if c == "red":    att.append(f"Déficit important — {label_d}")
         elif c == "orange": att.append(f"Déficit modéré — {label_d}")
-        elif c == "green" and d is not None: pos.append(f"{label} : {abs(d):.1f}%")
-        elif c == "navy" and d is not None: pos.append(f"{label} — lésé plus fort (+{d:.1f}%)")
         if p is not None and p > 0:
             prog_list.append(f"{row['mouvement']} {row['metrique']} ({row['vitesse']}) : +{p:.1f}%")
+
+    # Points satisfaisants : déficit sortie < 10% OU déficit entrée < 10% si pas de sortie
+    pos = []
+    for _, row in df_comp.iterrows():
+        if row["metrique"] == "Ratio I/Q":
+            continue
+        ds = row.get("sortie_deficit_pct")
+        if ds is not None and ds > -10:
+            label = f"{row['mouvement']} {row['metrique']} ({row['vitesse']})"
+            pos.append(f"{label} : {ds:.1f}%")
+        elif ds is None:
+            de = row.get("entree_deficit_pct")
+            if de is not None and de > -10:
+                label = f"{row['mouvement']} {row['metrique']}"
+                pos.append(f"{label} : {de:.1f}%")
+
     remarques = {
         "points_attention": [_sanitiser_emojis(p) for p in att[:5]],
         "points_positifs":  [_sanitiser_emojis(p) for p in pos[:5]],
@@ -654,13 +668,39 @@ def construire_contexte(
     rem60_data  = _generer_remarques_vitesse(e60,  s60p,  "60°/s")
     rem240_data = _generer_remarques_vitesse(e240, s240p, "240°/s")
 
-    # ── all_progressions : combine prog_list + positif 60 + positif 240
-    #    Visible sur page de garde même sans PDF comparatif ──────────────
-    _ap = list(remarques.get("progression", []))
-    for _p in (rem60_data.get("positif") or []) + (rem240_data.get("positif") or []):
-        if _p not in _ap:
-            _ap.append(_p)
-    all_progressions = [_sanitiser_emojis(p) for p in _ap[:8]]
+    # ── all_progressions : construit depuis toutes les sources disponibles
+    #    Visible sur page de garde même sans comparatifs ni sortie ────────
+    all_progressions = []
+
+    # Source 1 : df_comp (progressions calculées entrée→sortie, valeur brute > 0)
+    if df_comp is not None and not df_comp.empty:
+        for _, row in df_comp.iterrows():
+            if row.get("metrique") == "Ratio I/Q":
+                continue
+            p = row.get("progression_pct")
+            if p is not None and p > 0:
+                label = f"{row['mouvement']} {row['metrique']} ({row['vitesse']})"
+                all_progressions.append(f"{label} : +{p:.1f}%")
+
+    # Source 2 : remarques.progression (déjà calculé ci-dessus)
+    if not all_progressions and remarques:
+        all_progressions.extend(remarques.get("progression", []))
+
+    # Source 3 : points_positifs (déficits faibles = points satisfaisants)
+    if not all_progressions and remarques:
+        all_progressions.extend(remarques.get("points_positifs", [])[:3])
+
+    # Source 4 : déficits d'entrée dans la norme si aucune autre source disponible
+    if not all_progressions and df_comp is not None and not df_comp.empty:
+        for _, row in df_comp.iterrows():
+            d = row.get("entree_deficit_pct")
+            if d is not None and d > -10:
+                label = f"{row['mouvement']} {row['metrique']}"
+                all_progressions.append(f"{label} : dans la norme ({d:.1f}%)")
+                if len(all_progressions) >= 3:
+                    break
+
+    all_progressions = [_sanitiser_emojis(p) for p in all_progressions[:8]]
 
     return {
         "patient": sortie, "entree": entree, "sortie": sortie,
@@ -730,6 +770,7 @@ def generer_html(contexte: dict, template_dir: str = "templates") -> str:
     env = Environment(loader=FileSystemLoader(template_dir), autoescape=False)
     env.filters["fmt"] = lambda v, d=1: f"{v:.{d}f}" if v is not None else "—"
     env.filters["format_ratio"] = format_ratio
+    env.filters["truncate40"] = lambda v: (v[:40] + "…") if v and len(v) > 40 else (v or "—")
     return env.get_template("rapport.html").render(**contexte)
 
 

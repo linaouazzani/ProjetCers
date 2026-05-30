@@ -306,6 +306,60 @@ def parse_vald_cmj(pdf_source):
 
 
 # ---------------------------------------------------------------------------
+# Fonction unifiée (un seul PDF contenant CMJ + SLJ)
+# ---------------------------------------------------------------------------
+
+def parse_vald_pdf(pdf_source):
+    """
+    Parse un PDF VALD ForceDecks contenant SLJ et/ou CMJ dans le même fichier.
+    pdf_source : chemin str ou BytesIO.
+
+    Retourne dict unifié :
+    {
+        "slj_hauteur_g": float|None,  # Jump Height LEFT avg (cm)
+        "slj_hauteur_d": float|None,  # Jump Height RIGHT avg (cm)
+        "rsi_g":         float|None,  # RSI-modified LEFT avg (m/s)
+        "rsi_d":         float|None,  # RSI-modified RIGHT avg (m/s)
+        "cmj_hauteur":   float|None,  # Jump Height bilateral avg (cm)
+        "cmj_rsi":       float|None,  # RSI-modified bilateral avg (m/s) — souvent None
+        "date":          str|None,
+        "bw_kg":         float|None,
+        "reps":          int|None,
+    }
+    """
+    pages = _get_pages(pdf_source)
+    all_lines = [l for p in pages for l in p]
+
+    header = _parse_header(pages[0] if pages else [])
+
+    # ── SLJ unilatéral (section title contient "(Left)") ──
+    slj_g = _extract_side_average(all_lines, "Jump Height (Imp-Mom) (Left) [cm]", "LEFT")
+    slj_d = _extract_side_average(all_lines, "Jump Height (Imp-Mom) (Left) [cm]", "RIGHT")
+    rsi_g = _extract_side_average(all_lines, "RSI-modified (Imp-Mom) (Left) [m/s]", "LEFT")
+    rsi_d = _extract_side_average(all_lines, "RSI-modified (Imp-Mom) (Left) [m/s]", "RIGHT")
+
+    # ── CMJ bilatéral (section title sans "(Left)") ──
+    # "Jump Height (Imp-Mom) [cm]" ≠ sous-chaîne de "…(Left) [cm]" → pas de conflit
+    cmj_hauteur = _extract_bilateral_average(all_lines, "Jump Height (Imp-Mom) [cm]")
+
+    # CMJ RSI : titre spécifique d'abord, puis générique en fallback
+    cmj_rsi = _extract_bilateral_average(all_lines, "RSI-modified (Imp-Mom) [m/s]")
+    # Note : si le PDF ne contient que des données SLJ, cmj_rsi reste None (normal)
+
+    return {
+        "slj_hauteur_g": slj_g,
+        "slj_hauteur_d": slj_d,
+        "rsi_g":         rsi_g,
+        "rsi_d":         rsi_d,
+        "cmj_hauteur":   cmj_hauteur,
+        "cmj_rsi":       cmj_rsi,
+        "date":          header["date"],
+        "bw_kg":         header["bw_kg"],
+        "reps":          header["reps"],
+    }
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
@@ -322,8 +376,10 @@ if __name__ == "__main__":
         result = parse_vald_slj(path)
     elif mode == "cmj":
         result = parse_vald_cmj(path)
+    elif mode == "vald":
+        result = parse_vald_pdf(path)
     else:
-        print(f"Mode inconnu : {mode}")
+        print(f"Mode inconnu : {mode} (utiliser slj, cmj ou vald)")
         sys.exit(1)
 
     print(json.dumps(result, indent=2, ensure_ascii=False))

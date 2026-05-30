@@ -173,7 +173,7 @@ def _injecter_panneau_personnalisation(html: str) -> str:
     def assigner_sections(html_text):
         # Assigner data-section aux div.page en ordre séquentiel
         sequential = ["bilan-60", "bilan-240", "remarques", "bilan-vald",
-                      "section-4", "section-5"]
+                      "vald-tableau", "section-5", "section-6"]
         pattern = r'(<div[^>]*class=["\'][^"\']*\bpage\b[^"\']*["\'][^>]*>)'
         parts = _re.split(pattern, html_text)
         result = []
@@ -311,6 +311,11 @@ body { padding-top: 58px; box-sizing: border-box; }
            onchange="toggleSection('bilan-vald', this)">
     VALD
   </label>
+  <label class="ctrl-label" id="lbl-vald-tableau">
+    <input type="checkbox" checked
+           onchange="toggleSection('vald-tableau', this)">
+    VALD Tableau
+  </label>
   <label class="ctrl-label" id="lbl-conclusion-programme">
     <input type="checkbox" checked
            onchange="toggleSection('conclusion-programme', this)">
@@ -338,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var ta  = document.getElementById('remarques-textarea');
     if (rem && ta) ta.value = rem.innerText.trim();
 
-    var sections = ['page-garde','bilan-60','bilan-240','remarques','bilan-vald','conclusion-programme'];
+    var sections = ['page-garde','bilan-60','bilan-240','remarques','bilan-vald','vald-tableau','conclusion-programme'];
     sections.forEach(function(sid) {
         var el  = document.querySelector('[data-section="'+sid+'"]');
         var lbl = document.getElementById('lbl-'+sid);
@@ -463,56 +468,54 @@ with col_left:
 
     # 1b. VALD ForceDecks
     import io
-    from vald_parser import parse_vald_slj, parse_vald_cmj
+    from vald_parser import parse_vald_pdf
 
-    vald_slj_e, vald_slj_s, vald_cmj_e, vald_cmj_s = None, None, None, None
+    vald_e, vald_s = None, None
 
     with st.expander("📊 VALD ForceDecks — Sauts (optionnel)"):
-        st.caption("PDFs exportés depuis VALD Hub · Firefox → Imprimer → Enregistrer en PDF")
+        st.caption("Un seul PDF VALD peut contenir CMJ + SLJ · Exporter depuis VALD Hub via Firefox → Imprimer → PDF")
 
-        col_v1, col_v2, col_v3, col_v4 = st.columns(4)
+        col_v1, col_v2 = st.columns(2)
         with col_v1:
-            pdf_slj_e_up = st.file_uploader("SLJ Entrée", type="pdf", key="vald_slj_e",
-                                             help="PDF Single Leg Jump séance d'entrée")
+            pdf_vald_e_up = st.file_uploader(
+                "📥 VALD Entrée (CMJ + SLJ)", type="pdf", key="vald_e",
+                help="PDF VALD ForceDecks de la séance d'entrée (contient CMJ et/ou SLJ)"
+            )
         with col_v2:
-            pdf_slj_s_up = st.file_uploader("SLJ Sortie", type="pdf", key="vald_slj_s",
-                                             help="PDF Single Leg Jump séance de sortie")
-        with col_v3:
-            pdf_cmj_e_up = st.file_uploader("CMJ Entrée", type="pdf", key="vald_cmj_e",
-                                             help="PDF CMJ entrée (avec RSI-modified visible)")
-        with col_v4:
-            pdf_cmj_s_up = st.file_uploader("CMJ Sortie", type="pdf", key="vald_cmj_s",
-                                             help="PDF CMJ sortie (avec RSI-modified visible)")
+            pdf_vald_s_up = st.file_uploader(
+                "📤 VALD Sortie (CMJ + SLJ)", type="pdf", key="vald_s",
+                help="PDF VALD ForceDecks de la séance de sortie (contient CMJ et/ou SLJ)"
+            )
 
-        if pdf_slj_e_up:
+        if pdf_vald_e_up:
             try:
-                vald_slj_e = parse_vald_slj(io.BytesIO(pdf_slj_e_up.getvalue()))
-                st.success(f"SLJ Entrée : G={vald_slj_e['slj_hauteur_g']} cm / D={vald_slj_e['slj_hauteur_d']} cm")
+                vald_e = parse_vald_pdf(io.BytesIO(pdf_vald_e_up.getvalue()))
+                infos = []
+                if vald_e.get("slj_hauteur_g") is not None:
+                    infos.append(f"SLJ G={vald_e['slj_hauteur_g']} cm / D={vald_e['slj_hauteur_d']} cm")
+                if vald_e.get("rsi_g") is not None:
+                    infos.append(f"RSI G={vald_e['rsi_g']} m/s / D={vald_e['rsi_d']} m/s")
+                if vald_e.get("cmj_hauteur") is not None:
+                    rsi_cmj = f" · RSI={vald_e['cmj_rsi']} m/s" if vald_e.get("cmj_rsi") else ""
+                    infos.append(f"CMJ={vald_e['cmj_hauteur']} cm{rsi_cmj}")
+                st.success("VALD Entrée lu · " + (" · ".join(infos) or "aucune valeur extraite"))
             except Exception as _e:
-                st.error(f"Erreur SLJ Entrée : {_e}")
+                st.error(f"Erreur VALD Entrée : {_e}")
 
-        if pdf_slj_s_up:
+        if pdf_vald_s_up:
             try:
-                vald_slj_s = parse_vald_slj(io.BytesIO(pdf_slj_s_up.getvalue()))
-                st.success(f"SLJ Sortie : G={vald_slj_s['slj_hauteur_g']} cm / D={vald_slj_s['slj_hauteur_d']} cm")
+                vald_s = parse_vald_pdf(io.BytesIO(pdf_vald_s_up.getvalue()))
+                infos = []
+                if vald_s.get("slj_hauteur_g") is not None:
+                    infos.append(f"SLJ G={vald_s['slj_hauteur_g']} cm / D={vald_s['slj_hauteur_d']} cm")
+                if vald_s.get("rsi_g") is not None:
+                    infos.append(f"RSI G={vald_s['rsi_g']} m/s / D={vald_s['rsi_d']} m/s")
+                if vald_s.get("cmj_hauteur") is not None:
+                    rsi_cmj = f" · RSI={vald_s['cmj_rsi']} m/s" if vald_s.get("cmj_rsi") else ""
+                    infos.append(f"CMJ={vald_s['cmj_hauteur']} cm{rsi_cmj}")
+                st.success("VALD Sortie lu · " + (" · ".join(infos) or "aucune valeur extraite"))
             except Exception as _e:
-                st.error(f"Erreur SLJ Sortie : {_e}")
-
-        if pdf_cmj_e_up:
-            try:
-                vald_cmj_e = parse_vald_cmj(io.BytesIO(pdf_cmj_e_up.getvalue()))
-                rsi_txt = f"RSI={vald_cmj_e['cmj_rsi']} m/s" if vald_cmj_e['cmj_rsi'] else "RSI absent du PDF"
-                st.success(f"CMJ Entrée : H={vald_cmj_e['cmj_hauteur']} cm · {rsi_txt}")
-            except Exception as _e:
-                st.error(f"Erreur CMJ Entrée : {_e}")
-
-        if pdf_cmj_s_up:
-            try:
-                vald_cmj_s = parse_vald_cmj(io.BytesIO(pdf_cmj_s_up.getvalue()))
-                rsi_txt = f"RSI={vald_cmj_s['cmj_rsi']} m/s" if vald_cmj_s['cmj_rsi'] else "RSI absent du PDF"
-                st.success(f"CMJ Sortie : H={vald_cmj_s['cmj_hauteur']} cm · {rsi_txt}")
-            except Exception as _e:
-                st.error(f"Erreur CMJ Sortie : {_e}")
+                st.error(f"Erreur VALD Sortie : {_e}")
 
     # Parsing compte-rendu médical
     cr_data = None
@@ -943,10 +946,8 @@ with col_right:
                 pdf_comparatif          = path_comp,
                 pdf_comparatif_sain     = path_comp_sain,
                 pdf_excentrique         = path_exc,
-                vald_slj_entree         = vald_slj_e,
-                vald_slj_sortie         = vald_slj_s,
-                vald_cmj_entree         = vald_cmj_e,
-                vald_cmj_sortie         = vald_cmj_s,
+                vald_entree             = vald_e,
+                vald_sortie             = vald_s,
                 output_html             = out_html,
                 output_pdf              = out_pdf,
                 template_dir            = os.path.join(_APP_DIR, "templates"),

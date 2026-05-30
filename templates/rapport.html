@@ -1587,6 +1587,240 @@ body {
 {% endif %}
 
 
+{% if vald_tableau %}
+<!-- ══════════════════════════════════════════════════
+     PAGE VALD TABLEAU — TABLEAU CLINIQUE COMPLET VALD
+     ══════════════════════════════════════════════════ -->
+<div class="page" data-section="vald-tableau">
+
+  <!-- EN-TETE BLANC -->
+  <div style="display:table;width:100%;padding:6px 14px;border-bottom:2px solid #1c3f6e;box-sizing:border-box;background:#ffffff;">
+    <div style="display:table-cell;width:20%;vertical-align:middle;">
+      {% if logo_cers_b64 %}
+      <img src="{{ logo_cers_b64 }}" style="height:34px;display:block;" alt="CERS Capbreton">
+      {% else %}
+      <div style="font-size:9pt;font-weight:bold;color:#1c3f6e;line-height:1.2;">CERS<br>Capbreton</div>
+      {% endif %}
+      <div style="font-size:6pt;color:#1c3f6e;font-weight:bold;margin-top:2px;">Groupe Ramsay Sant&#233;</div>
+    </div>
+    <div style="display:table-cell;width:60%;vertical-align:middle;text-align:center;padding:0 10px;">
+      <div style="font-size:11pt;font-weight:bold;color:#1c3f6e;line-height:1.2;">CERS Capbreton &nbsp;&#8212;&nbsp; Bilan Complet Patient</div>
+      <div style="font-size:7pt;color:#555;margin-top:1px;">
+        {{ anon(patient.nom) }} &nbsp;&#183;&nbsp;
+        Entr&#233;e {{ entree.date_test }} &nbsp;&#183;&nbsp;
+        Sortie {{ sortie.date_test }}
+      </div>
+    </div>
+    <div style="display:table-cell;width:20%;vertical-align:middle;">
+      <div style="display:table;width:100%;table-layout:fixed;">
+        <div style="display:table-row;">
+          <div style="display:table-cell;text-align:center;padding-bottom:2px;vertical-align:middle;">
+            {% if logo_club_b64 %}
+            <img src="{{ logo_club_b64 }}" style="height:30px;max-width:70px;display:block;margin:0 auto;object-fit:contain;" alt="{{ nom_club }}">
+            {% endif %}
+          </div>
+        </div>
+        <div style="display:table-row;">
+          <div style="display:table-cell;text-align:center;font-size:7pt;font-weight:bold;color:#1c3f6e;word-break:break-word;">{{ nom_club }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="height:4px;min-height:4px;background:#1c3f6e;margin-bottom:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+
+  <div class="page-content">
+
+    <!-- TITRE SECTION -->
+    <div style="display:table;width:100%;margin-bottom:8px;">
+      <div style="display:table-cell;vertical-align:middle;">
+        <div style="font-size:11pt;font-weight:bold;color:#1c3f6e;letter-spacing:0.5px;">
+          TABLEAU CLINIQUE COMPLET &#8212; VALD FORCEDECKS
+        </div>
+        <div style="font-size:8pt;color:#666;margin-top:2px;">
+          Comparaison Entr&#233;e&#160;/&#160;Sortie &middot; &#201;volution du s&#233;jour
+        </div>
+      </div>
+      <div style="display:table-cell;text-align:right;vertical-align:middle;font-size:8pt;color:#999;">
+        {{ anon(patient.nom) }} &middot; S&#233;jour CERS
+      </div>
+    </div>
+
+    <div style="height:2px;background:#1c3f6e;margin-bottom:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+
+    <!-- ===== TABLEAU 1 : SLJ HAUTEUR ===== -->
+    {% if vald_tableau.slj_hauteur_g_ent is not none or vald_tableau.slj_hauteur_d_ent is not none or vald_tableau.slj_hauteur_g_sort is not none %}
+    <div style="font-size:10pt;font-weight:bold;color:#1c3f6e;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">
+      1. Hauteur de Saut &#8212; Single Leg Jump (SLJ)
+    </div>
+    <div style="font-size:8pt;color:#888;margin-bottom:6px;">
+      Unit&#233;&#160;: cm &middot; Norme LSI&#160;: &lt;10% d&#233;ficit
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:14px;">
+      <thead>
+        <tr style="background-color:#1c3f6e;color:#ffffff;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+          <th style="padding:5px 8px;text-align:left;width:22%;border:1px solid #999;">Param&#232;tre</th>
+          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">ENT.&#160;D (Sain)</th>
+          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">ENT.&#160;G (L&#233;s&#233;)</th>
+          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">D&#201;F. ENT.</th>
+          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">SORT.&#160;D (Sain)</th>
+          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">SORT.&#160;G (L&#233;s&#233;)</th>
+          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">D&#201;F. SORT.</th>
+          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">PROG. G</th>
+          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">PROG. D</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background-color:#f8f9fa;">
+          <td style="padding:5px 8px;font-weight:bold;border:1px solid #ccc;">Jump Height (cm)</td>
+          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.slj_hauteur_d_ent | fmt }}</td>
+          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.slj_hauteur_g_ent | fmt }}</td>
+          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">
+            {% if vald_tableau.def_slj_haut_ent is not none %}
+            <span style="background-color:{{ vald_tableau.color_def_slj_haut_ent }};color:#ffffff;padding:1px 5px;font-size:8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">{{ vald_tableau.def_slj_haut_ent }}%</span>
+            {% else %}&#8212;{% endif %}
+          </td>
+          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.slj_hauteur_d_sort | fmt }}</td>
+          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.slj_hauteur_g_sort | fmt }}</td>
+          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">
+            {% if vald_tableau.def_slj_haut_sort is not none %}
+            <span style="background-color:{{ vald_tableau.color_def_slj_haut_sort }};color:#ffffff;padding:1px 5px;font-size:8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">{{ vald_tableau.def_slj_haut_sort }}%</span>
+            {% else %}&#8212;{% endif %}
+          </td>
+          <td style="padding:5px 6px;text-align:center;font-weight:bold;border:1px solid #ccc;color:{{ vald_tableau.prog_slj_haut_g | couleur_progression }};">
+            {% if vald_tableau.prog_slj_haut_g is not none %}{{ '+' if vald_tableau.prog_slj_haut_g > 0 else '' }}{{ vald_tableau.prog_slj_haut_g }}%{% else %}&#8212;{% endif %}
+          </td>
+          <td style="padding:5px 6px;text-align:center;font-weight:bold;border:1px solid #ccc;color:{{ vald_tableau.prog_slj_haut_d | couleur_progression }};">
+            {% if vald_tableau.prog_slj_haut_d is not none %}{{ '+' if vald_tableau.prog_slj_haut_d > 0 else '' }}{{ vald_tableau.prog_slj_haut_d }}%{% else %}&#8212;{% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- ===== TABLEAU 2 : RSI-MODIFIED SLJ ===== -->
+    {% if vald_tableau.rsi_g_ent is not none or vald_tableau.rsi_d_ent is not none or vald_tableau.rsi_g_sort is not none %}
+    <div style="font-size:10pt;font-weight:bold;color:#1c3f6e;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">
+      2. RSI-Modified &#8212; Single Leg Jump (SLJ)
+    </div>
+    <div style="font-size:8pt;color:#888;margin-bottom:6px;">
+      Unit&#233;&#160;: m/s &middot; Reactive Strength Index &#8212; capacit&#233; de force r&#233;active
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:14px;">
+      <thead>
+        <tr style="background-color:#1c3f6e;color:#ffffff;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+          <th style="padding:5px 8px;text-align:left;width:22%;border:1px solid #999;">Param&#232;tre</th>
+          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">ENT.&#160;D (Sain)</th>
+          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">ENT.&#160;G (L&#233;s&#233;)</th>
+          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">D&#201;F. ENT.</th>
+          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">SORT.&#160;D (Sain)</th>
+          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">SORT.&#160;G (L&#233;s&#233;)</th>
+          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">D&#201;F. SORT.</th>
+          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">PROG. G</th>
+          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">PROG. D</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background-color:#f8f9fa;">
+          <td style="padding:5px 8px;font-weight:bold;border:1px solid #ccc;">RSI-Modified (m/s)</td>
+          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.rsi_d_ent | fmt(2) }}</td>
+          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.rsi_g_ent | fmt(2) }}</td>
+          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">
+            {% if vald_tableau.def_rsi_ent is not none %}
+            <span style="background-color:{{ vald_tableau.color_def_rsi_ent }};color:#ffffff;padding:1px 5px;font-size:8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">{{ vald_tableau.def_rsi_ent }}%</span>
+            {% else %}&#8212;{% endif %}
+          </td>
+          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.rsi_d_sort | fmt(2) }}</td>
+          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.rsi_g_sort | fmt(2) }}</td>
+          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">
+            {% if vald_tableau.def_rsi_sort is not none %}
+            <span style="background-color:{{ vald_tableau.color_def_rsi_sort }};color:#ffffff;padding:1px 5px;font-size:8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">{{ vald_tableau.def_rsi_sort }}%</span>
+            {% else %}&#8212;{% endif %}
+          </td>
+          <td style="padding:5px 6px;text-align:center;font-weight:bold;border:1px solid #ccc;color:{{ vald_tableau.prog_rsi_g | couleur_progression }};">
+            {% if vald_tableau.prog_rsi_g is not none %}{{ '+' if vald_tableau.prog_rsi_g > 0 else '' }}{{ vald_tableau.prog_rsi_g }}%{% else %}&#8212;{% endif %}
+          </td>
+          <td style="padding:5px 6px;text-align:center;font-weight:bold;border:1px solid #ccc;color:{{ vald_tableau.prog_rsi_d | couleur_progression }};">
+            {% if vald_tableau.prog_rsi_d is not none %}{{ '+' if vald_tableau.prog_rsi_d > 0 else '' }}{{ vald_tableau.prog_rsi_d }}%{% else %}&#8212;{% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- ===== TABLEAU 3 : CMJ BILATÉRAL ===== -->
+    {% if vald_tableau.cmj_hauteur_ent is not none or vald_tableau.cmj_hauteur_sort is not none %}
+    <div style="font-size:10pt;font-weight:bold;color:#1c3f6e;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">
+      3. Counter Movement Jump (CMJ) &#8212; Bilat&#233;ral
+    </div>
+    <div style="font-size:8pt;color:#888;margin-bottom:6px;">
+      Hauteur en cm &middot; RSI-Modified en m/s
+    </div>
+    <table style="width:55%;border-collapse:collapse;font-size:8.5pt;margin-bottom:14px;">
+      <thead>
+        <tr style="background-color:#2176c7;color:#ffffff;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+          <th style="padding:5px 8px;text-align:left;width:34%;border:1px solid #999;">Param&#232;tre</th>
+          <th style="padding:5px 8px;text-align:center;width:22%;border:1px solid #999;">ENTR&#201;E</th>
+          <th style="padding:5px 8px;text-align:center;width:22%;border:1px solid #999;">SORTIE</th>
+          <th style="padding:5px 8px;text-align:center;width:22%;border:1px solid #999;">PROGRESSION</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background-color:#f8f9fa;">
+          <td style="padding:5px 8px;font-weight:bold;border:1px solid #ccc;">Jump Height (cm)</td>
+          <td style="padding:5px 8px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.cmj_hauteur_ent | fmt }}</td>
+          <td style="padding:5px 8px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.cmj_hauteur_sort | fmt }}</td>
+          <td style="padding:5px 8px;text-align:center;font-weight:bold;border:1px solid #ccc;color:{{ vald_tableau.prog_cmj_haut | couleur_progression }};">
+            {% if vald_tableau.prog_cmj_haut is not none %}{{ '+' if vald_tableau.prog_cmj_haut > 0 else '' }}{{ vald_tableau.prog_cmj_haut }}%{% else %}&#8212;{% endif %}
+          </td>
+        </tr>
+        {% if vald_tableau.cmj_rsi_ent is not none or vald_tableau.cmj_rsi_sort is not none %}
+        <tr>
+          <td style="padding:5px 8px;font-weight:bold;border:1px solid #ccc;">RSI-Modified (m/s)</td>
+          <td style="padding:5px 8px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.cmj_rsi_ent | fmt(2) }}</td>
+          <td style="padding:5px 8px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.cmj_rsi_sort | fmt(2) }}</td>
+          <td style="padding:5px 8px;text-align:center;font-weight:bold;border:1px solid #ccc;color:{{ vald_tableau.prog_cmj_rsi | couleur_progression }};">
+            {% if vald_tableau.prog_cmj_rsi is not none %}{{ '+' if vald_tableau.prog_cmj_rsi > 0 else '' }}{{ vald_tableau.prog_cmj_rsi }}%{% else %}&#8212;{% endif %}
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- LÉGENDE LSI -->
+    <div style="display:table;width:100%;margin-top:8px;border:1px solid #ddd;padding:6px 10px;background-color:#fafafa;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      <div style="font-size:8pt;font-weight:bold;color:#555;margin-bottom:4px;">L&#201;GENDE &#8212; LSI (Limb Symmetry Index)</div>
+      <div style="display:table;width:100%;">
+        <div style="display:table-cell;width:33%;vertical-align:middle;">
+          <span style="display:inline-block;width:10px;height:10px;background-color:#27ae60;vertical-align:middle;margin-right:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></span>
+          <span style="font-size:8pt;color:#333;">D&#233;ficit &lt;&#160;10% &#8212; Sym&#233;trie normale</span>
+        </div>
+        <div style="display:table-cell;width:33%;vertical-align:middle;">
+          <span style="display:inline-block;width:10px;height:10px;background-color:#f39c12;vertical-align:middle;margin-right:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></span>
+          <span style="font-size:8pt;color:#333;">D&#233;ficit 10&#8211;15% &#8212; D&#233;ficit mod&#233;r&#233;</span>
+        </div>
+        <div style="display:table-cell;width:33%;vertical-align:middle;">
+          <span style="display:inline-block;width:10px;height:10px;background-color:#e74c3c;vertical-align:middle;margin-right:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></span>
+          <span style="font-size:8pt;color:#333;">D&#233;ficit &gt;&#160;15% &#8212; D&#233;ficit important</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER PAGE VALD TABLEAU -->
+    <div class="footer">
+      <div class="footer-logo">
+        {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
+        {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
+      </div>
+      <div class="footer-mention">CERS Capbreton &middot; Groupe Ramsay Sant&#233; &middot; Donn&#233;es VALD ForceDecks &#8212; Confidentiel</div>
+      <div class="footer-page">Page VALD</div>
+    </div>
+
+  </div><!-- fin page-content -->
+</div><!-- fin page vald-tableau -->
+{% endif %}
+
+
 <!-- ══════════════════════════════════════════════════
      PAGE FINALE — PROGRAMME DE RÉÉDUCATION & CONCLUSION
      ══════════════════════════════════════════════════ -->

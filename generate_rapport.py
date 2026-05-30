@@ -87,6 +87,45 @@ def calc_prog(a, b):
     return None
 
 
+# ── Utilitaires VALD ForceDecks ──────────────────────────────────────────────
+
+def calculer_deficit(sain, lese):
+    """Retourne |sain - lese| / sain * 100, arrondi à 1 décimale. None si données manquantes."""
+    if sain is None or lese is None or sain == 0:
+        return None
+    return round(abs(sain - lese) / sain * 100, 1)
+
+
+def calculer_progression(avant, apres):
+    """Retourne (apres - avant) / avant * 100, arrondi à 1 décimale. None si manquant."""
+    if avant is None or apres is None or avant == 0:
+        return None
+    return round((apres - avant) / avant * 100, 1)
+
+
+def couleur_lsi(deficit):
+    """Retourne couleur hex selon seuils LSI."""
+    if deficit is None:
+        return "#888888"
+    if deficit < 10:
+        return "#27ae60"   # vert  — symétrie normale
+    elif deficit <= 15:
+        return "#f39c12"   # orange — déficit modéré
+    else:
+        return "#e74c3c"   # rouge  — déficit important
+
+
+def couleur_progression_hex(prog):
+    """Retourne couleur hex selon la progression (positif=vert, négatif=rouge)."""
+    if prog is None:
+        return "#888888"
+    if prog > 0:
+        return "#27ae60"
+    elif prog < 0:
+        return "#e74c3c"
+    return "#888888"
+
+
 def couleur_ratio(ratio: Optional[float]) -> str:
     if ratio is None: return "gray"
     r = ratio / 100 if ratio > 1 else ratio
@@ -299,6 +338,8 @@ def construire_contexte(
     slj_sortie_data=None,
     cmj_entree_data=None,
     cmj_sortie_data=None,
+    vald_entree=None,
+    vald_sortie=None,
     cr_data: Optional[dict] = None,
     titre_rapport: str = "",
     notes_seance: str = "",
@@ -664,6 +705,80 @@ def construire_contexte(
 
     has_vald = bool(vald_ctx)
 
+    # ── vald_tableau : tableau clinique complet (nouvelle page dédiée) ─────────
+    # Sources unifiées : vald_entree/vald_sortie (parse_vald_pdf) prioritaires,
+    # fallback sur les anciens dicts séparés slj_*/cmj_*.
+    _ve = dict(vald_entree) if vald_entree else {}
+    _vs = dict(vald_sortie) if vald_sortie else {}
+
+    # Enrichissement depuis les anciens dicts séparés si le nouveau format n'est pas dispo
+    if not _ve:
+        if slj_entree_data:
+            _ve.update({k: v for k, v in slj_entree_data.items() if k not in _ve})
+        if cmj_entree_data:
+            _ve.update({k: v for k, v in cmj_entree_data.items() if k not in _ve})
+    if not _vs:
+        if slj_sortie_data:
+            _vs.update({k: v for k, v in slj_sortie_data.items() if k not in _vs})
+        if cmj_sortie_data:
+            _vs.update({k: v for k, v in cmj_sortie_data.items() if k not in _vs})
+
+    vald_tableau = None
+    if _ve or _vs:
+        # SLJ Hauteur
+        slj_hg_e = _ve.get("slj_hauteur_g")
+        slj_hd_e = _ve.get("slj_hauteur_d")
+        slj_hg_s = _vs.get("slj_hauteur_g")
+        slj_hd_s = _vs.get("slj_hauteur_d")
+        def_slj_e = calculer_deficit(slj_hd_e, slj_hg_e)   # sain=D, lésé=G
+        def_slj_s = calculer_deficit(slj_hd_s, slj_hg_s)
+
+        # RSI SLJ
+        rsi_g_e = _ve.get("rsi_g")
+        rsi_d_e = _ve.get("rsi_d")
+        rsi_g_s = _vs.get("rsi_g")
+        rsi_d_s = _vs.get("rsi_d")
+        def_rsi_e = calculer_deficit(rsi_d_e, rsi_g_e)
+        def_rsi_s = calculer_deficit(rsi_d_s, rsi_g_s)
+
+        # CMJ bilatéral
+        cmj_h_e = _ve.get("cmj_hauteur")
+        cmj_h_s = _vs.get("cmj_hauteur")
+        cmj_r_e = _ve.get("cmj_rsi")
+        cmj_r_s = _vs.get("cmj_rsi")
+
+        vald_tableau = {
+            # SLJ Hauteur
+            "slj_hauteur_g_ent":      slj_hg_e,
+            "slj_hauteur_d_ent":      slj_hd_e,
+            "slj_hauteur_g_sort":     slj_hg_s,
+            "slj_hauteur_d_sort":     slj_hd_s,
+            "def_slj_haut_ent":       def_slj_e,
+            "def_slj_haut_sort":      def_slj_s,
+            "prog_slj_haut_g":        calculer_progression(slj_hg_e, slj_hg_s),
+            "prog_slj_haut_d":        calculer_progression(slj_hd_e, slj_hd_s),
+            "color_def_slj_haut_ent": couleur_lsi(def_slj_e),
+            "color_def_slj_haut_sort":couleur_lsi(def_slj_s),
+            # RSI SLJ
+            "rsi_g_ent":              rsi_g_e,
+            "rsi_d_ent":              rsi_d_e,
+            "rsi_g_sort":             rsi_g_s,
+            "rsi_d_sort":             rsi_d_s,
+            "def_rsi_ent":            def_rsi_e,
+            "def_rsi_sort":           def_rsi_s,
+            "prog_rsi_g":             calculer_progression(rsi_g_e, rsi_g_s),
+            "prog_rsi_d":             calculer_progression(rsi_d_e, rsi_d_s),
+            "color_def_rsi_ent":      couleur_lsi(def_rsi_e),
+            "color_def_rsi_sort":     couleur_lsi(def_rsi_s),
+            # CMJ bilatéral
+            "cmj_hauteur_ent":        cmj_h_e,
+            "cmj_hauteur_sort":       cmj_h_s,
+            "cmj_rsi_ent":            cmj_r_e,
+            "cmj_rsi_sort":           cmj_r_s,
+            "prog_cmj_haut":          calculer_progression(cmj_h_e, cmj_h_s),
+            "prog_cmj_rsi":           calculer_progression(cmj_r_e, cmj_r_s),
+        }
+
     # ── Remarques par vitesse (calculées avant le return pour all_progressions) ──
     rem60_data  = _generer_remarques_vitesse(e60,  s60p,  "60°/s")
     rem240_data = _generer_remarques_vitesse(e240, s240p, "240°/s")
@@ -739,6 +854,7 @@ def construire_contexte(
         "delai_post_op":    delai_post_op,
         "vald":             vald_ctx,
         "has_vald":         has_vald,
+        "vald_tableau":     vald_tableau,
         "cr":               cr_data or {},
         "conclusion_auto":  _generer_conclusion_auto(remarques, entree, sortie),
         "remarques_60":     rem60_data,
@@ -771,6 +887,11 @@ def generer_html(contexte: dict, template_dir: str = "templates") -> str:
     env.filters["fmt"] = lambda v, d=1: f"{v:.{d}f}" if v is not None else "—"
     env.filters["format_ratio"] = format_ratio
     env.filters["truncate40"] = lambda v: (v[:40] + "…") if v and len(v) > 40 else (v or "—")
+    env.filters["couleur_progression"] = lambda prog: (
+        "#27ae60" if prog is not None and prog > 0 else
+        "#e74c3c" if prog is not None and prog < 0 else
+        "#888888"
+    )
     return env.get_template("rapport.html").render(**contexte)
 
 
@@ -860,6 +981,8 @@ def generer_rapport_biodex(
     vald_slj_sortie:     Optional[dict] = None,
     vald_cmj_entree:     Optional[dict] = None,
     vald_cmj_sortie:     Optional[dict] = None,
+    vald_entree:         Optional[dict] = None,
+    vald_sortie:         Optional[dict] = None,
     cr_data:             Optional[dict] = None,
     output_html:         str = "outputs/rapport_biodex.html",
     output_pdf:              str = "outputs/rapport_biodex.pdf",
@@ -954,6 +1077,8 @@ def generer_rapport_biodex(
         slj_sortie_data=vald_slj_sortie,
         cmj_entree_data=vald_cmj_entree,
         cmj_sortie_data=vald_cmj_sortie,
+        vald_entree=vald_entree,
+        vald_sortie=vald_sortie,
         cr_data=cr_data,
         titre_rapport=titre_rapport,
         notes_seance=notes_seance,

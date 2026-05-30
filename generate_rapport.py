@@ -340,6 +340,8 @@ def construire_contexte(
     cmj_sortie_data=None,
     vald_entree=None,
     vald_sortie=None,
+    slj_data=None,
+    cmj_data=None,
     cr_data: Optional[dict] = None,
     titre_rapport: str = "",
     notes_seance: str = "",
@@ -653,10 +655,39 @@ def construire_contexte(
                 return round((s - e) / abs(e) * 100, 1)
         return None
 
+    # ── Compat : construire les dicts entrée/sortie séparés depuis le nouveau format ──
+    # parse_slj_pdf() retourne {slj_hauteur_g_ent, slj_hauteur_g_sort, …}
+    # On reconstruit des dicts "entrée" et "sortie" compatibles avec l'ancien code.
     slj_e = slj_entree_data
     slj_s = slj_sortie_data
     cmj_e = cmj_entree_data
     cmj_s = cmj_sortie_data
+
+    if slj_data and not slj_e:
+        _dh_e = calculer_deficit(slj_data.get("slj_hauteur_d_ent"), slj_data.get("slj_hauteur_g_ent"))
+        _dr_e = calculer_deficit(slj_data.get("rsi_d_ent"),         slj_data.get("rsi_g_ent"))
+        slj_e = {
+            "slj_hauteur_g": slj_data.get("slj_hauteur_g_ent"),
+            "slj_hauteur_d": slj_data.get("slj_hauteur_d_ent"),
+            "rsi_g":         slj_data.get("rsi_g_ent"),
+            "rsi_d":         slj_data.get("rsi_d_ent"),
+            "deficit_hauteur": _dh_e,
+            "deficit_rsi":     _dr_e,
+        }
+        _dh_s = calculer_deficit(slj_data.get("slj_hauteur_d_sort"), slj_data.get("slj_hauteur_g_sort"))
+        _dr_s = calculer_deficit(slj_data.get("rsi_d_sort"),          slj_data.get("rsi_g_sort"))
+        slj_s = {
+            "slj_hauteur_g": slj_data.get("slj_hauteur_g_sort"),
+            "slj_hauteur_d": slj_data.get("slj_hauteur_d_sort"),
+            "rsi_g":         slj_data.get("rsi_g_sort"),
+            "rsi_d":         slj_data.get("rsi_d_sort"),
+            "deficit_hauteur": _dh_s,
+            "deficit_rsi":     _dr_s,
+        }
+
+    if cmj_data and not cmj_e:
+        cmj_e = {"cmj_hauteur": cmj_data.get("cmj_hauteur_ent"), "cmj_rsi": None}
+        cmj_s = {"cmj_hauteur": cmj_data.get("cmj_hauteur_sort"), "cmj_rsi": None}
 
     def _vald_cls(pct):
         if pct is None: return "vc-w"
@@ -705,79 +736,148 @@ def construire_contexte(
 
     has_vald = bool(vald_ctx)
 
-    # ── vald_tableau : tableau clinique complet (nouvelle page dédiée) ─────────
-    # Sources unifiées : vald_entree/vald_sortie (parse_vald_pdf) prioritaires,
-    # fallback sur les anciens dicts séparés slj_*/cmj_*.
-    _ve = dict(vald_entree) if vald_entree else {}
-    _vs = dict(vald_sortie) if vald_sortie else {}
-
-    # Enrichissement depuis les anciens dicts séparés si le nouveau format n'est pas dispo
-    if not _ve:
-        if slj_entree_data:
-            _ve.update({k: v for k, v in slj_entree_data.items() if k not in _ve})
-        if cmj_entree_data:
-            _ve.update({k: v for k, v in cmj_entree_data.items() if k not in _ve})
-    if not _vs:
-        if slj_sortie_data:
-            _vs.update({k: v for k, v in slj_sortie_data.items() if k not in _vs})
-        if cmj_sortie_data:
-            _vs.update({k: v for k, v in cmj_sortie_data.items() if k not in _vs})
+    # ── vald_tableau : tableau clinique complet (page dédiée) ────────────────────
+    # Priorité 1 : nouveau format slj_data/cmj_data (parse_slj_pdf + parse_cmj_pdf)
+    # Priorité 2 : ancien format vald_entree/vald_sortie (parse_vald_pdf)
+    # Priorité 3 : anciens dicts séparés slj_entree_data/cmj_entree_data (legacy)
 
     vald_tableau = None
-    if _ve or _vs:
-        # SLJ Hauteur
-        slj_hg_e = _ve.get("slj_hauteur_g")
-        slj_hd_e = _ve.get("slj_hauteur_d")
-        slj_hg_s = _vs.get("slj_hauteur_g")
-        slj_hd_s = _vs.get("slj_hauteur_d")
+
+    if slj_data or cmj_data:
+        # ── Nouveau format : les clés contiennent déjà _ent / _sort ──
+        _slj = slj_data or {}
+        _cmj = cmj_data or {}
+
+        slj_hg_e = _slj.get("slj_hauteur_g_ent")
+        slj_hd_e = _slj.get("slj_hauteur_d_ent")
+        slj_hg_s = _slj.get("slj_hauteur_g_sort")
+        slj_hd_s = _slj.get("slj_hauteur_d_sort")
         def_slj_e = calculer_deficit(slj_hd_e, slj_hg_e)   # sain=D, lésé=G
         def_slj_s = calculer_deficit(slj_hd_s, slj_hg_s)
 
-        # RSI SLJ
-        rsi_g_e = _ve.get("rsi_g")
-        rsi_d_e = _ve.get("rsi_d")
-        rsi_g_s = _vs.get("rsi_g")
-        rsi_d_s = _vs.get("rsi_d")
+        rsi_g_e = _slj.get("rsi_g_ent")
+        rsi_d_e = _slj.get("rsi_d_ent")
+        rsi_g_s = _slj.get("rsi_g_sort")
+        rsi_d_s = _slj.get("rsi_d_sort")
         def_rsi_e = calculer_deficit(rsi_d_e, rsi_g_e)
         def_rsi_s = calculer_deficit(rsi_d_s, rsi_g_s)
 
-        # CMJ bilatéral
-        cmj_h_e = _ve.get("cmj_hauteur")
-        cmj_h_s = _vs.get("cmj_hauteur")
-        cmj_r_e = _ve.get("cmj_rsi")
-        cmj_r_s = _vs.get("cmj_rsi")
+        cmj_h_e = _cmj.get("cmj_hauteur_ent")
+        cmj_h_s = _cmj.get("cmj_hauteur_sort")
+        cmj_r_e = None  # RSI CMJ non disponible dans le nouveau parser
+        cmj_r_s = None
 
         vald_tableau = {
-            # SLJ Hauteur
-            "slj_hauteur_g_ent":      slj_hg_e,
-            "slj_hauteur_d_ent":      slj_hd_e,
-            "slj_hauteur_g_sort":     slj_hg_s,
-            "slj_hauteur_d_sort":     slj_hd_s,
-            "def_slj_haut_ent":       def_slj_e,
-            "def_slj_haut_sort":      def_slj_s,
-            "prog_slj_haut_g":        calculer_progression(slj_hg_e, slj_hg_s),
-            "prog_slj_haut_d":        calculer_progression(slj_hd_e, slj_hd_s),
-            "color_def_slj_haut_ent": couleur_lsi(def_slj_e),
-            "color_def_slj_haut_sort":couleur_lsi(def_slj_s),
+            # SLJ Hauteur (G=Lésé, D=Sain)
+            "slj_hauteur_g_ent":       slj_hg_e,
+            "slj_hauteur_d_ent":       slj_hd_e,
+            "slj_hauteur_g_sort":      slj_hg_s,
+            "slj_hauteur_d_sort":      slj_hd_s,
+            "def_slj_haut_ent":        def_slj_e,
+            "def_slj_haut_sort":       def_slj_s,
+            "prog_slj_haut_g":         calculer_progression(slj_hg_e, slj_hg_s),
+            "prog_slj_haut_d":         calculer_progression(slj_hd_e, slj_hd_s),
+            "color_def_slj_haut_ent":  couleur_lsi(def_slj_e),
+            "color_def_slj_haut_sort": couleur_lsi(def_slj_s),
             # RSI SLJ
-            "rsi_g_ent":              rsi_g_e,
-            "rsi_d_ent":              rsi_d_e,
-            "rsi_g_sort":             rsi_g_s,
-            "rsi_d_sort":             rsi_d_s,
-            "def_rsi_ent":            def_rsi_e,
-            "def_rsi_sort":           def_rsi_s,
-            "prog_rsi_g":             calculer_progression(rsi_g_e, rsi_g_s),
-            "prog_rsi_d":             calculer_progression(rsi_d_e, rsi_d_s),
-            "color_def_rsi_ent":      couleur_lsi(def_rsi_e),
-            "color_def_rsi_sort":     couleur_lsi(def_rsi_s),
+            "rsi_g_ent":               rsi_g_e,
+            "rsi_d_ent":               rsi_d_e,
+            "rsi_g_sort":              rsi_g_s,
+            "rsi_d_sort":              rsi_d_s,
+            "def_rsi_ent":             def_rsi_e,
+            "def_rsi_sort":            def_rsi_s,
+            "prog_rsi_g":              calculer_progression(rsi_g_e, rsi_g_s),
+            "prog_rsi_d":              calculer_progression(rsi_d_e, rsi_d_s),
+            "color_def_rsi_ent":       couleur_lsi(def_rsi_e),
+            "color_def_rsi_sort":      couleur_lsi(def_rsi_s),
             # CMJ bilatéral
-            "cmj_hauteur_ent":        cmj_h_e,
-            "cmj_hauteur_sort":       cmj_h_s,
-            "cmj_rsi_ent":            cmj_r_e,
-            "cmj_rsi_sort":           cmj_r_s,
-            "prog_cmj_haut":          calculer_progression(cmj_h_e, cmj_h_s),
-            "prog_cmj_rsi":           calculer_progression(cmj_r_e, cmj_r_s),
+            "cmj_hauteur_ent":         cmj_h_e,
+            "cmj_hauteur_sort":        cmj_h_s,
+            "cmj_rsi_ent":             cmj_r_e,
+            "cmj_rsi_sort":            cmj_r_s,
+            "prog_cmj_haut":           calculer_progression(cmj_h_e, cmj_h_s),
+            "prog_cmj_rsi":            None,
+            # Champs supplémentaires du nouveau parser
+            "date_entree":             _slj.get("date_entree") or _cmj.get("date_entree"),
+            "date_sortie":             _slj.get("date_sortie") or _cmj.get("date_sortie"),
+            "slj_flight_g_ent":        _slj.get("slj_flight_g_ent"),
+            "slj_flight_g_sort":       _slj.get("slj_flight_g_sort"),
+            "slj_flight_d_ent":        _slj.get("slj_flight_d_ent"),
+            "slj_flight_d_sort":       _slj.get("slj_flight_d_sort"),
+            "peak_force_asym_ent":     _slj.get("peak_force_asym_ent"),
+            "peak_force_asym_sort":    _slj.get("peak_force_asym_sort"),
+            "cmj_rfd_ent":             _cmj.get("cmj_rfd_ent"),
+            "cmj_rfd_sort":            _cmj.get("cmj_rfd_sort"),
+            "cmj_landing_asym_ent":    _cmj.get("cmj_landing_asym_ent"),
+            "cmj_landing_asym_sort":   _cmj.get("cmj_landing_asym_sort"),
+            "cmj_landing_side_ent":    _cmj.get("cmj_landing_side_ent"),
+            "cmj_landing_side_sort":   _cmj.get("cmj_landing_side_sort"),
+            "cmj_ecc_vel_ent":         _cmj.get("cmj_ecc_vel_ent"),
+            "cmj_ecc_vel_sort":        _cmj.get("cmj_ecc_vel_sort"),
         }
+
+    else:
+        # ── Fallback ancien format (vald_entree/vald_sortie ou dicts séparés) ──
+        _ve = dict(vald_entree) if vald_entree else {}
+        _vs = dict(vald_sortie) if vald_sortie else {}
+        if not _ve:
+            if slj_entree_data:
+                _ve.update({k: v for k, v in slj_entree_data.items() if k not in _ve})
+            if cmj_entree_data:
+                _ve.update({k: v for k, v in cmj_entree_data.items() if k not in _ve})
+        if not _vs:
+            if slj_sortie_data:
+                _vs.update({k: v for k, v in slj_sortie_data.items() if k not in _vs})
+            if cmj_sortie_data:
+                _vs.update({k: v for k, v in cmj_sortie_data.items() if k not in _vs})
+
+        if _ve or _vs:
+            slj_hg_e = _ve.get("slj_hauteur_g")
+            slj_hd_e = _ve.get("slj_hauteur_d")
+            slj_hg_s = _vs.get("slj_hauteur_g")
+            slj_hd_s = _vs.get("slj_hauteur_d")
+            def_slj_e = calculer_deficit(slj_hd_e, slj_hg_e)
+            def_slj_s = calculer_deficit(slj_hd_s, slj_hg_s)
+
+            rsi_g_e = _ve.get("rsi_g"); rsi_d_e = _ve.get("rsi_d")
+            rsi_g_s = _vs.get("rsi_g"); rsi_d_s = _vs.get("rsi_d")
+            def_rsi_e = calculer_deficit(rsi_d_e, rsi_g_e)
+            def_rsi_s = calculer_deficit(rsi_d_s, rsi_g_s)
+
+            cmj_h_e = _ve.get("cmj_hauteur"); cmj_h_s = _vs.get("cmj_hauteur")
+            cmj_r_e = _ve.get("cmj_rsi");     cmj_r_s = _vs.get("cmj_rsi")
+
+            vald_tableau = {
+                "slj_hauteur_g_ent":       slj_hg_e,
+                "slj_hauteur_d_ent":       slj_hd_e,
+                "slj_hauteur_g_sort":      slj_hg_s,
+                "slj_hauteur_d_sort":      slj_hd_s,
+                "def_slj_haut_ent":        def_slj_e,
+                "def_slj_haut_sort":       def_slj_s,
+                "prog_slj_haut_g":         calculer_progression(slj_hg_e, slj_hg_s),
+                "prog_slj_haut_d":         calculer_progression(slj_hd_e, slj_hd_s),
+                "color_def_slj_haut_ent":  couleur_lsi(def_slj_e),
+                "color_def_slj_haut_sort": couleur_lsi(def_slj_s),
+                "rsi_g_ent":               rsi_g_e, "rsi_d_ent":    rsi_d_e,
+                "rsi_g_sort":              rsi_g_s, "rsi_d_sort":   rsi_d_s,
+                "def_rsi_ent":             def_rsi_e, "def_rsi_sort": def_rsi_s,
+                "prog_rsi_g":              calculer_progression(rsi_g_e, rsi_g_s),
+                "prog_rsi_d":              calculer_progression(rsi_d_e, rsi_d_s),
+                "color_def_rsi_ent":       couleur_lsi(def_rsi_e),
+                "color_def_rsi_sort":      couleur_lsi(def_rsi_s),
+                "cmj_hauteur_ent":         cmj_h_e, "cmj_hauteur_sort": cmj_h_s,
+                "cmj_rsi_ent":             cmj_r_e, "cmj_rsi_sort":    cmj_r_s,
+                "prog_cmj_haut":           calculer_progression(cmj_h_e, cmj_h_s),
+                "prog_cmj_rsi":            calculer_progression(cmj_r_e, cmj_r_s),
+                "date_entree": None, "date_sortie": None,
+                "slj_flight_g_ent": None, "slj_flight_g_sort": None,
+                "slj_flight_d_ent": None, "slj_flight_d_sort": None,
+                "peak_force_asym_ent": None, "peak_force_asym_sort": None,
+                "cmj_rfd_ent": None, "cmj_rfd_sort": None,
+                "cmj_landing_asym_ent": None, "cmj_landing_asym_sort": None,
+                "cmj_landing_side_ent": None, "cmj_landing_side_sort": None,
+                "cmj_ecc_vel_ent": None, "cmj_ecc_vel_sort": None,
+            }
 
     # ── Remarques par vitesse (calculées avant le return pour all_progressions) ──
     rem60_data  = _generer_remarques_vitesse(e60,  s60p,  "60°/s")
@@ -983,6 +1083,8 @@ def generer_rapport_biodex(
     vald_cmj_sortie:     Optional[dict] = None,
     vald_entree:         Optional[dict] = None,
     vald_sortie:         Optional[dict] = None,
+    slj_data:            Optional[dict] = None,
+    cmj_data:            Optional[dict] = None,
     cr_data:             Optional[dict] = None,
     output_html:         str = "outputs/rapport_biodex.html",
     output_pdf:              str = "outputs/rapport_biodex.pdf",
@@ -1079,6 +1181,8 @@ def generer_rapport_biodex(
         cmj_sortie_data=vald_cmj_sortie,
         vald_entree=vald_entree,
         vald_sortie=vald_sortie,
+        slj_data=slj_data,
+        cmj_data=cmj_data,
         cr_data=cr_data,
         titre_rapport=titre_rapport,
         notes_seance=notes_seance,

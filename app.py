@@ -468,54 +468,71 @@ with col_left:
 
     # 1b. VALD ForceDecks
     import io
-    from vald_parser import parse_vald_pdf
+    from vald_parser import parse_slj_pdf, parse_cmj_pdf
 
-    vald_e, vald_s = None, None
+    slj_data, cmj_data = None, None
 
     with st.expander("📊 VALD ForceDecks — Sauts (optionnel)"):
-        st.caption("Un seul PDF VALD peut contenir CMJ + SLJ · Exporter depuis VALD Hub via Firefox → Imprimer → PDF")
+        st.caption(
+            "Chaque PDF contient les 2 sessions (entrée + sortie) exportées depuis VALD Hub · "
+            "Firefox → Imprimer → Enregistrer en PDF"
+        )
 
         col_v1, col_v2 = st.columns(2)
         with col_v1:
-            pdf_vald_e_up = st.file_uploader(
-                "📥 VALD Entrée (CMJ + SLJ)", type="pdf", key="vald_e",
-                help="PDF VALD ForceDecks de la séance d'entrée (contient CMJ et/ou SLJ)"
+            pdf_slj_up = st.file_uploader(
+                "📊 PDF SLJ (entrée + sortie)", type="pdf", key="vald_slj",
+                help="Export VALD Hub contenant les 2 sessions SLJ (Single-Leg Jump) — ~7 pages"
             )
         with col_v2:
-            pdf_vald_s_up = st.file_uploader(
-                "📤 VALD Sortie (CMJ + SLJ)", type="pdf", key="vald_s",
-                help="PDF VALD ForceDecks de la séance de sortie (contient CMJ et/ou SLJ)"
+            pdf_cmj_up = st.file_uploader(
+                "📊 PDF CMJ (entrée + sortie)", type="pdf", key="vald_cmj",
+                help="Export VALD Hub contenant les 2 sessions CMJ (Counter-Movement Jump) — ~4 pages"
             )
 
-        if pdf_vald_e_up:
+        if pdf_slj_up:
             try:
-                vald_e = parse_vald_pdf(io.BytesIO(pdf_vald_e_up.getvalue()))
+                slj_data = parse_slj_pdf(io.BytesIO(pdf_slj_up.getvalue()))
                 infos = []
-                if vald_e.get("slj_hauteur_g") is not None:
-                    infos.append(f"SLJ G={vald_e['slj_hauteur_g']} cm / D={vald_e['slj_hauteur_d']} cm")
-                if vald_e.get("rsi_g") is not None:
-                    infos.append(f"RSI G={vald_e['rsi_g']} m/s / D={vald_e['rsi_d']} m/s")
-                if vald_e.get("cmj_hauteur") is not None:
-                    rsi_cmj = f" · RSI={vald_e['cmj_rsi']} m/s" if vald_e.get("cmj_rsi") else ""
-                    infos.append(f"CMJ={vald_e['cmj_hauteur']} cm{rsi_cmj}")
-                st.success("VALD Entrée lu · " + (" · ".join(infos) or "aucune valeur extraite"))
+                if slj_data.get("slj_hauteur_g_ent") is not None:
+                    infos.append(
+                        f"Haut G : {slj_data['slj_hauteur_g_ent']} → {slj_data['slj_hauteur_g_sort']} cm"
+                    )
+                if slj_data.get("slj_hauteur_d_ent") is not None:
+                    infos.append(
+                        f"Haut D : {slj_data['slj_hauteur_d_ent']} → {slj_data['slj_hauteur_d_sort']} cm"
+                    )
+                if slj_data.get("rsi_g_ent") is not None:
+                    infos.append(
+                        f"RSI G : {slj_data['rsi_g_ent']} → {slj_data['rsi_g_sort']} m/s"
+                    )
+                if slj_data.get("rsi_d_ent") is not None:
+                    infos.append(
+                        f"RSI D : {slj_data['rsi_d_ent']} → {slj_data['rsi_d_sort']} m/s"
+                    )
+                st.success("✅ SLJ lu · " + (" · ".join(infos) or "aucune valeur extraite"))
             except Exception as _e:
-                st.error(f"Erreur VALD Entrée : {_e}")
+                st.error(f"Erreur PDF SLJ : {_e}")
 
-        if pdf_vald_s_up:
+        if pdf_cmj_up:
             try:
-                vald_s = parse_vald_pdf(io.BytesIO(pdf_vald_s_up.getvalue()))
+                cmj_data = parse_cmj_pdf(io.BytesIO(pdf_cmj_up.getvalue()))
                 infos = []
-                if vald_s.get("slj_hauteur_g") is not None:
-                    infos.append(f"SLJ G={vald_s['slj_hauteur_g']} cm / D={vald_s['slj_hauteur_d']} cm")
-                if vald_s.get("rsi_g") is not None:
-                    infos.append(f"RSI G={vald_s['rsi_g']} m/s / D={vald_s['rsi_d']} m/s")
-                if vald_s.get("cmj_hauteur") is not None:
-                    rsi_cmj = f" · RSI={vald_s['cmj_rsi']} m/s" if vald_s.get("cmj_rsi") else ""
-                    infos.append(f"CMJ={vald_s['cmj_hauteur']} cm{rsi_cmj}")
-                st.success("VALD Sortie lu · " + (" · ".join(infos) or "aucune valeur extraite"))
+                if cmj_data.get("cmj_hauteur_ent") is not None:
+                    infos.append(
+                        f"Hauteur : {cmj_data['cmj_hauteur_ent']} → {cmj_data['cmj_hauteur_sort']} cm"
+                    )
+                if cmj_data.get("cmj_rfd_ent") is not None:
+                    infos.append(
+                        f"RFD : {cmj_data['cmj_rfd_ent']} → {cmj_data['cmj_rfd_sort']} N/s"
+                    )
+                if cmj_data.get("cmj_ecc_vel_ent") is not None:
+                    infos.append(
+                        f"Vel.Ecc : {cmj_data['cmj_ecc_vel_ent']} → {cmj_data['cmj_ecc_vel_sort']} m/s"
+                    )
+                st.success("✅ CMJ lu · " + (" · ".join(infos) or "aucune valeur extraite"))
             except Exception as _e:
-                st.error(f"Erreur VALD Sortie : {_e}")
+                st.error(f"Erreur PDF CMJ : {_e}")
 
     # Parsing compte-rendu médical
     cr_data = None
@@ -946,8 +963,8 @@ with col_right:
                 pdf_comparatif          = path_comp,
                 pdf_comparatif_sain     = path_comp_sain,
                 pdf_excentrique         = path_exc,
-                vald_entree             = vald_e,
-                vald_sortie             = vald_s,
+                slj_data                = slj_data,
+                cmj_data                = cmj_data,
                 output_html             = out_html,
                 output_pdf              = out_pdf,
                 template_dir            = os.path.join(_APP_DIR, "templates"),

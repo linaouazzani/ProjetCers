@@ -551,14 +551,14 @@ with col_left:
         except Exception as _e:
             st.error(f"Erreur CR médical : {_e}")
 
-    # 1c. GPS Catapult — A3
-    with st.expander("📡 GPS Catapult (optionnel — à venir)"):
-        st.info("Section en cours de développement. "
-                "Uploader ici les exports Catapult CSV/XLSX du patient.")
+    # 1c. GPS Catapult — PDF OpenField
+    with st.expander("📡 GPS Catapult — PDF OpenField (optionnel)"):
         pdf_gps = st.file_uploader(
-            "Fichier GPS Catapult (CSV ou XLSX)",
-            type=["csv", "xlsx"], key="up_gps"
+            "Rapport GPS Catapult — PDF VALD Hub / OpenField",
+            type=["pdf"], key="up_gps"
         )
+        if pdf_gps:
+            st.success(f"GPS chargé : {pdf_gps.name}")
 
     # Valeurs par défaut (accessibles même si l'expander n'est pas ouvert)
     remarques_medecin = ""

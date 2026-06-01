@@ -2148,57 +2148,165 @@ body {
 </div><!-- fin page conclusion -->
 
 
-{# PAGE GPS SUPPRIMÉE — pas de données GPS disponibles #}
-{# <div class="page">
-  <!-- EN-TETE BLANC -->
+{% if gps and gps.sessions %}
+<div class="page" data-section="gps-catapult">
+
+  <!-- EN-TETE -->
   <div style="display:table;width:100%;padding:6px 14px;border-bottom:2px solid #1c3f6e;box-sizing:border-box;flex-shrink:0;background:#ffffff;">
     <div style="display:table-cell;width:20%;vertical-align:middle;">
-      {% if logo_cers_b64 %}
-      <img src="{{ logo_cers_b64 }}" style="height:34px;display:block;" alt="CERS Capbreton">
-      {% else %}
-      <div style="font-size:9pt;font-weight:bold;color:#1c3f6e;line-height:1.2;">CERS<br>Capbreton</div>
-      {% endif %}
+      {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" style="height:34px;display:block;" alt="CERS Capbreton">
+      {% else %}<div style="font-size:9pt;font-weight:bold;color:#1c3f6e;line-height:1.2;">CERS<br>Capbreton</div>{% endif %}
       <div style="font-size:6pt;color:#1c3f6e;font-weight:bold;margin-top:2px;">Groupe Ramsay Sant&#233;</div>
     </div>
     <div style="display:table-cell;width:60%;vertical-align:middle;text-align:center;padding:0 10px;">
       <div style="font-size:11pt;font-weight:bold;color:#1c3f6e;line-height:1.2;">CERS Capbreton &nbsp;&#8212;&nbsp; Bilan Complet Patient</div>
-      <div style="font-size:7pt;color:#555;margin-top:1px;">
-        {{ anon(patient.nom) }} &nbsp;&#183;&nbsp;
-        Entr&#233;e {{ entree.date_test }} &nbsp;&#183;&nbsp;
-        Sortie {{ sortie.date_test }}
-      </div>
+      <div style="font-size:7pt;color:#555;margin-top:1px;">{{ anon(patient.nom) }} &nbsp;&#183;&nbsp; Entr&#233;e {{ entree.date_test }} &nbsp;&#183;&nbsp; Sortie {{ sortie.date_test }}</div>
     </div>
     <div style="display:table-cell;width:20%;vertical-align:middle;">
       <div style="display:table;width:100%;table-layout:fixed;">
-        <div style="display:table-row;">
-          <div style="display:table-cell;text-align:center;padding-bottom:2px;vertical-align:middle;">
-            {% if logo_club_b64 %}
-            <img src="{{ logo_club_b64 }}" style="height:30px;max-width:70px;display:block;margin:0 auto;object-fit:contain;" alt="{{ nom_club }}">
-            {% endif %}
-          </div>
-        </div>
-        <div style="display:table-row;">
-          <div style="display:table-cell;text-align:center;font-size:7pt;font-weight:bold;color:#1c3f6e;word-break:break-word;">{{ nom_club }}</div>
-        </div>
+        <div style="display:table-row;"><div style="display:table-cell;text-align:center;padding-bottom:2px;vertical-align:middle;">
+          {% if logo_club_b64 %}<img src="{{ logo_club_b64 }}" style="height:30px;max-width:70px;display:block;margin:0 auto;object-fit:contain;" alt="{{ nom_club }}">{% endif %}
+        </div></div>
+        <div style="display:table-row;"><div style="display:table-cell;text-align:center;font-size:7pt;font-weight:bold;color:#1c3f6e;word-break:break-word;">{{ nom_club }}</div></div>
       </div>
     </div>
   </div>
-  <div style="height:4px;min-height:4px;background:#1c3f6e;margin-bottom:6px;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+  <div style="height:4px;background:#1c3f6e;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
 
   <div class="page-content">
 
-    <div style="background:#1c3f6e;color:#ffffff;font-size:10pt;font-weight:bold;padding:5px 10px;margin:8px 0 6px 0;border-radius:4px 4px 0 0;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-      Section 3 &#8212; Donn&#233;es GPS Catapult
+    <!-- TITRE GPS -->
+    <div style="background:#1c3f6e;color:#ffffff;font-size:11pt;font-weight:800;padding:6px 14px;margin:6px 0 5px 0;border-radius:3px;letter-spacing:0.3px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      &#128225; GPS Catapult OpenField &mdash; Analyse de progression
     </div>
 
-    <div style="border:1px dashed #AFA9EC;border-radius:0 0 4px 4px;padding:20px;text-align:center;color:#7F77DD;margin-bottom:12px;flex-shrink:0;">
-      <div style="font-size:14pt;margin-bottom:8px;">&#128225;</div>
-      <div style="font-size:10pt;font-weight:bold;margin-bottom:4px;">Section en cours de d&#233;veloppement</div>
-      <div style="font-size:8.5pt;color:#888;">
-        Les donn&#233;es GPS Catapult (distance, charge, acc&#233;l&#233;rations, vitesse max)
-        seront int&#233;gr&#233;es ici dans une prochaine version.
+    <!-- META -->
+    <div style="display:table;width:100%;table-layout:fixed;background:#eef3fa;border:1px solid #c8d4e8;border-radius:3px;margin-bottom:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      <div style="display:table-cell;width:33%;padding:5px 10px;vertical-align:middle;border-right:1px solid #c8d4e8;">
+        <div style="font-size:6.5pt;color:#1c3f6e;font-weight:700;text-transform:uppercase;">Athl&#232;te</div>
+        <div style="font-size:9.5pt;font-weight:700;color:#1c3f6e;">{{ gps.meta.athlete }}</div>
+      </div>
+      <div style="display:table-cell;width:33%;padding:5px 10px;vertical-align:middle;border-right:1px solid #c8d4e8;">
+        <div style="font-size:6.5pt;color:#1c3f6e;font-weight:700;text-transform:uppercase;">P&#233;riode</div>
+        <div style="font-size:9.5pt;font-weight:700;color:#1c3f6e;">{{ gps.meta.periode }}</div>
+      </div>
+      <div style="display:table-cell;width:34%;padding:5px 10px;vertical-align:middle;">
+        <div style="font-size:6.5pt;color:#1c3f6e;font-weight:700;text-transform:uppercase;">Sessions / Semaines</div>
+        <div style="font-size:9.5pt;font-weight:700;color:#1c3f6e;">{{ gps.meta.n_sessions }} sessions &nbsp;&#183;&nbsp; {{ gps.meta.n_semaines }} semaines</div>
       </div>
     </div>
+
+    <!-- TABLEAU SESSIONS BRUTES -->
+    <div style="font-size:7pt;font-weight:700;color:#ffffff;background:#2a6099;padding:3px 8px;border-radius:2px 2px 0 0;margin-bottom:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      &#9658; Sessions individuelles
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:5.8pt;table-layout:fixed;margin-bottom:6px;">
+      <thead>
+        <tr style="-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+          <th style="background:#1c3f6e;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:9%;">Date</th>
+          <th style="background:#1c3f6e;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:6%;">Dist<br>(m)</th>
+          <th style="background:#1c3f6e;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:6%;">Dur&#233;e</th>
+          <th style="background:#1c3f6e;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">Vmax<br>km/h</th>
+          <th style="background:#2a6099;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">18-21<br>(m)</th>
+          <th style="background:#2a6099;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">21-24<br>(m)</th>
+          <th style="background:#2a6099;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">&gt;24<br>(m)</th>
+          <th style="background:#374151;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">m/min</th>
+          <th style="background:#5b4a8a;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">AccB1<br>effs</th>
+          <th style="background:#5b4a8a;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">AccB1<br>dist</th>
+          <th style="background:#5b4a8a;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">AccB2<br>effs</th>
+          <th style="background:#5b4a8a;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">AccB2<br>dist</th>
+          <th style="background:#5b4a8a;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">AccB3<br>effs</th>
+          <th style="background:#5b4a8a;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">MaxAcc<br>m/s²</th>
+          <th style="background:#8b3a3a;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">DécB1</th>
+          <th style="background:#8b3a3a;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">DécB2</th>
+          <th style="background:#8b3a3a;color:#fff;padding:2px 2px;border:1px solid #99aac4;text-align:center;width:5%;">DécB3</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in gps.sessions %}
+        <tr {% if loop.index is odd %}style="background:#f5f8fc;"{% endif %}>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;font-weight:700;color:#1c3f6e;">{{ s.date }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.distance_m if s.distance_m is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.duree if s.duree else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;font-weight:700;">{{ s.vmax_kmh if s.vmax_kmh is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.d_18_21 if s.d_18_21 is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.d_21_24 if s.d_21_24 is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.d_sup24 if s.d_sup24 is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.metrage_min if s.metrage_min is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.acc_b1_effs if s.acc_b1_effs is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.acc_b1_dist if s.acc_b1_dist is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.acc_b2_effs if s.acc_b2_effs is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.acc_b2_dist if s.acc_b2_dist is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.acc_b3_effs if s.acc_b3_effs is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;font-weight:700;">{{ s.max_acc if s.max_acc is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.decel_b1 if s.decel_b1 is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.decel_b2 if s.decel_b2 is not none else '—' }}</td>
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;">{{ s.decel_b3 if s.decel_b3 is not none else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- TABLEAU PAR SEMAINE -->
+    <div style="font-size:7pt;font-weight:700;color:#ffffff;background:#2a6099;padding:3px 8px;border-radius:2px 2px 0 0;margin-bottom:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      &#9658; Progression semaine par semaine
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:6pt;table-layout:fixed;margin-bottom:6px;">
+      <thead>
+        <tr style="-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+          <th style="background:#374151;color:#fff;padding:3px 4px;border:1px solid #99aac4;text-align:left;width:22%;">Indicateur</th>
+          {% for wk_key, wk in gps.semaines.items() %}
+          <th style="background:#1c3f6e;color:#fff;padding:3px 4px;border:1px solid #99aac4;text-align:center;">
+            Sem. {{ wk_key.split('-W')[1] }}<br>
+            <span style="font-weight:400;font-size:5.5pt;">{{ wk.dates[0] }}{% if wk.dates|length > 1 %} → {{ wk.dates[-1] }}{% endif %}</span><br>
+            <span style="font-weight:400;font-size:5.5pt;">({{ wk.n_sessions }} sess.)</span>
+          </th>
+          {% endfor %}
+          {% if gps.progression %}
+          <th style="background:#2a8a36;color:#fff;padding:3px 4px;border:1px solid #99aac4;text-align:center;width:10%;">Tendance<br>S1&#8594;Sf</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% set rows = [
+          ("Distance totale (m)", "distance_m"),
+          ("Vitesse max (km/h)",  "vmax_kmh"),
+          ("HSR >18 km/h (m)",   "d_hsr"),
+          ("  18–21 km/h (m)",   "d_18_21"),
+          ("  21–24 km/h (m)",   "d_21_24"),
+          ("  >24 km/h (m)",     "d_sup24"),
+          ("Métrage/min (m/min)","metrage_min"),
+          ("Acc B1 efforts",     "acc_b1_effs"),
+          ("Acc B1 dist (m)",    "acc_b1_dist"),
+          ("Acc B2 efforts",     "acc_b2_effs"),
+          ("Acc B2 dist (m)",    "acc_b2_dist"),
+          ("Acc B3 efforts",     "acc_b3_effs"),
+          ("Acc max (m/s²)",     "max_acc"),
+          ("Décel B1",           "decel_b1"),
+          ("Décel B2",           "decel_b2"),
+          ("Décel B3",           "decel_b3"),
+        ] %}
+        {% for label, col in rows %}
+        {% set is_alt = loop.index is odd %}
+        <tr {% if is_alt %}style="background:#f0f4fa;-webkit-print-color-adjust:exact;print-color-adjust:exact;"{% endif %}>
+          <td style="border:1px solid #cccccc;padding:2px 5px;font-weight:{% if col in ['distance_m','vmax_kmh','d_hsr'] %}700{% else %}400{% endif %};color:#1c3f6e;">{{ label }}</td>
+          {% for wk_key, wk in gps.semaines.items() %}
+          {% set val = wk[col] %}
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;font-weight:{% if col in ['distance_m','vmax_kmh','d_hsr'] %}700{% else %}400{% endif %};">
+            {{ val if val is not none else '—' }}
+          </td>
+          {% endfor %}
+          {% if gps.progression %}
+          {% set pct = gps.progression[col] if col in gps.progression else none %}
+          <td style="border:1px solid #cccccc;padding:2px 3px;text-align:center;font-weight:700;
+            {% if pct is not none %}{% if pct > 0 %}color:#2a8a36;{% elif pct < 0 %}color:#c0392b;{% else %}color:#888;{% endif %}{% endif %}">
+            {% if pct is not none %}{{ "%+.1f"|format(pct) }}%{% else %}—{% endif %}
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
 
     <!-- FOOTER PAGE GPS -->
     <div class="footer">
@@ -2206,13 +2314,13 @@ body {
         {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
         {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
       </div>
-      <div class="footer-mention">*Seuls les resultats cles sont affiches. Les rapports originaux detailles ont ete envoyes separement.</div>
-      <div class="footer-page">Annexe — GPS Catapult</div>
+      <div class="footer-mention">GPS Catapult OpenField &middot; Centre Europ&#233;en de R&#233;&#233;ducation du Sportif &middot; Document confidentiel</div>
+      <div class="footer-page">GPS</div>
     </div>
 
   </div>
-</div>
-#}
+</div><!-- fin page gps -->
+{% endif %}
 
 </body>
 </html>

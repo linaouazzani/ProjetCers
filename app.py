@@ -13,6 +13,7 @@ import datetime
 import json
 from clubs_database import search_clubs
 from cr_parser import parse_compte_rendu
+from gps_parser import parse_gps_pdf
 
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 CLUBS_DB_PATH    = os.path.join(_APP_DIR, "clubs_db.json")
@@ -554,18 +555,28 @@ with col_left:
     # 1c. GPS Catapult — PDF OpenField
     with st.expander("📡 GPS Catapult — PDF OpenField (optionnel)"):
         pdf_gps = st.file_uploader(
-            "Rapport GPS Catapult — PDF VALD Hub / OpenField",
+            "Rapport GPS Catapult — PDF OpenField",
             type=["pdf"], key="up_gps"
         )
         if pdf_gps:
-            st.success(f"GPS chargé : {pdf_gps.name}")
+            try:
+                import tempfile as _tmp
+                with _tmp.NamedTemporaryFile(delete=False, suffix=".pdf") as _tf:
+                    _tf.write(pdf_gps.read())
+                    _gps_path = _tf.name
+                gps_data = parse_gps_pdf(_gps_path)
+                os.unlink(_gps_path)
+                st.success(f"GPS chargé : {gps_data['meta']['n_sessions']} sessions · {gps_data['meta']['n_semaines']} semaines · {gps_data['meta']['periode']}")
+            except Exception as _e:
+                st.error(f"Erreur lecture GPS : {_e}")
+                gps_data = None
 
     # Valeurs par défaut (accessibles même si l'expander n'est pas ouvert)
     remarques_medecin = ""
     programme_kine    = ""
     programme_prepa   = ""
     conclusion_sortie = ""
-    ressenti          = ""
+    gps_data          = None
 
     # 2. Informations complémentaires patient — A2 (placeholder mis à jour)
     with st.expander("⚙️ Informations complémentaires patient", expanded=False):
@@ -642,14 +653,6 @@ with col_left:
             "Conclusion de sortie / Recommandations (optionnel)",
             placeholder="Conclusion médicale personnalisée et recommandations pour la suite de la rééducation à domicile...",
             height=65, key="conclusion_sortie"
-        )
-
-        st.markdown("---")
-        st.caption("🩺 Ressenti du joueur & avis clinique — retour au sport (apparaît en page de garde)")
-        ressenti = st.text_area(
-            "Ressenti du joueur / Avis clinique (optionnel)",
-            placeholder="Ex : Le joueur se sent prêt à reprendre l'entraînement collectif. Bonne confiance dans le genou. Appréhension légère sur les changements de direction...\nOu : Nécessite encore 3 semaines de rééducation avant retour au club.",
-            height=80, key="ressenti_joueur"
         )
 
     # Variables avec valeurs par défaut
@@ -982,7 +985,7 @@ with col_right:
                 programme_kine          = programme_kine,
                 programme_prepa         = programme_prepa,
                 conclusion_sortie       = conclusion_sortie,
-                ressenti                = ressenti,
+                gps_data               = gps_data,
             )
 
             progress.progress(90, text="📄 Traitement du résultat...")

@@ -552,6 +552,13 @@ with col_left:
         except Exception as _e:
             st.error(f"Erreur CR médical : {_e}")
 
+    # Valeurs par défaut (accessibles même si les expanders ne sont pas ouverts)
+    remarques_medecin = ""
+    programme_kine    = ""
+    programme_prepa   = ""
+    conclusion_sortie = ""
+    gps_data          = None   # doit être AVANT l'expander GPS
+
     # 1c. GPS Catapult — PDF OpenField
     with st.expander("📡 GPS Catapult — PDF OpenField (optionnel)"):
         pdf_gps = st.file_uploader(
@@ -570,13 +577,6 @@ with col_left:
             except Exception as _e:
                 st.error(f"Erreur lecture GPS : {_e}")
                 gps_data = None
-
-    # Valeurs par défaut (accessibles même si l'expander n'est pas ouvert)
-    remarques_medecin = ""
-    programme_kine    = ""
-    programme_prepa   = ""
-    conclusion_sortie = ""
-    gps_data          = None
 
     # 2. Informations complémentaires patient — A2 (placeholder mis à jour)
     with st.expander("⚙️ Informations complémentaires patient", expanded=False):

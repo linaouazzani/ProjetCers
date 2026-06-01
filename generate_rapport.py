@@ -767,6 +767,61 @@ def construire_contexte(
         cmj_r_e = None  # RSI CMJ non disponible dans le nouveau parser
         cmj_r_s = None
 
+        # ── Helper : largeur barre (% relatif au max des 2 valeurs) ──
+        def _bw(a, b):
+            """Retourne (pct_a, pct_b) pour barres horizontales relatives."""
+            if a is None or b is None:
+                return None, None
+            ma = max(abs(a), abs(b))
+            if ma == 0:
+                return 50, 50
+            return round(abs(a) / ma * 100), round(abs(b) / ma * 100)
+
+        # ── Helper : largeur barre 4 valeurs — proportionnelles au max global ──
+        def _bw4(a, b, c, d, scale=80):
+            """Retourne (pct_a, pct_b, pct_c, pct_d) relatives au max de toutes les valeurs.
+            scale = largeur max en % du conteneur (default 80)."""
+            vals = [v for v in [a, b, c, d] if v is not None]
+            if not vals:
+                return None, None, None, None
+            m = max(abs(v) for v in vals)
+            if m == 0:
+                return (round(scale/2),) * 4
+            def _p(v):
+                return round(abs(v) / m * scale) if v is not None else None
+            return _p(a), _p(b), _p(c), _p(d)
+
+        # ── Helper : largeur barre 2 valeurs ──
+        def _bw2(a, b, scale=80):
+            vals = [v for v in [a, b] if v is not None]
+            if not vals:
+                return None, None
+            m = max(abs(v) for v in vals)
+            if m == 0:
+                return round(scale/2), round(scale/2)
+            def _p(v):
+                return round(abs(v) / m * scale) if v is not None else None
+            return _p(a), _p(b)
+
+        _slj_hg_bw_e, _slj_hd_bw_e = _bw(slj_hg_e, slj_hd_e)
+        _slj_hg_bw_s, _slj_hd_bw_s = _bw(slj_hg_s, slj_hd_s)
+        _rsi_g_bw_e,  _rsi_d_bw_e  = _bw(rsi_g_e,  rsi_d_e)
+        _rsi_g_bw_s,  _rsi_d_bw_s  = _bw(rsi_g_s,  rsi_d_s)
+        _flt_g_bw_e,  _flt_d_bw_e  = _bw(_slj.get("slj_flight_g_ent"), _slj.get("slj_flight_d_ent"))
+        _flt_g_bw_s,  _flt_d_bw_s  = _bw(_slj.get("slj_flight_g_sort"), _slj.get("slj_flight_d_sort"))
+        _cmj_h_bw_e,  _cmj_h_bw_s  = _bw(cmj_h_e, cmj_h_s)
+
+        # ── Barres 4 valeurs — proportionnelles à toutes les sessions ──
+        _b4_slj_ge, _b4_slj_de, _b4_slj_gs, _b4_slj_ds = _bw4(slj_hg_e, slj_hd_e, slj_hg_s, slj_hd_s)
+        _b4_rsi_ge, _b4_rsi_de, _b4_rsi_gs, _b4_rsi_ds = _bw4(rsi_g_e, rsi_d_e, rsi_g_s, rsi_d_s)
+        _flt_ge = _slj.get("slj_flight_g_ent");  _flt_de = _slj.get("slj_flight_d_ent")
+        _flt_gs = _slj.get("slj_flight_g_sort"); _flt_ds = _slj.get("slj_flight_d_sort")
+        _b4_flt_ge, _b4_flt_de, _b4_flt_gs, _b4_flt_ds = _bw4(_flt_ge, _flt_de, _flt_gs, _flt_ds)
+        _b2_cmj_e, _b2_cmj_s = _bw2(cmj_h_e, cmj_h_s)
+
+        # is_single_session : pas de date_sortie dans le PDF → 1 seule session
+        _is_single = (_slj.get("date_sortie") is None and _cmj.get("date_sortie") is None)
+
         vald_tableau = {
             # SLJ Hauteur (G=Lésé, D=Sain)
             "slj_hauteur_g_ent":       slj_hg_e,
@@ -779,6 +834,11 @@ def construire_contexte(
             "prog_slj_haut_d":         calculer_progression(slj_hd_e, slj_hd_s),
             "color_def_slj_haut_ent":  couleur_lsi(def_slj_e),
             "color_def_slj_haut_sort": couleur_lsi(def_slj_s),
+            "bar_slj_g_ent": _slj_hg_bw_e, "bar_slj_d_ent": _slj_hd_bw_e,
+            "bar_slj_g_sort": _slj_hg_bw_s, "bar_slj_d_sort": _slj_hd_bw_s,
+            # SLJ barres 4-valeurs (proportionnelles au max de toutes les sessions)
+            "b4_slj_ge": _b4_slj_ge, "b4_slj_de": _b4_slj_de,
+            "b4_slj_gs": _b4_slj_gs, "b4_slj_ds": _b4_slj_ds,
             # RSI SLJ
             "rsi_g_ent":               rsi_g_e,
             "rsi_d_ent":               rsi_d_e,
@@ -790,30 +850,72 @@ def construire_contexte(
             "prog_rsi_d":              calculer_progression(rsi_d_e, rsi_d_s),
             "color_def_rsi_ent":       couleur_lsi(def_rsi_e),
             "color_def_rsi_sort":      couleur_lsi(def_rsi_s),
-            # CMJ bilatéral
+            "bar_rsi_g_ent": _rsi_g_bw_e, "bar_rsi_d_ent": _rsi_d_bw_e,
+            "bar_rsi_g_sort": _rsi_g_bw_s, "bar_rsi_d_sort": _rsi_d_bw_s,
+            # RSI barres 4-valeurs
+            "b4_rsi_ge": _b4_rsi_ge, "b4_rsi_de": _b4_rsi_de,
+            "b4_rsi_gs": _b4_rsi_gs, "b4_rsi_ds": _b4_rsi_ds,
+            # Flight Time SLJ
+            "slj_flight_g_ent":        _flt_ge,
+            "slj_flight_g_sort":       _flt_gs,
+            "slj_flight_d_ent":        _flt_de,
+            "slj_flight_d_sort":       _flt_ds,
+            "def_flight_ent":          calculer_deficit(_flt_de, _flt_ge),
+            "def_flight_sort":         calculer_deficit(_flt_ds, _flt_gs),
+            "prog_flight_g":           calculer_progression(_flt_ge, _flt_gs),
+            "prog_flight_d":           calculer_progression(_flt_de, _flt_ds),
+            "color_def_flight_ent":    couleur_lsi(calculer_deficit(_flt_de, _flt_ge)),
+            "color_def_flight_sort":   couleur_lsi(calculer_deficit(_flt_ds, _flt_gs)),
+            "bar_flt_g_ent": _flt_g_bw_e, "bar_flt_d_ent": _flt_d_bw_e,
+            "bar_flt_g_sort": _flt_g_bw_s, "bar_flt_d_sort": _flt_d_bw_s,
+            # Flight Time barres 4-valeurs
+            "b4_flt_ge": _b4_flt_ge, "b4_flt_de": _b4_flt_de,
+            "b4_flt_gs": _b4_flt_gs, "b4_flt_ds": _b4_flt_ds,
+            # Peak Force Asymmetry SLJ
+            "peak_force_asym_ent":     _slj.get("peak_force_asym_ent"),
+            "peak_force_asym_sort":    _slj.get("peak_force_asym_sort"),
+            # CMJ bilatéral — hauteur
             "cmj_hauteur_ent":         cmj_h_e,
             "cmj_hauteur_sort":        cmj_h_s,
             "cmj_rsi_ent":             cmj_r_e,
             "cmj_rsi_sort":            cmj_r_s,
             "prog_cmj_haut":           calculer_progression(cmj_h_e, cmj_h_s),
             "prog_cmj_rsi":            None,
-            # Champs supplémentaires du nouveau parser
-            "date_entree":             _slj.get("date_entree") or _cmj.get("date_entree"),
-            "date_sortie":             _slj.get("date_sortie") or _cmj.get("date_sortie"),
-            "slj_flight_g_ent":        _slj.get("slj_flight_g_ent"),
-            "slj_flight_g_sort":       _slj.get("slj_flight_g_sort"),
-            "slj_flight_d_ent":        _slj.get("slj_flight_d_ent"),
-            "slj_flight_d_sort":       _slj.get("slj_flight_d_sort"),
-            "peak_force_asym_ent":     _slj.get("peak_force_asym_ent"),
-            "peak_force_asym_sort":    _slj.get("peak_force_asym_sort"),
-            "cmj_rfd_ent":             _cmj.get("cmj_rfd_ent"),
-            "cmj_rfd_sort":            _cmj.get("cmj_rfd_sort"),
+            "bar_cmj_e": _cmj_h_bw_e, "bar_cmj_s": _cmj_h_bw_s,
+            # CMJ barres 2-valeurs (proportionnelles aux 2 sessions)
+            "b2_cmj_e": _b2_cmj_e, "b2_cmj_s": _b2_cmj_s,
+            # CMJ — asymétrie force concentrique
+            "cmj_conc_asym_ent":       _cmj.get("cmj_conc_asym_ent"),
+            "cmj_conc_asym_sort":      _cmj.get("cmj_conc_asym_sort"),
+            "cmj_conc_asym_side_ent":  _cmj.get("cmj_conc_asym_side_ent"),
+            "cmj_conc_asym_side_sort": _cmj.get("cmj_conc_asym_side_sort"),
+            "prog_cmj_conc_asym":      calculer_progression(
+                                           _cmj.get("cmj_conc_asym_ent"),
+                                           _cmj.get("cmj_conc_asym_sort")),
+            # CMJ — landing asymmetry
             "cmj_landing_asym_ent":    _cmj.get("cmj_landing_asym_ent"),
             "cmj_landing_asym_sort":   _cmj.get("cmj_landing_asym_sort"),
             "cmj_landing_side_ent":    _cmj.get("cmj_landing_side_ent"),
             "cmj_landing_side_sort":   _cmj.get("cmj_landing_side_sort"),
+            "prog_cmj_landing_asym":   calculer_progression(
+                                           _cmj.get("cmj_landing_asym_ent"),
+                                           _cmj.get("cmj_landing_asym_sort")),
+            # CMJ — vitesse excentrique
             "cmj_ecc_vel_ent":         _cmj.get("cmj_ecc_vel_ent"),
             "cmj_ecc_vel_sort":        _cmj.get("cmj_ecc_vel_sort"),
+            "prog_cmj_ecc_vel":        calculer_progression(
+                                           _cmj.get("cmj_ecc_vel_ent"),
+                                           _cmj.get("cmj_ecc_vel_sort")),
+            # CMJ — RFD
+            "cmj_rfd_ent":             _cmj.get("cmj_rfd_ent"),
+            "cmj_rfd_sort":            _cmj.get("cmj_rfd_sort"),
+            "prog_cmj_rfd":            calculer_progression(
+                                           _cmj.get("cmj_rfd_ent"),
+                                           _cmj.get("cmj_rfd_sort")),
+            # Méta
+            "date_entree":             _slj.get("date_entree") or _cmj.get("date_entree"),
+            "date_sortie":             _slj.get("date_sortie") or _cmj.get("date_sortie"),
+            "is_single_session":       _is_single,
         }
 
     else:
@@ -847,7 +949,43 @@ def construire_contexte(
             cmj_h_e = _ve.get("cmj_hauteur"); cmj_h_s = _vs.get("cmj_hauteur")
             cmj_r_e = _ve.get("cmj_rsi");     cmj_r_s = _vs.get("cmj_rsi")
 
+            # Détecte si on a des données sortie (pour is_single_session)
+            _has_sortie = any(v is not None for v in [slj_hg_s, slj_hd_s, rsi_g_s, rsi_d_s, cmj_h_s])
+
+            # Barres de largeur relative (None si données manquantes)
+            def _bw_fb(a, b):
+                if a is None or b is None: return None, None
+                ma = max(abs(a), abs(b))
+                if ma == 0: return 50, 50
+                return round(abs(a) / ma * 100), round(abs(b) / ma * 100)
+
+            def _bw4_fb(a, b, c, d, scale=80):
+                vals = [v for v in [a, b, c, d] if v is not None]
+                if not vals: return None, None, None, None
+                m = max(abs(v) for v in vals)
+                if m == 0: return (round(scale/2),) * 4
+                def _p(v): return round(abs(v) / m * scale) if v is not None else None
+                return _p(a), _p(b), _p(c), _p(d)
+
+            def _bw2_fb(a, b, scale=80):
+                vals = [v for v in [a, b] if v is not None]
+                if not vals: return None, None
+                m = max(abs(v) for v in vals)
+                if m == 0: return round(scale/2), round(scale/2)
+                def _p(v): return round(abs(v) / m * scale) if v is not None else None
+                return _p(a), _p(b)
+
+            _slj_hg_bw_e, _slj_hd_bw_e = _bw_fb(slj_hg_e, slj_hd_e)
+            _slj_hg_bw_s, _slj_hd_bw_s = _bw_fb(slj_hg_s, slj_hd_s)
+            _rsi_g_bw_e,  _rsi_d_bw_e  = _bw_fb(rsi_g_e,  rsi_d_e)
+            _rsi_g_bw_s,  _rsi_d_bw_s  = _bw_fb(rsi_g_s,  rsi_d_s)
+            _cmj_h_bw_e,  _cmj_h_bw_s  = _bw_fb(cmj_h_e,  cmj_h_s)
+            _fb_slj_ge, _fb_slj_de, _fb_slj_gs, _fb_slj_ds = _bw4_fb(slj_hg_e, slj_hd_e, slj_hg_s, slj_hd_s)
+            _fb_rsi_ge, _fb_rsi_de, _fb_rsi_gs, _fb_rsi_ds = _bw4_fb(rsi_g_e, rsi_d_e, rsi_g_s, rsi_d_s)
+            _fb_cmj_e, _fb_cmj_s = _bw2_fb(cmj_h_e, cmj_h_s)
+
             vald_tableau = {
+                # SLJ Hauteur
                 "slj_hauteur_g_ent":       slj_hg_e,
                 "slj_hauteur_d_ent":       slj_hd_e,
                 "slj_hauteur_g_sort":      slj_hg_s,
@@ -858,6 +996,12 @@ def construire_contexte(
                 "prog_slj_haut_d":         calculer_progression(slj_hd_e, slj_hd_s),
                 "color_def_slj_haut_ent":  couleur_lsi(def_slj_e),
                 "color_def_slj_haut_sort": couleur_lsi(def_slj_s),
+                "bar_slj_g_ent": _slj_hg_bw_e, "bar_slj_d_ent": _slj_hd_bw_e,
+                "bar_slj_g_sort": _slj_hg_bw_s, "bar_slj_d_sort": _slj_hd_bw_s,
+                # SLJ barres 4-valeurs
+                "b4_slj_ge": _fb_slj_ge, "b4_slj_de": _fb_slj_de,
+                "b4_slj_gs": _fb_slj_gs, "b4_slj_ds": _fb_slj_ds,
+                # RSI SLJ
                 "rsi_g_ent":               rsi_g_e, "rsi_d_ent":    rsi_d_e,
                 "rsi_g_sort":              rsi_g_s, "rsi_d_sort":   rsi_d_s,
                 "def_rsi_ent":             def_rsi_e, "def_rsi_sort": def_rsi_s,
@@ -865,18 +1009,47 @@ def construire_contexte(
                 "prog_rsi_d":              calculer_progression(rsi_d_e, rsi_d_s),
                 "color_def_rsi_ent":       couleur_lsi(def_rsi_e),
                 "color_def_rsi_sort":      couleur_lsi(def_rsi_s),
+                "bar_rsi_g_ent": _rsi_g_bw_e, "bar_rsi_d_ent": _rsi_d_bw_e,
+                "bar_rsi_g_sort": _rsi_g_bw_s, "bar_rsi_d_sort": _rsi_d_bw_s,
+                # RSI barres 4-valeurs
+                "b4_rsi_ge": _fb_rsi_ge, "b4_rsi_de": _fb_rsi_de,
+                "b4_rsi_gs": _fb_rsi_gs, "b4_rsi_ds": _fb_rsi_ds,
+                # Flight Time SLJ (non disponible ancien format)
+                "slj_flight_g_ent":        None, "slj_flight_g_sort": None,
+                "slj_flight_d_ent":        None, "slj_flight_d_sort": None,
+                "def_flight_ent":          None, "def_flight_sort":   None,
+                "prog_flight_g":           None, "prog_flight_d":     None,
+                "color_def_flight_ent":    "#888888", "color_def_flight_sort": "#888888",
+                "bar_flt_g_ent":           None, "bar_flt_d_ent":  None,
+                "bar_flt_g_sort":          None, "bar_flt_d_sort": None,
+                # Flight Time barres 4-valeurs (toutes None ancien format)
+                "b4_flt_ge": None, "b4_flt_de": None,
+                "b4_flt_gs": None, "b4_flt_ds": None,
+                # Peak Force Asymmetry SLJ
+                "peak_force_asym_ent":     None, "peak_force_asym_sort": None,
+                # CMJ bilatéral
                 "cmj_hauteur_ent":         cmj_h_e, "cmj_hauteur_sort": cmj_h_s,
                 "cmj_rsi_ent":             cmj_r_e, "cmj_rsi_sort":    cmj_r_s,
                 "prog_cmj_haut":           calculer_progression(cmj_h_e, cmj_h_s),
                 "prog_cmj_rsi":            calculer_progression(cmj_r_e, cmj_r_s),
+                "bar_cmj_e": _cmj_h_bw_e, "bar_cmj_s": _cmj_h_bw_s,
+                # CMJ barres 2-valeurs
+                "b2_cmj_e": _fb_cmj_e, "b2_cmj_s": _fb_cmj_s,
+                # CMJ asymétries (non disponibles ancien format)
+                "cmj_conc_asym_ent":       None, "cmj_conc_asym_sort":      None,
+                "cmj_conc_asym_side_ent":  None, "cmj_conc_asym_side_sort": None,
+                "cmj_landing_asym_ent":    None, "cmj_landing_asym_sort":   None,
+                "cmj_landing_side_ent":    None, "cmj_landing_side_sort":   None,
+                "cmj_ecc_vel_ent":         None, "cmj_ecc_vel_sort":        None,
+                "cmj_rfd_ent":             None, "cmj_rfd_sort":            None,
+                # Progressions CMJ
+                "prog_cmj_conc_asym":      None,
+                "prog_cmj_landing_asym":   None,
+                "prog_cmj_ecc_vel":        None,
+                "prog_cmj_rfd":            None,
+                # Méta
                 "date_entree": None, "date_sortie": None,
-                "slj_flight_g_ent": None, "slj_flight_g_sort": None,
-                "slj_flight_d_ent": None, "slj_flight_d_sort": None,
-                "peak_force_asym_ent": None, "peak_force_asym_sort": None,
-                "cmj_rfd_ent": None, "cmj_rfd_sort": None,
-                "cmj_landing_asym_ent": None, "cmj_landing_asym_sort": None,
-                "cmj_landing_side_ent": None, "cmj_landing_side_sort": None,
-                "cmj_ecc_vel_ent": None, "cmj_ecc_vel_sort": None,
+                "is_single_session": not _has_sortie,
             }
 
     # ── Remarques par vitesse (calculées avant le return pour all_progressions) ──
@@ -992,6 +1165,19 @@ def generer_html(contexte: dict, template_dir: str = "templates") -> str:
         "#e74c3c" if prog is not None and prog < 0 else
         "#888888"
     )
+    env.filters["abs"] = lambda v: abs(v) if v is not None else None
+    env.filters["signe"] = lambda v: "+" if v is not None and v > 0 else ""
+    env.filters["side_label"] = lambda s: (
+        "D (droite)" if s in ("R", "D") else
+        "G (gauche)" if s in ("L", "G") else (s or "—")
+    )
+    # bar_pct(a, b) → largeur % de a relativement au max(|a|,|b|)
+    def _bar_pct(a, b):
+        if a is None or b is None:
+            return 0
+        ma = max(abs(a), abs(b))
+        return round(abs(a) / ma * 100) if ma != 0 else 50
+    env.globals["bar_pct"] = _bar_pct
     return env.get_template("rapport.html").render(**contexte)
 
 

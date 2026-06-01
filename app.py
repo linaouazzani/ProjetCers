@@ -481,13 +481,13 @@ with col_left:
         col_v1, col_v2 = st.columns(2)
         with col_v1:
             pdf_slj_up = st.file_uploader(
-                "📊 PDF SLJ (entrée + sortie)", type="pdf", key="vald_slj",
-                help="Export VALD Hub contenant les 2 sessions SLJ (Single-Leg Jump) — ~7 pages"
+                "📊 SLJ — PDF VALD Hub", type="pdf", key="vald_slj",
+                help="Export VALD Hub contenant 1 ou 2 sessions SLJ (Single-Leg Jump)"
             )
         with col_v2:
             pdf_cmj_up = st.file_uploader(
-                "📊 PDF CMJ (entrée + sortie)", type="pdf", key="vald_cmj",
-                help="Export VALD Hub contenant les 2 sessions CMJ (Counter-Movement Jump) — ~4 pages"
+                "📊 CMJ — PDF VALD Hub", type="pdf", key="vald_cmj",
+                help="Export VALD Hub contenant 1 ou 2 sessions CMJ (Counter-Movement Jump)"
             )
 
         if pdf_slj_up:

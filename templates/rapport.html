@@ -706,7 +706,7 @@ body {
         Bilan Complet du Patient
       </div>
       <div style="font-size:9pt; color:#888; margin-top:4px;">
-        G&#233;n&#233;ration automatique &middot; Suivi de progression &middot; Impression A4
+        Compte rendu d&#8217;hospitalisation CRH
       </div>
     </div>
 
@@ -781,18 +781,6 @@ body {
             <div style="font-size:11pt; color:#1a1a1a; margin-top:2px;">{% if cr and cr.club %}{{ cr.club }}{% else %}{{ nom_club }}{% endif %}</div>
           </div>
         </div>
-        {% if cr and (cr.mecanisme or cr.date_accident) %}
-        <div style="display:table-row;">
-          <div style="display:table-cell; padding:5px 10px 0 0; vertical-align:top; border-right:1px solid #e8eef5; border-top:1px solid #f0f4f8;">
-            <div style="font-size:7.5pt; color:#c0392b; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">M&#233;canisme</div>
-            <div style="font-size:9.5pt; color:#333; margin-top:2px; line-height:1.3;">{% if cr.mecanisme %}{{ cr.mecanisme }}{% else %}&mdash;{% endif %}</div>
-          </div>
-          <div style="display:table-cell; padding:5px 0 0 10px; vertical-align:top; border-top:1px solid #f0f4f8;">
-            <div style="font-size:7.5pt; color:#c0392b; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">Date accident</div>
-            <div style="font-size:9.5pt; color:#333; margin-top:2px;">{% if cr.date_accident %}{{ cr.date_accident }}{% else %}&mdash;{% endif %}</div>
-          </div>
-        </div>
-        {% endif %}
       </div>
     </div>
   </div>
@@ -920,36 +908,17 @@ body {
   </div>
   {% endif %}
 
-  <!-- ── RESSENTI DU JOUEUR / AVIS CLINIQUE ────────────────────────── -->
-  {% if ressenti and ressenti | trim %}
-  <div style="padding:0 18px 10px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
-    <div style="background:#fff8e6; border:2px solid #e07b00; border-radius:6px; padding:10px 14px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-      <div style="font-size:9pt; font-weight:800; color:#b85c00; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; padding-bottom:5px; border-bottom:1.5px solid #f0c070;">
-        &#128172; Ressenti du joueur &amp; avis clinique &mdash; Retour au sport
-      </div>
-      <div style="font-size:9pt; color:#5c3800; line-height:1.6; font-style:italic;">
-        {{ ressenti }}
-      </div>
-    </div>
-  </div>
-  {% endif %}
 
-  <!-- ── PROGRESSIONS BIODEX CLÉS ────────────────────────────────── -->
-  {# all_progressions = prog_list + positif 60/240 : toujours alimenté si tests Biodex présents #}
-  {% if all_progressions %}
+  <!-- ── RÉSUMÉ DU SÉJOUR (déplacé depuis page finale) ──────────── -->
+  {% if resume_override or (cr and cr.conclusion and cr.conclusion | trim) %}
   <div style="padding:8px 18px 10px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
-    <div style="background:#f0faf2; border:2.5px solid #2a8a36; border-radius:6px; padding:10px 16px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-      <div style="font-size:9pt; color:#1a6e28; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px; padding-bottom:5px; border-bottom:1.5px solid #c3e6cb;">
-        &#9650; Progressions objectiv&#233;es &amp; Points cl&#233;s &mdash; Bilan isocin&#233;tique Biodex
+    <div style="border:1.5px solid #1c3f6e; border-radius:4px; overflow:visible; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+      <div style="background:#1c3f6e; color:#ffffff; font-size:9.5pt; font-weight:700; padding:5px 12px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+        R&#233;sum&#233; du s&#233;jour au CERS &mdash; Prise en charge &amp; &#233;volution
       </div>
-      {% for p in all_progressions %}
-      <div style="display:table; width:100%; margin-bottom:4px;">
-        <div style="display:table-cell; vertical-align:middle; width:20px; text-align:center;">
-          <span style="font-size:12pt; color:#2a8a36; font-weight:900; line-height:1;">&#9650;</span>
-        </div>
-        <div style="display:table-cell; vertical-align:middle; font-size:9pt; font-weight:700; color:#1a6e28; line-height:1.4; padding-left:6px;">{{ p }}</div>
+      <div style="padding:8px 14px; background:#f5f8fc; font-size:9pt; color:#333; line-height:1.7; overflow-wrap:anywhere; word-wrap:break-word; white-space:pre-wrap;">
+        {% if resume_override %}{{ resume_override }}{% else %}{{ cr.conclusion }}{% endif %}
       </div>
-      {% endfor %}
     </div>
   </div>
   {% endif %}
@@ -1402,7 +1371,7 @@ body {
 <!-- ══════════════════════════════════════════════════
      PAGE 4 — BILAN VALD FORCEDECKS
      ══════════════════════════════════════════════════ -->
-<div class="page">
+<div class="page" data-section="bilan-vald">
 
   <!-- EN-TETE BLANC -->
   <div style="display:table;width:100%;padding:6px 14px;border-bottom:2px solid #1c3f6e;box-sizing:border-box;flex-shrink:0;background:#ffffff;">
@@ -1589,224 +1558,401 @@ body {
 
 {% if vald_tableau %}
 <!-- ══════════════════════════════════════════════════
-     PAGE VALD TABLEAU — TABLEAU CLINIQUE COMPLET VALD
+     PAGE VALD — TABLEAU CLINIQUE VALD FORCEDECKS
      ══════════════════════════════════════════════════ -->
 <div class="page" data-section="vald-tableau">
 
-  <!-- EN-TETE BLANC -->
-  <div style="display:table;width:100%;padding:6px 14px;border-bottom:2px solid #1c3f6e;box-sizing:border-box;background:#ffffff;">
-    <div style="display:table-cell;width:20%;vertical-align:middle;">
-      {% if logo_cers_b64 %}
-      <img src="{{ logo_cers_b64 }}" style="height:34px;display:block;" alt="CERS Capbreton">
-      {% else %}
-      <div style="font-size:9pt;font-weight:bold;color:#1c3f6e;line-height:1.2;">CERS<br>Capbreton</div>
-      {% endif %}
-      <div style="font-size:6pt;color:#1c3f6e;font-weight:bold;margin-top:2px;">Groupe Ramsay Sant&#233;</div>
+  {# ── Bandeau gris supérieur ── #}
+  <div style="background:#3d3d3d;color:#ffffff;text-align:center;padding:3px 8px;font-size:6.5pt;font-weight:bold;letter-spacing:1.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    RAPPORT DE R&#201;ATHL&#201;TISATION &nbsp;&#183;&nbsp; CERS / RAMSAY SANT&#201;
+  </div>
+
+  {# ── En-tête patient ── #}
+  <div style="display:table;width:100%;padding:4px 10px;border-bottom:2px solid #1c3f6e;box-sizing:border-box;background:#ffffff;">
+    <div style="display:table-cell;width:22%;vertical-align:middle;">
+      {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" style="height:28px;display:block;" alt="CERS">
+      {% else %}<div style="font-size:8pt;font-weight:bold;color:#1c3f6e;">CERS<br>Capbreton</div>{% endif %}
     </div>
-    <div style="display:table-cell;width:60%;vertical-align:middle;text-align:center;padding:0 10px;">
-      <div style="font-size:11pt;font-weight:bold;color:#1c3f6e;line-height:1.2;">CERS Capbreton &nbsp;&#8212;&nbsp; Bilan Complet Patient</div>
-      <div style="font-size:7pt;color:#555;margin-top:1px;">
-        {{ anon(patient.nom) }} &nbsp;&#183;&nbsp;
-        Entr&#233;e {{ entree.date_test }} &nbsp;&#183;&nbsp;
-        Sortie {{ sortie.date_test }}
+    <div style="display:table-cell;width:56%;vertical-align:middle;text-align:center;">
+      <div style="font-size:10pt;font-weight:bold;color:#1c3f6e;line-height:1.3;">{{ anon(patient.nom) }}</div>
+      <div style="font-size:7pt;color:#555;">Bilan VALD ForceDecks &#8212; Sauts unilat&#233;raux &amp; bilat&#233;raux</div>
+    </div>
+    <div style="display:table-cell;width:22%;vertical-align:middle;text-align:right;font-size:7pt;color:#444;line-height:1.6;">
+      {% if vald_tableau.date_entree %}<b>Entr&#233;e&#160;:</b> {{ vald_tableau.date_entree }}<br>{% endif %}
+      {% if not vald_tableau.is_single_session and vald_tableau.date_sortie %}<b>Sortie&#160;:</b> {{ vald_tableau.date_sortie }}{% endif %}
+      {% if vald_tableau.is_single_session %}<em style="color:#888;">Session unique</em>{% endif %}
+    </div>
+  </div>
+  <div style="height:3px;background:#1c3f6e;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+
+  {# ── Légende couleurs ── #}
+  <div style="background:#f4f4f4;padding:3px 10px;border-bottom:1px solid #ddd;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    <span style="font-size:6.5pt;font-weight:bold;color:#333;margin-right:8px;">L&#201;GENDE&#160;:</span>
+    <span style="display:inline-block;width:9px;height:9px;background:#1c3f6e;vertical-align:middle;margin-right:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></span><span style="font-size:6.5pt;color:#333;margin-right:10px;">L&#233;s&#233; (G)</span>
+    <span style="display:inline-block;width:9px;height:9px;background:#e67e22;vertical-align:middle;margin-right:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></span><span style="font-size:6.5pt;color:#333;margin-right:10px;">Sain (D)</span>
+    <span style="display:inline-block;width:9px;height:9px;background:#e8c300;vertical-align:middle;margin-right:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></span><span style="font-size:6.5pt;color:#333;margin-right:12px;">Bilat&#233;ral</span>
+    <span style="font-size:6.5pt;color:#555;margin-right:4px;">LSI&#160;:</span>
+    <span style="background:#27ae60;color:#fff;padding:1px 4px;font-size:6pt;font-weight:bold;margin-right:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">&lt;10%</span>
+    <span style="background:#f39c12;color:#fff;padding:1px 4px;font-size:6pt;font-weight:bold;margin-right:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">10&#8211;15%</span>
+    <span style="background:#e74c3c;color:#fff;padding:1px 4px;font-size:6pt;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact;">&gt;15%</span>
+  </div>
+
+  <div class="page-content" style="padding:3mm 8mm 2mm 8mm;">
+
+{# ═══════════════════════════════════════════════════════
+   MACRO : carte SLJ (unilateral, G = Lésé bleu, D = Sain orange)
+   ═══════════════════════════════════════════════════════ #}
+{% macro slj_card(title, unit,
+    g_e, d_e, g_s, d_s,
+    bar_ge, bar_de, bar_gs, bar_ds,
+    lsi_e, lsi_s, lsi_col_e, lsi_col_s,
+    prog_g, prog_d, decimals=1) %}
+<div style="background:#ffffff;border:1px solid #ccc;height:100%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+  <div style="background:#e67e22;color:#fff;font-size:7pt;font-weight:bold;padding:3px 5px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    {{ title }} <span style="font-weight:normal;font-size:6pt;">({{ unit }})</span>
+  </div>
+  <div style="padding:3px 4px;">
+    <div style="font-size:5.5pt;font-weight:bold;color:#888;text-transform:uppercase;margin-bottom:2px;">Entr&#233;e</div>
+    <div style="display:table;width:100%;margin-bottom:2px;">
+      <div style="display:table-row;">
+        <div style="display:table-cell;width:28%;font-size:6pt;font-weight:bold;color:#1c3f6e;vertical-align:middle;">G L&#233;s.</div>
+        <div style="display:table-cell;width:17%;font-size:7pt;font-weight:bold;color:#1c3f6e;text-align:right;vertical-align:middle;padding-right:3px;">{{ g_e | fmt(decimals) if g_e is not none else '&#8212;' }}</div>
+        <div style="display:table-cell;width:55%;vertical-align:middle;">
+          {% if bar_ge is not none and bar_ge > 0 %}<div style="height:7px;width:{{ bar_ge }}%;background:#1c3f6e;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>{% endif %}
+        </div>
       </div>
     </div>
-    <div style="display:table-cell;width:20%;vertical-align:middle;">
-      <div style="display:table;width:100%;table-layout:fixed;">
-        <div style="display:table-row;">
-          <div style="display:table-cell;text-align:center;padding-bottom:2px;vertical-align:middle;">
-            {% if logo_club_b64 %}
-            <img src="{{ logo_club_b64 }}" style="height:30px;max-width:70px;display:block;margin:0 auto;object-fit:contain;" alt="{{ nom_club }}">
-            {% endif %}
-          </div>
+    <div style="display:table;width:100%;margin-bottom:3px;">
+      <div style="display:table-row;">
+        <div style="display:table-cell;width:28%;font-size:6pt;font-weight:bold;color:#e67e22;vertical-align:middle;">D Sain</div>
+        <div style="display:table-cell;width:17%;font-size:7pt;font-weight:bold;color:#e67e22;text-align:right;vertical-align:middle;padding-right:3px;">{{ d_e | fmt(decimals) if d_e is not none else '&#8212;' }}</div>
+        <div style="display:table-cell;width:55%;vertical-align:middle;">
+          {% if bar_de is not none and bar_de > 0 %}<div style="height:7px;width:{{ bar_de }}%;background:#e67e22;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>{% endif %}
         </div>
-        <div style="display:table-row;">
-          <div style="display:table-cell;text-align:center;font-size:7pt;font-weight:bold;color:#1c3f6e;word-break:break-word;">{{ nom_club }}</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #eee;padding:2px 0 2px 0;">
+      <span style="font-size:6pt;color:#666;">LSI&#160;: </span>
+      {% if lsi_e is not none %}<span style="background:{{ lsi_col_e }};color:#fff;padding:1px 5px;font-size:6.5pt;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact;">{{ lsi_e | fmt(1) }}%</span>
+      {% else %}<span style="font-size:6.5pt;color:#aaa;">&#8212;</span>{% endif %}
+    </div>
+    {% if not vald_tableau.is_single_session %}
+    <div style="font-size:5.5pt;font-weight:bold;color:#2176c7;text-transform:uppercase;margin-bottom:2px;margin-top:3px;border-top:1px dashed #bbb;padding-top:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">Sortie</div>
+    <div style="display:table;width:100%;margin-bottom:2px;">
+      <div style="display:table-row;">
+        <div style="display:table-cell;width:28%;font-size:6pt;font-weight:bold;color:#1c3f6e;vertical-align:middle;">G L&#233;s.</div>
+        <div style="display:table-cell;width:17%;font-size:7pt;font-weight:bold;color:#1c3f6e;text-align:right;vertical-align:middle;padding-right:3px;">{{ g_s | fmt(decimals) if g_s is not none else '&#8212;' }}</div>
+        <div style="display:table-cell;width:55%;vertical-align:middle;">
+          {% if bar_gs is not none and bar_gs > 0 %}<div style="height:7px;width:{{ bar_gs }}%;background:#1c3f6e;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>{% endif %}
+        </div>
+      </div>
+    </div>
+    <div style="display:table;width:100%;margin-bottom:3px;">
+      <div style="display:table-row;">
+        <div style="display:table-cell;width:28%;font-size:6pt;font-weight:bold;color:#e67e22;vertical-align:middle;">D Sain</div>
+        <div style="display:table-cell;width:17%;font-size:7pt;font-weight:bold;color:#e67e22;text-align:right;vertical-align:middle;padding-right:3px;">{{ d_s | fmt(decimals) if d_s is not none else '&#8212;' }}</div>
+        <div style="display:table-cell;width:55%;vertical-align:middle;">
+          {% if bar_ds is not none and bar_ds > 0 %}<div style="height:7px;width:{{ bar_ds }}%;background:#e67e22;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>{% endif %}
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #eee;padding:2px 0 2px 0;">
+      <span style="font-size:6pt;color:#666;">LSI&#160;: </span>
+      {% if lsi_s is not none %}<span style="background:{{ lsi_col_s }};color:#fff;padding:1px 5px;font-size:6.5pt;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact;">{{ lsi_s | fmt(1) }}%</span>
+      {% else %}<span style="font-size:6.5pt;color:#aaa;">&#8212;</span>{% endif %}
+    </div>
+    <div style="border-top:1px solid #eee;padding-top:2px;font-size:6pt;">
+      <span style="color:#555;">&#9650;G&#160;: </span>{% if prog_g is not none %}<span style="font-weight:bold;color:{{ prog_g | couleur_progression }};font-size:6.5pt;">{{ prog_g | signe }}{{ prog_g | fmt }}%</span>{% else %}<span style="color:#aaa;">&#8212;</span>{% endif %}
+      <span style="color:#ccc;margin:0 4px;">|</span>
+      <span style="color:#555;">&#9650;D&#160;: </span>{% if prog_d is not none %}<span style="font-weight:bold;color:{{ prog_d | couleur_progression }};font-size:6.5pt;">{{ prog_d | signe }}{{ prog_d | fmt }}%</span>{% else %}<span style="color:#aaa;">&#8212;</span>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{# ═══════════════════════════════════════════════════════
+   MACRO : carte CMJ (bilatéral)
+   ═══════════════════════════════════════════════════════ #}
+{% macro cmj_card(title, unit, val_e, val_s, bar_e, bar_s, prog, note, decimals=1, bar_color="#e8c300") %}
+<div style="background:#ffffff;border:1px solid #ccc;height:100%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+  <div style="background:#1c3f6e;color:#fff;font-size:7pt;font-weight:bold;padding:3px 5px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    {{ title }} <span style="font-weight:normal;font-size:6pt;">({{ unit }})</span>
+  </div>
+  <div style="padding:3px 4px;">
+    <div style="font-size:5.5pt;font-weight:bold;color:#888;text-transform:uppercase;margin-bottom:2px;">Entr&#233;e</div>
+    <div style="display:table;width:100%;margin-bottom:3px;">
+      <div style="display:table-row;">
+        <div style="display:table-cell;width:28%;font-size:6pt;color:#555;vertical-align:middle;">Valeur</div>
+        <div style="display:table-cell;width:17%;font-size:7.5pt;font-weight:bold;color:#333;text-align:right;vertical-align:middle;padding-right:3px;">{{ val_e | fmt(decimals) if val_e is not none else '&#8212;' }}</div>
+        <div style="display:table-cell;width:55%;vertical-align:middle;">
+          {% if bar_e is not none and bar_e > 0 %}<div style="height:7px;width:{{ bar_e }}%;background:{{ bar_color }};-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>{% endif %}
+        </div>
+      </div>
+    </div>
+    {% if not vald_tableau.is_single_session %}
+    <div style="font-size:5.5pt;font-weight:bold;color:#2176c7;text-transform:uppercase;margin-bottom:2px;border-top:1px dashed #bbb;padding-top:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">Sortie</div>
+    <div style="display:table;width:100%;margin-bottom:3px;">
+      <div style="display:table-row;">
+        <div style="display:table-cell;width:28%;font-size:6pt;color:#555;vertical-align:middle;">Valeur</div>
+        <div style="display:table-cell;width:17%;font-size:7.5pt;font-weight:bold;color:#333;text-align:right;vertical-align:middle;padding-right:3px;">{{ val_s | fmt(decimals) if val_s is not none else '&#8212;' }}</div>
+        <div style="display:table-cell;width:55%;vertical-align:middle;">
+          {% if bar_s is not none and bar_s > 0 %}<div style="height:7px;width:{{ bar_s }}%;background:{{ bar_color }};-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>{% endif %}
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #eee;padding-top:2px;font-size:6pt;">
+      <span style="color:#555;">&#9650; Prog.&#160;: </span>
+      {% if prog is not none %}<span style="font-weight:bold;color:{{ prog | couleur_progression }};font-size:6.5pt;">{{ prog | signe }}{{ prog | fmt }}%</span>{% else %}<span style="color:#aaa;">&#8212;</span>{% endif %}
+    </div>
+    {% endif %}
+    {% if note %}<div style="font-size:6pt;color:#888;font-style:italic;border-top:1px solid #f0f0f0;padding-top:2px;margin-top:2px;">{{ note }}</div>{% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+
+{# ═══════════════════════════════════════════════════════════════════
+   SECTION 1 — SINGLE LEG JUMP (SLJ)
+   ═══════════════════════════════════════════════════════════════════ #}
+{% set has_slj = vald_tableau.slj_hauteur_g_ent is not none or vald_tableau.slj_hauteur_d_ent is not none or vald_tableau.rsi_g_ent is not none %}
+{% if has_slj %}
+<div style="display:table;width:100%;margin-bottom:4px;">
+  <div style="display:table-row;">
+    <div style="display:table-cell;width:22px;vertical-align:middle;">
+      <div style="background:#e67e22;color:#fff;width:18px;height:18px;text-align:center;line-height:18px;font-size:9pt;font-weight:bold;border-radius:50%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">1</div>
+    </div>
+    <div style="display:table-cell;vertical-align:middle;padding-left:4px;">
+      <span style="font-size:9pt;font-weight:bold;color:#e67e22;text-transform:uppercase;letter-spacing:0.5px;">Single Leg Jump (SLJ)</span>
+      <span style="font-size:6.5pt;color:#666;margin-left:8px;">Unilat&#233;ral &#8212; G&#160;=&#160;L&#233;s&#233; (bleu) | D&#160;=&#160;Sain (orange) | LSI&#160;=&#160;|D&#8722;G|/D&#215;100</span>
+    </div>
+  </div>
+</div>
+
+<div style="display:table;width:100%;table-layout:fixed;border-spacing:0;margin-bottom:5px;">
+  <div style="display:table-row;">
+    <div style="display:table-cell;width:33%;padding-right:3px;vertical-align:top;">
+      {{ slj_card("Jump Height","cm",
+         vald_tableau.slj_hauteur_g_ent, vald_tableau.slj_hauteur_d_ent,
+         vald_tableau.slj_hauteur_g_sort, vald_tableau.slj_hauteur_d_sort,
+         vald_tableau.b4_slj_ge, vald_tableau.b4_slj_de,
+         vald_tableau.b4_slj_gs, vald_tableau.b4_slj_ds,
+         vald_tableau.def_slj_haut_ent, vald_tableau.def_slj_haut_sort,
+         vald_tableau.color_def_slj_haut_ent, vald_tableau.color_def_slj_haut_sort,
+         vald_tableau.prog_slj_haut_g, vald_tableau.prog_slj_haut_d, 1) }}
+    </div>
+    <div style="display:table-cell;width:33%;padding-right:3px;padding-left:3px;vertical-align:top;">
+      {{ slj_card("RSI-Modifi&#233;","m/s",
+         vald_tableau.rsi_g_ent, vald_tableau.rsi_d_ent,
+         vald_tableau.rsi_g_sort, vald_tableau.rsi_d_sort,
+         vald_tableau.b4_rsi_ge, vald_tableau.b4_rsi_de,
+         vald_tableau.b4_rsi_gs, vald_tableau.b4_rsi_ds,
+         vald_tableau.def_rsi_ent, vald_tableau.def_rsi_sort,
+         vald_tableau.color_def_rsi_ent, vald_tableau.color_def_rsi_sort,
+         vald_tableau.prog_rsi_g, vald_tableau.prog_rsi_d, 2) }}
+    </div>
+    <div style="display:table-cell;width:33%;padding-left:3px;vertical-align:top;">
+      {% if vald_tableau.slj_flight_g_ent is not none or vald_tableau.slj_flight_d_ent is not none %}
+      {{ slj_card("Flight Time","cm",
+         vald_tableau.slj_flight_g_ent, vald_tableau.slj_flight_d_ent,
+         vald_tableau.slj_flight_g_sort, vald_tableau.slj_flight_d_sort,
+         vald_tableau.b4_flt_ge, vald_tableau.b4_flt_de,
+         vald_tableau.b4_flt_gs, vald_tableau.b4_flt_ds,
+         vald_tableau.def_flight_ent, vald_tableau.def_flight_sort,
+         vald_tableau.color_def_flight_ent, vald_tableau.color_def_flight_sort,
+         vald_tableau.prog_flight_g, vald_tableau.prog_flight_d, 1) }}
+      {% else %}
+      <div style="background:#f8f8f8;border:1px dashed #ccc;padding:12px 5px;text-align:center;font-size:6.5pt;color:#bbb;height:100%;box-sizing:border-box;">Flight Time<br>non disponible</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{# SLJ — Concentric Peak Force Asymmetry (barre centrée) #}
+{% if vald_tableau.peak_force_asym_ent is not none or vald_tableau.peak_force_asym_sort is not none %}
+<div style="border:1px solid #ddd;padding:4px 6px;margin-bottom:4px;background:#fafafa;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+  <div style="font-size:7pt;font-weight:bold;color:#555;margin-bottom:3px;">Concentric Peak Force Asymmetry</div>
+  {% if vald_tableau.peak_force_asym_ent is not none %}
+  {% set _pfa_e = vald_tableau.peak_force_asym_ent %}
+  {% set _pfa_ew = [_pfa_e / 60 * 100, 100] | min %}
+  <div style="display:table;width:100%;margin-bottom:2px;">
+    <div style="display:table-row;">
+      <div style="display:table-cell;width:12%;font-size:6pt;color:#555;vertical-align:middle;">E&#160;:</div>
+      <div style="display:table-cell;width:88%;vertical-align:middle;">
+        <div style="display:table;width:100%;height:11px;background:#ebebeb;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+          <div style="display:table-row;">
+            <div style="display:table-cell;width:50%;border-right:2px solid #444;vertical-align:middle;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+            <div style="display:table-cell;width:50%;vertical-align:middle;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+              <div style="display:inline-block;height:7px;width:{{ _pfa_ew }}%;background:#e67e22;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-  <div style="height:4px;min-height:4px;background:#1c3f6e;margin-bottom:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
-
-  <div class="page-content">
-
-    <!-- TITRE SECTION -->
-    <div style="display:table;width:100%;margin-bottom:8px;">
-      <div style="display:table-cell;vertical-align:middle;">
-        <div style="font-size:11pt;font-weight:bold;color:#1c3f6e;letter-spacing:0.5px;">
-          TABLEAU CLINIQUE COMPLET &#8212; VALD FORCEDECKS
-        </div>
-        <div style="font-size:8pt;color:#666;margin-top:2px;">
-          Comparaison Entr&#233;e&#160;/&#160;Sortie &middot; &#201;volution du s&#233;jour
+  <div style="font-size:6pt;color:#777;text-align:center;">{{ _pfa_e | fmt(1) }}% (non sign&#233;)</div>
+  {% endif %}
+  {% if not vald_tableau.is_single_session and vald_tableau.peak_force_asym_sort is not none %}
+  {% set _pfa_s = vald_tableau.peak_force_asym_sort %}
+  {% set _pfa_sw = [_pfa_s / 60 * 100, 100] | min %}
+  <div style="display:table;width:100%;margin-bottom:2px;margin-top:3px;">
+    <div style="display:table-row;">
+      <div style="display:table-cell;width:12%;font-size:6pt;color:#2176c7;font-weight:bold;vertical-align:middle;">S&#160;:</div>
+      <div style="display:table-cell;width:88%;vertical-align:middle;">
+        <div style="display:table;width:100%;height:11px;background:#ebebeb;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+          <div style="display:table-row;">
+            <div style="display:table-cell;width:50%;border-right:2px solid #444;vertical-align:middle;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+            <div style="display:table-cell;width:50%;vertical-align:middle;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+              <div style="display:inline-block;height:7px;width:{{ _pfa_sw }}%;background:#e67e22;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+            </div>
+          </div>
         </div>
       </div>
-      <div style="display:table-cell;text-align:right;vertical-align:middle;font-size:8pt;color:#999;">
-        {{ anon(patient.nom) }} &middot; S&#233;jour CERS
+    </div>
+  </div>
+  <div style="font-size:6pt;color:#777;text-align:center;">{{ _pfa_s | fmt(1) }}%</div>
+  {% endif %}
+</div>
+{% endif %}
+{% endif %}{# /has_slj #}
+
+
+{# ═══════════════════════════════════════════════════════════════════
+   SECTION 2 — COUNTER MOVEMENT JUMP (CMJ)
+   ═══════════════════════════════════════════════════════════════════ #}
+{% set has_cmj = vald_tableau.cmj_hauteur_ent is not none or vald_tableau.cmj_ecc_vel_ent is not none or vald_tableau.cmj_conc_asym_ent is not none or vald_tableau.cmj_rfd_ent is not none %}
+{% if has_cmj %}
+<div style="display:table;width:100%;margin-bottom:4px;">
+  <div style="display:table-row;">
+    <div style="display:table-cell;width:22px;vertical-align:middle;">
+      <div style="background:#1c3f6e;color:#fff;width:18px;height:18px;text-align:center;line-height:18px;font-size:9pt;font-weight:bold;border-radius:50%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">2</div>
+    </div>
+    <div style="display:table-cell;vertical-align:middle;padding-left:4px;">
+      <span style="font-size:9pt;font-weight:bold;color:#1c3f6e;text-transform:uppercase;letter-spacing:0.5px;">Counter Movement Jump (CMJ)</span>
+      <span style="font-size:6.5pt;color:#666;margin-left:8px;">Bilat&#233;ral &#8212; Asym&#233;trie sign&#233;e : +&#160;=&#160;D dominant, &#8722;&#160;=&#160;G dominant</span>
+    </div>
+  </div>
+</div>
+
+<div style="display:table;width:100%;table-layout:fixed;border-spacing:0;margin-bottom:5px;">
+  <div style="display:table-row;">
+    {# Card 1 : Jump Height #}
+    <div style="display:table-cell;width:33%;padding-right:3px;vertical-align:top;">
+      {{ cmj_card("Jump Height","cm",
+         vald_tableau.cmj_hauteur_ent, vald_tableau.cmj_hauteur_sort,
+         vald_tableau.b2_cmj_e, vald_tableau.b2_cmj_s,
+         vald_tableau.prog_cmj_haut, "Saut bilat&#233;ral", 1, "#e8c300") }}
+    </div>
+    {# Card 2 : RFD + Asymétrie concentrique #}
+    <div style="display:table-cell;width:33%;padding-right:3px;padding-left:3px;vertical-align:top;">
+      <div style="background:#ffffff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+        <div style="background:#1c3f6e;color:#fff;font-size:7pt;font-weight:bold;padding:3px 5px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+          RFD Concentrique <span style="font-weight:normal;font-size:6pt;">(N/s)</span>
+        </div>
+        <div style="padding:3px 4px;">
+          <div style="font-size:5.5pt;font-weight:bold;color:#888;text-transform:uppercase;margin-bottom:2px;">Entr&#233;e</div>
+          <div style="font-size:8pt;font-weight:bold;color:#333;margin-bottom:3px;">{{ vald_tableau.cmj_rfd_ent | fmt(0) if vald_tableau.cmj_rfd_ent is not none else '&#8212;' }}</div>
+          {% if not vald_tableau.is_single_session %}
+          <div style="font-size:5.5pt;font-weight:bold;color:#2176c7;border-top:1px dashed #bbb;padding-top:2px;margin-bottom:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">Sortie</div>
+          <div style="font-size:8pt;font-weight:bold;color:#333;margin-bottom:3px;">{{ vald_tableau.cmj_rfd_sort | fmt(0) if vald_tableau.cmj_rfd_sort is not none else '&#8212;' }}</div>
+          <div style="border-top:1px solid #eee;padding-top:2px;font-size:6pt;margin-bottom:3px;">
+            <span style="color:#555;">&#9650;&#160;: </span>
+            {% if vald_tableau.prog_cmj_rfd is not none %}<span style="font-weight:bold;color:{{ vald_tableau.prog_cmj_rfd | couleur_progression }};font-size:6.5pt;">{{ vald_tableau.prog_cmj_rfd | signe }}{{ vald_tableau.prog_cmj_rfd | fmt }}%</span>{% else %}<span style="color:#aaa;">&#8212;</span>{% endif %}
+          </div>
+          {% endif %}
+          {% if vald_tableau.cmj_conc_asym_ent is not none %}
+          <div style="border-top:2px solid #eee;margin-top:2px;padding-top:3px;">
+            <div style="font-size:6pt;color:#666;font-weight:bold;margin-bottom:2px;">Asym. Conc. Force</div>
+            <div style="font-size:7.5pt;font-weight:bold;{% if vald_tableau.cmj_conc_asym_ent > 0 %}color:#e67e22;{% elif vald_tableau.cmj_conc_asym_ent < 0 %}color:#1c3f6e;{% else %}color:#888;{% endif %}-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+              E&#160;: {{ vald_tableau.cmj_conc_asym_ent | abs | fmt(1) }}%{% if vald_tableau.cmj_conc_asym_ent > 0 %}&#160;(D){% elif vald_tableau.cmj_conc_asym_ent < 0 %}&#160;(G){% endif %}
+            </div>
+            {% if not vald_tableau.is_single_session and vald_tableau.cmj_conc_asym_sort is not none %}
+            <div style="font-size:7.5pt;font-weight:bold;{% if vald_tableau.cmj_conc_asym_sort > 0 %}color:#e67e22;{% elif vald_tableau.cmj_conc_asym_sort < 0 %}color:#1c3f6e;{% else %}color:#888;{% endif %}-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+              S&#160;: {{ vald_tableau.cmj_conc_asym_sort | abs | fmt(1) }}%{% if vald_tableau.cmj_conc_asym_sort > 0 %}&#160;(D){% elif vald_tableau.cmj_conc_asym_sort < 0 %}&#160;(G){% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
       </div>
     </div>
+    {# Card 3 : Vitesse excentrique #}
+    <div style="display:table-cell;width:33%;padding-left:3px;vertical-align:top;">
+      {{ cmj_card("Vit. Excentrique","m/s",
+         vald_tableau.cmj_ecc_vel_ent, vald_tableau.cmj_ecc_vel_sort,
+         vald_tableau.b2_cmj_e, vald_tableau.b2_cmj_s,
+         vald_tableau.prog_cmj_ecc_vel, "N&#233;gatif&#160;= descente rapide", 2, "#7f8c8d") }}
+    </div>
+  </div>
+</div>
 
-    <div style="height:2px;background:#1c3f6e;margin-bottom:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
-
-    <!-- ===== TABLEAU 1 : SLJ HAUTEUR ===== -->
-    {% if vald_tableau.slj_hauteur_g_ent is not none or vald_tableau.slj_hauteur_d_ent is not none or vald_tableau.slj_hauteur_g_sort is not none %}
-    <div style="font-size:10pt;font-weight:bold;color:#1c3f6e;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">
-      1. Hauteur de Saut &#8212; Single Leg Jump (SLJ)
-    </div>
-    <div style="font-size:8pt;color:#888;margin-bottom:6px;">
-      Unit&#233;&#160;: cm &middot; Norme LSI&#160;: &lt;10% d&#233;ficit
-    </div>
-    <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:14px;">
-      <thead>
-        <tr style="background-color:#1c3f6e;color:#ffffff;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-          <th style="padding:5px 8px;text-align:left;width:22%;border:1px solid #999;">Param&#232;tre</th>
-          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">ENT.&#160;D (Sain)</th>
-          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">ENT.&#160;G (L&#233;s&#233;)</th>
-          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">D&#201;F. ENT.</th>
-          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">SORT.&#160;D (Sain)</th>
-          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">SORT.&#160;G (L&#233;s&#233;)</th>
-          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">D&#201;F. SORT.</th>
-          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">PROG. G</th>
-          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">PROG. D</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="background-color:#f8f9fa;">
-          <td style="padding:5px 8px;font-weight:bold;border:1px solid #ccc;">Jump Height (cm)</td>
-          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.slj_hauteur_d_ent | fmt }}</td>
-          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.slj_hauteur_g_ent | fmt }}</td>
-          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">
-            {% if vald_tableau.def_slj_haut_ent is not none %}
-            <span style="background-color:{{ vald_tableau.color_def_slj_haut_ent }};color:#ffffff;padding:1px 5px;font-size:8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">{{ vald_tableau.def_slj_haut_ent }}%</span>
-            {% else %}&#8212;{% endif %}
-          </td>
-          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.slj_hauteur_d_sort | fmt }}</td>
-          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.slj_hauteur_g_sort | fmt }}</td>
-          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">
-            {% if vald_tableau.def_slj_haut_sort is not none %}
-            <span style="background-color:{{ vald_tableau.color_def_slj_haut_sort }};color:#ffffff;padding:1px 5px;font-size:8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">{{ vald_tableau.def_slj_haut_sort }}%</span>
-            {% else %}&#8212;{% endif %}
-          </td>
-          <td style="padding:5px 6px;text-align:center;font-weight:bold;border:1px solid #ccc;color:{{ vald_tableau.prog_slj_haut_g | couleur_progression }};">
-            {% if vald_tableau.prog_slj_haut_g is not none %}{{ '+' if vald_tableau.prog_slj_haut_g > 0 else '' }}{{ vald_tableau.prog_slj_haut_g }}%{% else %}&#8212;{% endif %}
-          </td>
-          <td style="padding:5px 6px;text-align:center;font-weight:bold;border:1px solid #ccc;color:{{ vald_tableau.prog_slj_haut_d | couleur_progression }};">
-            {% if vald_tableau.prog_slj_haut_d is not none %}{{ '+' if vald_tableau.prog_slj_haut_d > 0 else '' }}{{ vald_tableau.prog_slj_haut_d }}%{% else %}&#8212;{% endif %}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    {% endif %}
-
-    <!-- ===== TABLEAU 2 : RSI-MODIFIED SLJ ===== -->
-    {% if vald_tableau.rsi_g_ent is not none or vald_tableau.rsi_d_ent is not none or vald_tableau.rsi_g_sort is not none %}
-    <div style="font-size:10pt;font-weight:bold;color:#1c3f6e;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">
-      2. RSI-Modified &#8212; Single Leg Jump (SLJ)
-    </div>
-    <div style="font-size:8pt;color:#888;margin-bottom:6px;">
-      Unit&#233;&#160;: m/s &middot; Reactive Strength Index &#8212; capacit&#233; de force r&#233;active
-    </div>
-    <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:14px;">
-      <thead>
-        <tr style="background-color:#1c3f6e;color:#ffffff;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-          <th style="padding:5px 8px;text-align:left;width:22%;border:1px solid #999;">Param&#232;tre</th>
-          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">ENT.&#160;D (Sain)</th>
-          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">ENT.&#160;G (L&#233;s&#233;)</th>
-          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">D&#201;F. ENT.</th>
-          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">SORT.&#160;D (Sain)</th>
-          <th style="padding:5px 6px;text-align:center;width:10%;border:1px solid #999;">SORT.&#160;G (L&#233;s&#233;)</th>
-          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">D&#201;F. SORT.</th>
-          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">PROG. G</th>
-          <th style="padding:5px 6px;text-align:center;width:12%;border:1px solid #999;">PROG. D</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="background-color:#f8f9fa;">
-          <td style="padding:5px 8px;font-weight:bold;border:1px solid #ccc;">RSI-Modified (m/s)</td>
-          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.rsi_d_ent | fmt(2) }}</td>
-          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.rsi_g_ent | fmt(2) }}</td>
-          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">
-            {% if vald_tableau.def_rsi_ent is not none %}
-            <span style="background-color:{{ vald_tableau.color_def_rsi_ent }};color:#ffffff;padding:1px 5px;font-size:8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">{{ vald_tableau.def_rsi_ent }}%</span>
-            {% else %}&#8212;{% endif %}
-          </td>
-          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.rsi_d_sort | fmt(2) }}</td>
-          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.rsi_g_sort | fmt(2) }}</td>
-          <td style="padding:5px 6px;text-align:center;border:1px solid #ccc;">
-            {% if vald_tableau.def_rsi_sort is not none %}
-            <span style="background-color:{{ vald_tableau.color_def_rsi_sort }};color:#ffffff;padding:1px 5px;font-size:8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">{{ vald_tableau.def_rsi_sort }}%</span>
-            {% else %}&#8212;{% endif %}
-          </td>
-          <td style="padding:5px 6px;text-align:center;font-weight:bold;border:1px solid #ccc;color:{{ vald_tableau.prog_rsi_g | couleur_progression }};">
-            {% if vald_tableau.prog_rsi_g is not none %}{{ '+' if vald_tableau.prog_rsi_g > 0 else '' }}{{ vald_tableau.prog_rsi_g }}%{% else %}&#8212;{% endif %}
-          </td>
-          <td style="padding:5px 6px;text-align:center;font-weight:bold;border:1px solid #ccc;color:{{ vald_tableau.prog_rsi_d | couleur_progression }};">
-            {% if vald_tableau.prog_rsi_d is not none %}{{ '+' if vald_tableau.prog_rsi_d > 0 else '' }}{{ vald_tableau.prog_rsi_d }}%{% else %}&#8212;{% endif %}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    {% endif %}
-
-    <!-- ===== TABLEAU 3 : CMJ BILATÉRAL ===== -->
-    {% if vald_tableau.cmj_hauteur_ent is not none or vald_tableau.cmj_hauteur_sort is not none %}
-    <div style="font-size:10pt;font-weight:bold;color:#1c3f6e;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">
-      3. Counter Movement Jump (CMJ) &#8212; Bilat&#233;ral
-    </div>
-    <div style="font-size:8pt;color:#888;margin-bottom:6px;">
-      Hauteur en cm &middot; RSI-Modified en m/s
-    </div>
-    <table style="width:55%;border-collapse:collapse;font-size:8.5pt;margin-bottom:14px;">
-      <thead>
-        <tr style="background-color:#2176c7;color:#ffffff;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-          <th style="padding:5px 8px;text-align:left;width:34%;border:1px solid #999;">Param&#232;tre</th>
-          <th style="padding:5px 8px;text-align:center;width:22%;border:1px solid #999;">ENTR&#201;E</th>
-          <th style="padding:5px 8px;text-align:center;width:22%;border:1px solid #999;">SORTIE</th>
-          <th style="padding:5px 8px;text-align:center;width:22%;border:1px solid #999;">PROGRESSION</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="background-color:#f8f9fa;">
-          <td style="padding:5px 8px;font-weight:bold;border:1px solid #ccc;">Jump Height (cm)</td>
-          <td style="padding:5px 8px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.cmj_hauteur_ent | fmt }}</td>
-          <td style="padding:5px 8px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.cmj_hauteur_sort | fmt }}</td>
-          <td style="padding:5px 8px;text-align:center;font-weight:bold;border:1px solid #ccc;color:{{ vald_tableau.prog_cmj_haut | couleur_progression }};">
-            {% if vald_tableau.prog_cmj_haut is not none %}{{ '+' if vald_tableau.prog_cmj_haut > 0 else '' }}{{ vald_tableau.prog_cmj_haut }}%{% else %}&#8212;{% endif %}
-          </td>
-        </tr>
-        {% if vald_tableau.cmj_rsi_ent is not none or vald_tableau.cmj_rsi_sort is not none %}
-        <tr>
-          <td style="padding:5px 8px;font-weight:bold;border:1px solid #ccc;">RSI-Modified (m/s)</td>
-          <td style="padding:5px 8px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.cmj_rsi_ent | fmt(2) }}</td>
-          <td style="padding:5px 8px;text-align:center;border:1px solid #ccc;">{{ vald_tableau.cmj_rsi_sort | fmt(2) }}</td>
-          <td style="padding:5px 8px;text-align:center;font-weight:bold;border:1px solid #ccc;color:{{ vald_tableau.prog_cmj_rsi | couleur_progression }};">
-            {% if vald_tableau.prog_cmj_rsi is not none %}{{ '+' if vald_tableau.prog_cmj_rsi > 0 else '' }}{{ vald_tableau.prog_cmj_rsi }}%{% else %}&#8212;{% endif %}
-          </td>
-        </tr>
+{# CMJ — Peak Landing Force Asymmetry (barre centrée ±60%) #}
+{% if vald_tableau.cmj_landing_asym_ent is not none or vald_tableau.cmj_landing_asym_sort is not none %}
+<div style="border:1px solid #ddd;padding:4px 6px;margin-bottom:3px;background:#fafafa;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+  <div style="display:table;width:100%;">
+    <div style="display:table-row;">
+      <div style="display:table-cell;width:24%;vertical-align:middle;">
+        <div style="font-size:7pt;font-weight:bold;color:#555;line-height:1.4;">Peak Landing Force Asymmetry</div>
+        <div style="font-size:6pt;color:#888;">&#233;chelle &#177;60%</div>
+        <div style="display:table;width:100%;font-size:5.5pt;color:#888;margin-top:4px;">
+          <div style="display:table-row;">
+            <div style="display:table-cell;text-align:left;">&#171; G</div>
+            <div style="display:table-cell;text-align:right;">D &#187;</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:table-cell;width:76%;vertical-align:middle;padding-left:8px;">
+        {% if vald_tableau.cmj_landing_asym_ent is not none %}
+        {% set _la_e = vald_tableau.cmj_landing_asym_ent %}
+        {% set _la_ew = [(_la_e | abs) / 60 * 100, 100] | min %}
+        <div style="display:table;width:100%;height:12px;background:#e8e8e8;margin-bottom:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+          <div style="display:table-row;">
+            <div style="display:table-cell;width:50%;text-align:right;vertical-align:middle;border-right:2px solid #333;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+              {% if _la_e < 0 %}<div style="display:inline-block;height:8px;width:{{ _la_ew }}%;background:#1c3f6e;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>{% endif %}
+            </div>
+            <div style="display:table-cell;width:50%;text-align:left;vertical-align:middle;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+              {% if _la_e > 0 %}<div style="display:inline-block;height:8px;width:{{ _la_ew }}%;background:#e67e22;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>{% endif %}
+            </div>
+          </div>
+        </div>
+        <div style="font-size:6pt;text-align:center;margin-bottom:3px;">
+          <b>E&#160;:</b>
+          {% if _la_e > 0 %}<span style="color:#e67e22;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact;">+{{ _la_e | fmt(1) }}%&#160;D</span>
+          {% elif _la_e < 0 %}<span style="color:#1c3f6e;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact;">{{ _la_e | fmt(1) }}%&#160;G</span>
+          {% else %}<span style="color:#888;">0%&#160;sym&#233;trique</span>{% endif %}
+        </div>
         {% endif %}
-      </tbody>
-    </table>
-    {% endif %}
-
-    <!-- LÉGENDE LSI -->
-    <div style="display:table;width:100%;margin-top:8px;border:1px solid #ddd;padding:6px 10px;background-color:#fafafa;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-      <div style="font-size:8pt;font-weight:bold;color:#555;margin-bottom:4px;">L&#201;GENDE &#8212; LSI (Limb Symmetry Index)</div>
-      <div style="display:table;width:100%;">
-        <div style="display:table-cell;width:33%;vertical-align:middle;">
-          <span style="display:inline-block;width:10px;height:10px;background-color:#27ae60;vertical-align:middle;margin-right:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></span>
-          <span style="font-size:8pt;color:#333;">D&#233;ficit &lt;&#160;10% &#8212; Sym&#233;trie normale</span>
+        {% if not vald_tableau.is_single_session and vald_tableau.cmj_landing_asym_sort is not none %}
+        {% set _la_s = vald_tableau.cmj_landing_asym_sort %}
+        {% set _la_sw = [(_la_s | abs) / 60 * 100, 100] | min %}
+        <div style="display:table;width:100%;height:12px;background:#ddeeff;margin-bottom:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+          <div style="display:table-row;">
+            <div style="display:table-cell;width:50%;text-align:right;vertical-align:middle;border-right:2px solid #333;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+              {% if _la_s < 0 %}<div style="display:inline-block;height:8px;width:{{ _la_sw }}%;background:#1c3f6e;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>{% endif %}
+            </div>
+            <div style="display:table-cell;width:50%;text-align:left;vertical-align:middle;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+              {% if _la_s > 0 %}<div style="display:inline-block;height:8px;width:{{ _la_sw }}%;background:#e67e22;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>{% endif %}
+            </div>
+          </div>
         </div>
-        <div style="display:table-cell;width:33%;vertical-align:middle;">
-          <span style="display:inline-block;width:10px;height:10px;background-color:#f39c12;vertical-align:middle;margin-right:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></span>
-          <span style="font-size:8pt;color:#333;">D&#233;ficit 10&#8211;15% &#8212; D&#233;ficit mod&#233;r&#233;</span>
+        <div style="font-size:6pt;text-align:center;">
+          <b>S&#160;:</b>
+          {% if _la_s > 0 %}<span style="color:#e67e22;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact;">+{{ _la_s | fmt(1) }}%&#160;D</span>
+          {% elif _la_s < 0 %}<span style="color:#1c3f6e;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact;">{{ _la_s | fmt(1) }}%&#160;G</span>
+          {% else %}<span style="color:#888;">0%&#160;sym&#233;trique</span>{% endif %}
+          {% if vald_tableau.prog_cmj_landing_asym is not none %}
+          &nbsp;<span style="color:{{ vald_tableau.prog_cmj_landing_asym | couleur_progression }};font-weight:bold;">&#9650;{{ vald_tableau.prog_cmj_landing_asym | signe }}{{ vald_tableau.prog_cmj_landing_asym | fmt }}pts</span>
+          {% endif %}
         </div>
-        <div style="display:table-cell;width:33%;vertical-align:middle;">
-          <span style="display:inline-block;width:10px;height:10px;background-color:#e74c3c;vertical-align:middle;margin-right:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></span>
-          <span style="font-size:8pt;color:#333;">D&#233;ficit &gt;&#160;15% &#8212; D&#233;ficit important</span>
-        </div>
+        {% endif %}
       </div>
     </div>
+  </div>
+</div>
+{% endif %}
+{% endif %}{# /has_cmj #}
 
-    <!-- FOOTER PAGE VALD TABLEAU -->
+    <!-- FOOTER -->
     <div class="footer">
       <div class="footer-logo">
         {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
@@ -1899,17 +2045,6 @@ body {
     </div>
     {% endif %}
 
-    <!-- ══ RÉSUMÉ DU SÉJOUR ══ -->
-    {% if resume_override or (cr and cr.conclusion and cr.conclusion | trim) %}
-    <div style="border:1.5px solid #1c3f6e; border-radius:4px; overflow:visible; margin-bottom:10px; flex-shrink:0;">
-      <div style="background:#1c3f6e; color:#ffffff; font-size:9.5pt; font-weight:700; padding:5px 12px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-        R&#233;sum&#233; du s&#233;jour au CERS &mdash; Prise en charge &amp; &#233;volution
-      </div>
-      <div style="padding:8px 14px; background:#f5f8fc; font-size:9pt; color:#333; line-height:1.7; overflow-wrap:anywhere; word-wrap:break-word; white-space:pre-wrap;">
-        {% if resume_override %}{{ resume_override }}{% else %}{{ cr.conclusion }}{% endif %}
-      </div>
-    </div>
-    {% endif %}
 
     <!-- ══ ENGAGEMENT DE L'ÉQUIPE PLURIDISCIPLINAIRE ══ -->
     <div style="flex-shrink:0; margin-bottom:8px; border:2px solid #1c3f6e; border-radius:8px; overflow:hidden;">

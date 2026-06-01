@@ -1,23 +1,18 @@
 """
 vald_parser.py — Parser PDFs VALD ForceDecks
-Projet CERS Capbreton — version 3 (structure réelle avec 2 sessions par PDF)
+Version 4 — gère 1 session (reps multiples) ET 2 sessions (entrée+sortie)
 
-Structure réelle des PDFs VALD Hub exportés via Firefox → Imprimer → PDF :
-  - Un PDF SLJ contient 2 sessions (entrée + sortie) sur ~7 pages
-  - Un PDF CMJ contient 2 sessions (entrée + sortie) sur ~4 pages
-  - Les valeurs par session sont dans les annotations graphiques
-    Ex : "Jump Height (Imp-Mom) [cm]  9.7 L\n13.7 L"
-         → 1ère valeur = date ancienne = ENTRÉE
-         → 2ème valeur = date récente  = SORTIE
-  - Distinguer L (Gauche) et R (Droite) pour SLJ
-  - Distinguer "cm" (CMJ bilatéral) pour CMJ Jump Height
+Logique de détection :
+  - 1 date unique  → session unique → on extrait les moyennes (Average) des tables stats
+  - 2 dates uniques → 2 sessions   → on extrait les 2 valeurs d'annotation du graphe
 
-API principale :
-  parse_slj_pdf(pdf_source) → dict avec clés _ent / _sort
-  parse_cmj_pdf(pdf_source) → dict avec clés _ent / _sort
+Structure PDF 1 session (ex. Noe) :
+  Chaque page : "LEFT SIDERange18.7 - 19.1Average18.9CoV0.7%SD0.1RIGHT SIDERange..."
+  → résultat : clés _ent remplies, clés _sort = None
 
-Fonctions historiques conservées (rétrocompatibilité) :
-  parse_vald_slj(), parse_vald_cmj(), parse_vald_pdf()
+Structure PDF 2 sessions (ex. Adam) :
+  Chaque page : "Jump Height (Imp-Mom) [cm]  9.7 L\n13.7 L"
+  → 1re valeur = date ancienne = ENTRÉE, 2e = date récente = SORTIE
 """
 
 import re
@@ -25,9 +20,9 @@ import pdfplumber
 from datetime import datetime
 
 
-# ---------------------------------------------------------------------------
-# Helpers communs
-# ---------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────
+# HELPERS
+# ────────────────────────────────────────────────────────────────
 
 def _safe_float(s):
     try:
@@ -36,9 +31,36 @@ def _safe_float(s):
         return None
 
 
+def _count_unique_dates(text):
+    """Nombre de dates JJ/MM/AAAA distinctes et valides dans le texte."""
+    seen = set()
+    for d in re.findall(r'\d{2}/\d{2}/\d{4}', text):
+        try:
+            datetime.strptime(d, "%d/%m/%Y")
+            seen.add(d)
+        except ValueError:
+            pass
+    return len(seen)
+
+
+def _is_single_session(page1_text: str):
+    """Détecte le nombre de sessions via '1 Test' / '2 Tests' dans le texte page 1.
+
+    Retourne :
+        True  → 1 session (entrée uniquement)
+        False → 2 sessions (entrée + sortie)
+        None  → indéterminé (fallback sur comptage de dates)
+    """
+    if re.search(r'\b1\s+Test\b', page1_text, re.IGNORECASE):
+        return True
+    if re.search(r'\b2\s+Tests?\b', page1_text, re.IGNORECASE):
+        return False
+    return None
+
+
 def _extract_dates(text):
-    """Extrait et classe les dates uniques trouvées dans le texte.
-    Retourne (date_entree, date_sortie) = (ancienne, récente) format JJ/MM/AAAA."""
+    """Retourne (date_entree, date_sortie) = (plus ancienne, plus récente).
+    Si 1 seule date → (date, None) = session unique."""
     raw = re.findall(r'(\d{2}/\d{2}/\d{4})', text)
     seen, objs = set(), []
     for d in raw:
@@ -51,165 +73,273 @@ def _extract_dates(text):
     if len(objs) >= 2:
         return min(objs).strftime("%d/%m/%Y"), max(objs).strftime("%d/%m/%Y")
     if len(objs) == 1:
-        s = objs[0].strftime("%d/%m/%Y")
-        return s, s
+        return objs[0].strftime("%d/%m/%Y"), None   # session unique
     return None, None
 
 
-# ---------------------------------------------------------------------------
-# API principale — parse_slj_pdf
-# ---------------------------------------------------------------------------
+def _extract_stat_avg_side(text, side):
+    """Extrait la moyenne depuis une table 'SIDE SIDERange X - Y Average Z CoV...'.
+
+    Gère les 2 variantes :
+      - sans espaces : "LEFT SIDERange18.7 - 19.1Average18.9CoV..."
+      - avec espaces : "LEFT SIDE Range 18.7 - 19.1 Average 18.9 CoV..."
+    """
+    pattern = rf'{side}\s+SIDE\s*Range\s*-?[\d.]+\s*-\s*-?[\d.]+\s*Average\s*(-?[\d.]+)'
+    m = re.search(pattern, text, re.IGNORECASE)
+    if m:
+        return _safe_float(m.group(1))
+    return None
+
+
+def _extract_all_avgs_with_side(text):
+    """Retourne la liste [(valeur, side)] de tous les blocs 'Average X [L/R] CoV...'
+    dans le texte. side = '' si bilatéral, 'L' ou 'R' si asymétrie."""
+    results = []
+    for m in re.finditer(
+        r'Average\s*(-?[\d.]+)\s*([LR]?)\s*CoV',
+        text, re.IGNORECASE
+    ):
+        val = _safe_float(m.group(1))
+        side = m.group(2).upper() if m.group(2) else ""
+        if val is not None:
+            results.append((val, side))
+    return results
+
+
+# ────────────────────────────────────────────────────────────────
+# SLJ — parse_slj_pdf
+# ────────────────────────────────────────────────────────────────
 
 def parse_slj_pdf(pdf_source):
-    """
-    Parse un PDF SLJ exporté depuis VALD Hub.
-    Le PDF contient 2 sessions (entrée + sortie) dans le même fichier.
-    pdf_source : chemin str ou BytesIO.
+    """Parse un PDF SLJ VALD Hub (1 ou 2 sessions).
 
     Retourne dict :
-    {
-        "slj_hauteur_g_ent":   float|None,   # Jump Height Left  entrée (cm)
-        "slj_hauteur_g_sort":  float|None,   # Jump Height Left  sortie (cm)
-        "slj_hauteur_d_ent":   float|None,   # Jump Height Right entrée (cm)
-        "slj_hauteur_d_sort":  float|None,   # Jump Height Right sortie (cm)
-        "rsi_g_ent":           float|None,   # RSI-modified Left  entrée (m/s)
-        "rsi_g_sort":          float|None,   # RSI-modified Left  sortie (m/s)
-        "rsi_d_ent":           float|None,   # RSI-modified Right entrée (m/s)
-        "rsi_d_sort":          float|None,   # RSI-modified Right sortie (m/s)
-        "slj_flight_g_ent":    float|None,   # Jump Height Flight Time Left  entrée (cm)
-        "slj_flight_g_sort":   float|None,
-        "slj_flight_d_ent":    float|None,
-        "slj_flight_d_sort":   float|None,
-        "peak_force_asym_ent": float|None,   # Concentric Peak Force Asymmetry entrée (%)
-        "peak_force_asym_sort":float|None,
-        "date_entree":         str|None,     # JJ/MM/AAAA
-        "date_sortie":         str|None,
-    }
+      slj_hauteur_g_ent/sort  : Jump Height Left  entrée/sortie (cm)
+      slj_hauteur_d_ent/sort  : Jump Height Right entrée/sortie (cm)
+      rsi_g_ent/sort          : RSI-modified Left  entrée/sortie (m/s)
+      rsi_d_ent/sort          : RSI-modified Right entrée/sortie (m/s)
+      slj_flight_g_ent/sort   : Flight Time Left  entrée/sortie (cm)
+      slj_flight_d_ent/sort   : Flight Time Right entrée/sortie (cm)
+      peak_force_asym_ent/sort: Asymmetry % entrée/sortie
+      date_entree / date_sortie
+    Les clés _sort sont None pour un PDF 1 session.
     """
     result = {
-        "slj_hauteur_g_ent":    None, "slj_hauteur_g_sort":  None,
-        "slj_hauteur_d_ent":    None, "slj_hauteur_d_sort":  None,
-        "rsi_g_ent":            None, "rsi_g_sort":          None,
-        "rsi_d_ent":            None, "rsi_d_sort":          None,
-        "slj_flight_g_ent":     None, "slj_flight_g_sort":   None,
-        "slj_flight_d_ent":     None, "slj_flight_d_sort":   None,
-        "peak_force_asym_ent":  None, "peak_force_asym_sort":None,
-        "date_entree":          None, "date_sortie":         None,
+        "slj_hauteur_g_ent":    None, "slj_hauteur_g_sort":   None,
+        "slj_hauteur_d_ent":    None, "slj_hauteur_d_sort":   None,
+        "rsi_g_ent":            None, "rsi_g_sort":           None,
+        "rsi_d_ent":            None, "rsi_d_sort":           None,
+        "slj_flight_g_ent":     None, "slj_flight_g_sort":    None,
+        "slj_flight_d_ent":     None, "slj_flight_d_sort":    None,
+        "peak_force_asym_ent":  None, "peak_force_asym_sort": None,
+        "date_entree":          None, "date_sortie":          None,
     }
 
     with pdfplumber.open(pdf_source) as pdf:
-        full_text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+        pages = [page.extract_text() or "" for page in pdf.pages]
+    full_text = "\n".join(pages)
 
-    # Dates
     result["date_entree"], result["date_sortie"] = _extract_dates(full_text)
 
-    # SLJ Jump Height — Left (G) : "Jump Height (Imp-Mom) [cm]  9.7 L\n13.7 L"
+    # Détection via "1 Test" / "2 Tests" en page 1 ; fallback sur comptage dates
+    _single = _is_single_session(pages[0] if pages else "")
+    if _single is None:
+        _single = _count_unique_dates(full_text) <= 1
+
+    if _single:
+        _parse_slj_single(pages, result)
+    else:
+        _parse_slj_multi(full_text, result)
+
+    return result
+
+
+def _parse_slj_single(pages, result):
+    """1 session SLJ : extrait les moyennes LEFT/RIGHT SIDE par page."""
+    for page_text in pages:
+        pt = page_text.upper()
+
+        # Jump Height (Imp-Mom) — page contient LEFT et RIGHT SIDE, pas Flight Time
+        if "JUMP HEIGHT (IMP-MOM)" in pt and "FLIGHT TIME" not in pt:
+            g = _extract_stat_avg_side(page_text, "LEFT")
+            d = _extract_stat_avg_side(page_text, "RIGHT")
+            if g is not None and result["slj_hauteur_g_ent"] is None:
+                result["slj_hauteur_g_ent"] = g
+            if d is not None and result["slj_hauteur_d_ent"] is None:
+                result["slj_hauteur_d_ent"] = d
+
+        # RSI-modified
+        if "RSI-MODIF" in pt:
+            g = _extract_stat_avg_side(page_text, "LEFT")
+            d = _extract_stat_avg_side(page_text, "RIGHT")
+            if g is not None and result["rsi_g_ent"] is None:
+                result["rsi_g_ent"] = g
+            if d is not None and result["rsi_d_ent"] is None:
+                result["rsi_d_ent"] = d
+
+        # Flight Time
+        if "FLIGHT TIME" in pt:
+            g = _extract_stat_avg_side(page_text, "LEFT")
+            d = _extract_stat_avg_side(page_text, "RIGHT")
+            if g is not None and result["slj_flight_g_ent"] is None:
+                result["slj_flight_g_ent"] = g
+            if d is not None and result["slj_flight_d_ent"] is None:
+                result["slj_flight_d_ent"] = d
+
+
+def _parse_slj_multi(full_text, result):
+    """2 sessions SLJ : extrait les 2 valeurs d'annotation du graphe."""
+
+    # Jump Height Left : "9.7 L\n13.7 L" ou "9.7 L  13.7 L"
     m = re.search(
-        r'Jump Height \(Imp-Mom\) \[cm\]\s+([\d.]+)\s*L\s+([\d.]+)\s*L',
+        r'Jump Height \(Imp-Mom\) \[cm\]\s+([\d.]+)\s*L[\s\n]+([\d.]+)\s*L',
         full_text
     )
     if m:
         result["slj_hauteur_g_ent"]  = _safe_float(m.group(1))
         result["slj_hauteur_g_sort"] = _safe_float(m.group(2))
 
-    # SLJ Jump Height — Right (D) : "Jump Height (Imp-Mom) [cm]  8.4 R  11 R"
+    # Jump Height Right
     m = re.search(
-        r'Jump Height \(Imp-Mom\) \[cm\]\s+([\d.]+)\s*R\s+([\d.]+)\s*R',
+        r'Jump Height \(Imp-Mom\) \[cm\]\s+([\d.]+)\s*R[\s\n]+([\d.]+)\s*R',
         full_text
     )
     if m:
         result["slj_hauteur_d_ent"]  = _safe_float(m.group(1))
         result["slj_hauteur_d_sort"] = _safe_float(m.group(2))
 
-    # RSI-modified — Left (G) : "RSI-modified (Imp-Mom) [m/s]  0.13 L\n0.12 L"
+    # RSI Left
     m = re.search(
-        r'RSI-modifi(?:ed|é) \(Imp-Mom\) \[m/s\]\s*([\d.]+)\s*L\s+([\d.]+)\s*L',
+        r'RSI-modifi(?:ed|é) \(Imp-Mom\) \[m/s\]\s*([\d.]+)\s*L[\s\n]+([\d.]+)\s*L',
         full_text
     )
     if m:
         result["rsi_g_ent"]  = _safe_float(m.group(1))
         result["rsi_g_sort"] = _safe_float(m.group(2))
 
-    # RSI-modified — Right (D) : "RSI-modified (Imp-Mom) [m/s]  0.11 R  0.11 R"
+    # RSI Right
     m = re.search(
-        r'RSI-modifi(?:ed|é) \(Imp-Mom\) \[m/s\]\s*([\d.]+)\s*R\s+([\d.]+)\s*R',
+        r'RSI-modifi(?:ed|é) \(Imp-Mom\) \[m/s\]\s*([\d.]+)\s*R[\s\n]+([\d.]+)\s*R',
         full_text
     )
     if m:
         result["rsi_d_ent"]  = _safe_float(m.group(1))
         result["rsi_d_sort"] = _safe_float(m.group(2))
 
-    # Jump Height Flight Time — Left : "Jump Height (Flight Time) [cm]  10.9 L\n15.2 L"
+    # Flight Time Left
     m = re.search(
-        r'Jump Height \(Flight Time\) \[cm\]\s*([\d.]+)\s*L\s+([\d.]+)\s*L',
+        r'Jump Height \(Flight Time\) \[cm\]\s*([\d.]+)\s*L[\s\n]+([\d.]+)\s*L',
         full_text
     )
     if m:
         result["slj_flight_g_ent"]  = _safe_float(m.group(1))
         result["slj_flight_g_sort"] = _safe_float(m.group(2))
 
-    # Jump Height Flight Time — Right : "Jump Height (Flight Time) [cm]  9.3 R\n13.3 R"
+    # Flight Time Right
     m = re.search(
-        r'Jump Height \(Flight Time\) \[cm\]\s*([\d.]+)\s*R\s+([\d.]+)\s*R',
+        r'Jump Height \(Flight Time\) \[cm\]\s*([\d.]+)\s*R[\s\n]+([\d.]+)\s*R',
         full_text
     )
     if m:
         result["slj_flight_d_ent"]  = _safe_float(m.group(1))
         result["slj_flight_d_sort"] = _safe_float(m.group(2))
 
-    # Concentric Peak Force Asymmetry : "Asymmetry [%]  1.7\n1.9"
+    # Asymmetry (toujours positif en SLJ)
     m = re.search(r'Asymmetry \[%\]\s*([\d.]+)\s+([\d.]+)', full_text)
     if m:
         result["peak_force_asym_ent"]  = _safe_float(m.group(1))
         result["peak_force_asym_sort"] = _safe_float(m.group(2))
 
-    return result
 
-
-# ---------------------------------------------------------------------------
-# API principale — parse_cmj_pdf
-# ---------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────
+# CMJ — parse_cmj_pdf
+# ────────────────────────────────────────────────────────────────
 
 def parse_cmj_pdf(pdf_source):
-    """
-    Parse un PDF CMJ exporté depuis VALD Hub.
-    Le PDF contient 2 sessions (entrée + sortie) dans le même fichier.
-    pdf_source : chemin str ou BytesIO.
+    """Parse un PDF CMJ VALD Hub (1 ou 2 sessions).
 
     Retourne dict :
-    {
-        "cmj_hauteur_ent":      float|None,  # Jump Height Imp-Mom entrée (cm)
-        "cmj_hauteur_sort":     float|None,  # Jump Height Imp-Mom sortie (cm)
-        "cmj_rfd_ent":          float|None,  # Concentric RFD entrée (N/s)
-        "cmj_rfd_sort":         float|None,
-        "cmj_landing_asym_ent": float|None,  # Peak Landing Force Asymmetry entrée (%)
-        "cmj_landing_asym_sort":float|None,
-        "cmj_landing_side_ent": str|None,    # "D" (positif) ou "G" (négatif)
-        "cmj_landing_side_sort":str|None,
-        "cmj_ecc_vel_ent":      float|None,  # Eccentric Peak Velocity entrée (m/s, négatif)
-        "cmj_ecc_vel_sort":     float|None,
-        "date_entree":          str|None,    # JJ/MM/AAAA
-        "date_sortie":          str|None,
-    }
+      cmj_hauteur_ent/sort          : Jump Height bilatéral (cm)
+      cmj_rfd_ent/sort              : Concentric RFD (N/s)
+      cmj_conc_asym_ent/sort        : Concentric Peak Force Asymmetry signé (% ; + = D, − = G)
+      cmj_conc_asym_side_ent/sort   : côté dominant ('L' ou 'R')
+      cmj_landing_asym_ent/sort     : Peak Landing Force Asymmetry signé (% ; + = D, − = G)
+      cmj_landing_side_ent/sort     : côté dominant ('L'/'R' ou 'G'/'D')
+      cmj_ecc_vel_ent/sort          : Eccentric Peak Velocity (m/s, négatif)
+      date_entree / date_sortie
     """
     result = {
-        "cmj_hauteur_ent":      None, "cmj_hauteur_sort":     None,
-        "cmj_rfd_ent":          None, "cmj_rfd_sort":         None,
-        "cmj_landing_asym_ent": None, "cmj_landing_asym_sort":None,
-        "cmj_landing_side_ent": None, "cmj_landing_side_sort":None,
-        "cmj_ecc_vel_ent":      None, "cmj_ecc_vel_sort":     None,
-        "date_entree":          None, "date_sortie":          None,
+        "cmj_hauteur_ent":          None, "cmj_hauteur_sort":         None,
+        "cmj_rfd_ent":              None, "cmj_rfd_sort":             None,
+        "cmj_conc_asym_ent":        None, "cmj_conc_asym_sort":       None,
+        "cmj_conc_asym_side_ent":   None, "cmj_conc_asym_side_sort":  None,
+        "cmj_landing_asym_ent":     None, "cmj_landing_asym_sort":    None,
+        "cmj_landing_side_ent":     None, "cmj_landing_side_sort":    None,
+        "cmj_ecc_vel_ent":          None, "cmj_ecc_vel_sort":         None,
+        "date_entree":              None, "date_sortie":              None,
     }
 
     with pdfplumber.open(pdf_source) as pdf:
-        full_text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+        pages = [page.extract_text() or "" for page in pdf.pages]
+    full_text = "\n".join(pages)
 
-    # Dates
     result["date_entree"], result["date_sortie"] = _extract_dates(full_text)
 
-    # Jump Height Imp-Mom : "24.8 cm\n29.1 cm" — distingué de SLJ par le suffixe "cm"
+    # Détection via "1 Test" / "2 Tests" en page 1 ; fallback sur comptage dates
+    _single = _is_single_session(pages[0] if pages else "")
+    if _single is None:
+        _single = _count_unique_dates(full_text) <= 1
+
+    if _single:
+        _parse_cmj_single(pages, result)
+    else:
+        _parse_cmj_multi(full_text, result)
+
+    return result
+
+
+def _parse_cmj_single(pages, result):
+    """1 session CMJ : extrait les moyennes depuis les tables stats par page."""
+    for page_text in pages:
+        pt = page_text.upper()
+        avgs = _extract_all_avgs_with_side(page_text)
+
+        # ── Page : Jump Height (Imp-Mom) + Concentric Peak Force Asymmetry ──
+        if "JUMP HEIGHT (IMP-MOM)" in pt:
+            for val, side in avgs:
+                if side:  # L ou R → asymétrie concentrique
+                    if result["cmj_conc_asym_ent"] is None:
+                        result["cmj_conc_asym_ent"] = val if side == "R" else -val
+                        result["cmj_conc_asym_side_ent"] = side
+                else:     # bilatéral → hauteur de saut
+                    if result["cmj_hauteur_ent"] is None:
+                        result["cmj_hauteur_ent"] = val
+
+        # ── Page : Eccentric Peak Velocity + Peak Landing Force Asymmetry ──
+        if "ECCENTRIC PEAK VELOCITY" in pt:
+            for val, side in avgs:
+                if side:  # L ou R → landing asymmetry
+                    if result["cmj_landing_asym_ent"] is None:
+                        result["cmj_landing_asym_ent"] = val if side == "R" else -val
+                        result["cmj_landing_side_ent"] = side
+                else:     # bilatéral → vitesse excentrique (négatif)
+                    if result["cmj_ecc_vel_ent"] is None:
+                        result["cmj_ecc_vel_ent"] = val
+
+        # ── Page : Concentric RFD ──
+        if "CONCENTRIC RFD" in pt:
+            for val, side in avgs:
+                if not side and result["cmj_rfd_ent"] is None:
+                    result["cmj_rfd_ent"] = val
+                    break
+
+
+def _parse_cmj_multi(full_text, result):
+    """2 sessions CMJ : extrait les 2 valeurs d'annotation du graphe."""
+
+    # Jump Height : "24.8 cm\n29.1 cm" — suffixe "cm" distingue de SLJ (L/R)
     m = re.search(
-        r'Jump Height \(Imp-Mom\) \[cm\]\s*([\d.]+)\s*cm\s+([\d.]+)\s*cm',
+        r'Jump Height \(Imp-Mom\) \[cm\]\s*([\d.]+)\s*cm[\s\n]+([\d.]+)\s*cm',
         full_text
     )
     if m:
@@ -218,14 +348,14 @@ def parse_cmj_pdf(pdf_source):
 
     # Concentric RFD : "1000 N/s\n3419 N/s"
     m = re.search(
-        r'Concentric RFD \[N/s\]\s*([\d.]+)\s*N/s\s+([\d.]+)\s*N/s',
+        r'Concentric RFD \[N/s\]\s*([\d.]+)\s*N/s[\s\n]+([\d.]+)\s*N/s',
         full_text
     )
     if m:
         result["cmj_rfd_ent"]  = _safe_float(m.group(1))
         result["cmj_rfd_sort"] = _safe_float(m.group(2))
 
-    # Peak Landing Force Asymmetry : "55\n-17" (positif=D, négatif=G)
+    # Landing Asymmetry : "55\n-17" (positif = D, négatif = G)
     m = re.search(r'Asymmetry \[%\]\s*(-?[\d.]+)\s+(-?[\d.]+)', full_text)
     if m:
         v1 = _safe_float(m.group(1))
@@ -239,28 +369,21 @@ def parse_cmj_pdf(pdf_source):
 
     # Eccentric Peak Velocity : "-0.96 m/s\n-1.03 m/s"
     m = re.search(
-        r'Eccentric Peak Velocity \[m/s\]\s*(-?[\d.]+)\s*m/s\s+(-?[\d.]+)\s*m/s',
+        r'Eccentric Peak Velocity \[m/s\]\s*(-?[\d.]+)\s*m/s[\s\n]+(-?[\d.]+)\s*m/s',
         full_text
     )
     if m:
         result["cmj_ecc_vel_ent"]  = _safe_float(m.group(1))
         result["cmj_ecc_vel_sort"] = _safe_float(m.group(2))
 
-    return result
 
-
-# ---------------------------------------------------------------------------
-# Fonctions historiques (rétrocompatibilité — format 1 session par PDF)
-# ---------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────
+# FONCTIONS HISTORIQUES (rétrocompatibilité)
+# ────────────────────────────────────────────────────────────────
 
 def _get_pages(pdf_source):
-    """Retourne liste de pages, chaque page = liste de lignes."""
     with pdfplumber.open(pdf_source) as pdf:
-        result = []
-        for page in pdf.pages:
-            text = page.extract_text() or ""
-            result.append(text.split("\n"))
-        return result
+        return [page.extract_text() or "" for page in pdf.pages]
 
 
 HEADER_DATE_RE = re.compile(r"(\d{2}/\d{2}/\d{4})")
@@ -351,34 +474,21 @@ def _lsi(lese, sain):
 
 
 def _color(deficit):
-    if deficit is None:
-        return "grey"
-    if deficit < 10:
-        return "green"
-    if deficit <= 15:
-        return "orange"
+    if deficit is None: return "grey"
+    if deficit < 10:    return "green"
+    if deficit <= 15:   return "orange"
     return "red"
 
 
 def parse_vald_slj(pdf_source):
     """HISTORIQUE — PDF SLJ à 1 session (ancien format). Préférer parse_slj_pdf()."""
     pages = _get_pages(pdf_source)
-    all_lines = [l for p in pages for l in p]
-    header = _parse_header(pages[0] if pages else [])
-    page2 = pages[1] if len(pages) > 1 else []
-    slj_g = _extract_side_average(page2, "Jump Height (Imp-Mom) (Left) [cm]", "LEFT")
-    slj_d = _extract_side_average(page2, "Jump Height (Imp-Mom) (Left) [cm]", "RIGHT")
-    page3 = pages[2] if len(pages) > 2 else []
-    rsi_g = _extract_side_average(page3, "RSI-modified (Imp-Mom) (Left) [m/s]", "LEFT")
-    rsi_d = _extract_side_average(page3, "RSI-modified (Imp-Mom) (Left) [m/s]", "RIGHT")
-    if slj_g is None:
-        slj_g = _extract_side_average(all_lines, "Jump Height (Imp-Mom) (Left) [cm]", "LEFT")
-    if slj_d is None:
-        slj_d = _extract_side_average(all_lines, "Jump Height (Imp-Mom) (Left) [cm]", "RIGHT")
-    if rsi_g is None:
-        rsi_g = _extract_side_average(all_lines, "RSI-modified (Imp-Mom) (Left) [m/s]", "LEFT")
-    if rsi_d is None:
-        rsi_d = _extract_side_average(all_lines, "RSI-modified (Imp-Mom) (Left) [m/s]", "RIGHT")
+    all_lines = [l for p in pages for l in p.split("\n")]
+    header = _parse_header(pages[0].split("\n") if pages else [])
+    slj_g = _extract_side_average(all_lines, "Jump Height (Imp-Mom) (Left) [cm]", "LEFT")
+    slj_d = _extract_side_average(all_lines, "Jump Height (Imp-Mom) (Left) [cm]", "RIGHT")
+    rsi_g = _extract_side_average(all_lines, "RSI-modified (Imp-Mom) (Left) [m/s]", "LEFT")
+    rsi_d = _extract_side_average(all_lines, "RSI-modified (Imp-Mom) (Left) [m/s]", "RIGHT")
     dh = _deficit(slj_g, slj_d)
     dr = _deficit(rsi_g, rsi_d)
     return {
@@ -392,14 +502,11 @@ def parse_vald_slj(pdf_source):
 
 
 def parse_vald_cmj(pdf_source):
-    """HISTORIQUE — PDF CMJ à 1 session (ancien format). Préférer parse_cmj_pdf()."""
+    """HISTORIQUE — PDF CMJ à 1 session. Préférer parse_cmj_pdf()."""
     pages = _get_pages(pdf_source)
-    all_lines = [l for p in pages for l in p]
-    header = _parse_header(pages[0] if pages else [])
-    page2 = pages[1] if len(pages) > 1 else []
-    hauteur = _extract_bilateral_average(page2, "Jump Height (Imp-Mom) [cm]")
-    if hauteur is None:
-        hauteur = _extract_bilateral_average(all_lines, "Jump Height (Imp-Mom) [cm]")
+    all_lines = [l for p in pages for l in p.split("\n")]
+    header = _parse_header(pages[0].split("\n") if pages else [])
+    hauteur = _extract_bilateral_average(all_lines, "Jump Height (Imp-Mom) [cm]")
     rsi = _extract_bilateral_average(all_lines, "RSI-modified")
     return {
         "cmj_hauteur": hauteur, "cmj_rsi": rsi,
@@ -410,8 +517,8 @@ def parse_vald_cmj(pdf_source):
 def parse_vald_pdf(pdf_source):
     """HISTORIQUE — PDF VALD unifié à 1 session. Préférer parse_slj_pdf()/parse_cmj_pdf()."""
     pages = _get_pages(pdf_source)
-    all_lines = [l for p in pages for l in p]
-    header = _parse_header(pages[0] if pages else [])
+    all_lines = [l for p in pages for l in p.split("\n")]
+    header = _parse_header(pages[0].split("\n") if pages else [])
     slj_g = _extract_side_average(all_lines, "Jump Height (Imp-Mom) (Left) [cm]", "LEFT")
     slj_d = _extract_side_average(all_lines, "Jump Height (Imp-Mom) (Left) [cm]", "RIGHT")
     rsi_g = _extract_side_average(all_lines, "RSI-modified (Imp-Mom) (Left) [m/s]", "LEFT")
@@ -426,9 +533,9 @@ def parse_vald_pdf(pdf_source):
     }
 
 
-# ---------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────
 # CLI
-# ---------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import sys, json
 
@@ -450,7 +557,7 @@ if __name__ == "__main__":
     elif mode == "vald":
         result = parse_vald_pdf(path)
     else:
-        print(f"Mode inconnu : {mode} (utiliser slj, cmj, slj-old, cmj-old, vald)")
+        print(f"Mode inconnu : {mode}")
         sys.exit(1)
 
     print(json.dumps(result, indent=2, ensure_ascii=False))

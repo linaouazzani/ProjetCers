@@ -441,6 +441,16 @@ body {
 .gps-neg { color: #c0392b; font-weight: 700; }
 .gps-neu { color: #888888; font-weight: 700; }
 .gps-nd  { color: #333333; font-weight: 700; }
+
+/* ====== VALD MANUEL ====== */
+.vm-h1 { background: #1c3f6e; color: #fff; font-size: 9pt; font-weight: 700; padding: 4px 12px; border-radius: 2px 2px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.vm-h2 { background: #2a6099; color: #fff; font-size: 9pt; font-weight: 700; padding: 4px 12px; border-radius: 2px 2px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.vm-h3 { background: #374151; color: #fff; font-size: 9pt; font-weight: 700; padding: 4px 12px; border-radius: 2px 2px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.vm-td { border: 1px solid #cccccc; padding: 5px 6px; text-align: center; font-weight: 700; }
+.vm-pos { color: #1a7a30; }
+.vm-neg { color: #c0392b; }
+.vm-neu { color: #888888; }
+.vm-null { color: #cccccc; font-weight: 400; font-style: italic; }
 </style>
 </head>
 <body>
@@ -1976,6 +1986,93 @@ body {
 </div><!-- fin page vald-tableau -->
 {% endif %}
 
+
+{% if vald_manual and (vald_manual.cmj or vald_manual.dj or vald_manual.slj) %}
+<!-- ══════════════════════════════════════════════════
+     PAGE VALD — SAISIE MANUELLE (CMJ / DROP JUMP / SLJ)
+     ══════════════════════════════════════════════════ -->
+<div class="page" data-section="vald-manuel" style="height:auto !important;overflow:visible !important;">
+
+  <!-- EN-TETE -->
+  <div style="display:table;width:100%;padding:6px 14px;border-bottom:2px solid #1c3f6e;box-sizing:border-box;flex-shrink:0;background:#ffffff;">
+    <div style="display:table-cell;width:20%;vertical-align:middle;">
+      {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" style="height:34px;display:block;" alt="CERS Capbreton">
+      {% else %}<div style="font-size:9pt;font-weight:bold;color:#1c3f6e;">CERS<br>Capbreton</div>{% endif %}
+      <div style="font-size:6pt;color:#1c3f6e;font-weight:bold;margin-top:2px;">Groupe Ramsay Sant&#233;</div>
+    </div>
+    <div style="display:table-cell;width:60%;vertical-align:middle;text-align:center;padding:0 10px;">
+      <div style="font-size:11pt;font-weight:bold;color:#1c3f6e;">CERS Capbreton &nbsp;&#8212;&nbsp; Bilan Complet Patient</div>
+      <div style="font-size:7pt;color:#555;margin-top:1px;">{{ anon(patient.nom) }} &nbsp;&#183;&nbsp; Entr&#233;e {{ entree.date_test }} &nbsp;&#183;&nbsp; Sortie {{ sortie.date_test }}</div>
+    </div>
+    <div style="display:table-cell;width:20%;vertical-align:middle;">
+      <div style="display:table;width:100%;table-layout:fixed;">
+        <div style="display:table-row;"><div style="display:table-cell;text-align:center;padding-bottom:2px;vertical-align:middle;">
+          {% if logo_club_b64 %}<img src="{{ logo_club_b64 }}" style="height:30px;max-width:70px;display:block;margin:0 auto;object-fit:contain;" alt="{{ nom_club }}">{% endif %}
+        </div></div>
+        <div style="display:table-row;"><div style="display:table-cell;text-align:center;font-size:7pt;font-weight:bold;color:#1c3f6e;word-break:break-word;">{{ nom_club }}</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="height:4px;background:#1c3f6e;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+
+  <div class="page-content">
+
+    <!-- TITRE -->
+    <div style="background:#1c3f6e;color:#ffffff;font-size:13pt;font-weight:800;padding:8px 16px;margin:8px 0 10px 0;border-radius:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      &#9654; VALD ForceDecks &mdash; Bilan des tests de force
+    </div>
+
+    {% macro vald_table(rows, titre, header_cls) %}
+    {% if rows %}
+    <div style="margin-bottom:12px;">
+      <div class="{{ header_cls }}">{{ titre }}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:8.5pt;table-layout:fixed;">
+        <thead>
+          <tr style="-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:left;width:48%;">Indicateur</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:center;width:16%;">Entr&#233;e</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:center;width:16%;">Sortie</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:center;width:20%;">Progression</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          {% set prog = row.progression %}
+          {% set prog_cls = 'vm-pos' if prog is not none and prog > 0 else ('vm-neg' if prog is not none and prog < 0 else ('vm-neu' if prog is not none else 'vm-null')) %}
+          <tr class="{% if loop.index is odd %}gps-alt{% endif %}">
+            <td style="border:1px solid #cccccc;padding:5px 8px;font-weight:600;color:#1c3f6e;">{{ row.indicateur }}</td>
+            <td style="border:1px solid #cccccc;padding:5px 6px;text-align:center;">{{ row.entree if row.entree is not none else '—' }}</td>
+            <td style="border:1px solid #cccccc;padding:5px 6px;text-align:center;">{{ row.sortie if row.sortie is not none else '—' }}</td>
+            <td class="vm-td {{ prog_cls }}">
+              {% if prog is not none %}
+                {% if prog > 0 %}&#8593;{% elif prog < 0 %}&#8595;{% else %}&#8594;{% endif %}
+                {{ "%.1f"|format(prog|abs) }}&nbsp;%
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+    {% endmacro %}
+
+    {{ vald_table(vald_manual.cmj, "CMJ — Counter Movement Jump", "vm-h1") }}
+    {{ vald_table(vald_manual.dj,  "Drop Jump",                   "vm-h2") }}
+    {{ vald_table(vald_manual.slj, "SLJ — Single Leg Jump",       "vm-h3") }}
+
+    <div class="footer">
+      <div class="footer-logo">
+        {% if logo_cers_b64 %}<img src="{{ logo_cers_b64 }}" alt="CERS">
+        {% else %}<span class="footer-logo-text">CERS Capbreton</span>{% endif %}
+      </div>
+      <div class="footer-mention">VALD ForceDecks &middot; Centre Europ&#233;en de R&#233;&#233;ducation du Sportif &middot; Document confidentiel</div>
+      <div class="footer-page">VALD</div>
+    </div>
+
+  </div>
+</div><!-- fin page vald-manuel -->
+{% endif %}
 
 {% if gps and gps.sessions %}
 <!-- ══════════════════════════════════════════════════

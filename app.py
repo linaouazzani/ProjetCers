@@ -11,6 +11,7 @@ import os
 import base64
 import datetime
 import json
+import pandas as pd
 from clubs_database import search_clubs
 from cr_parser import parse_compte_rendu
 from gps_parser import parse_gps_pdf
@@ -467,73 +468,116 @@ with col_left:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 1b. VALD ForceDecks
-    import io
-    from vald_parser import parse_slj_pdf, parse_cmj_pdf
+    # 1b. VALD ForceDecks — saisie manuelle (3 tableaux)
+    _CMJ_IND = [
+        "Jump Height (cm)",
+        "Peak Power / BM (W/kg)",
+        "RSI Modified (m/s)",
+        "Concentric Impulse (%)",
+        "Peak Landing Force (%)",
+    ]
+    _DJ_IND = [
+        "Jump Height (cm)",
+        "Peak Power / BM (W/kg)",
+        "RSI JH — Flight Time / Contact Time (m/s)",
+        "Peak Landing Force (%)",
+    ]
+    _SLJ_IND = [
+        "Max Jump Height (cm)",
+        "RSI Modified (m/s)",
+        "Eccentric Braking RFD / BM (N/s)",
+    ]
 
-    slj_data, cmj_data = None, None
+    def _vald_default_df(indicators):
+        return pd.DataFrame({
+            "Indicateur":      indicators,
+            "Entrée":          pd.array([None] * len(indicators), dtype=pd.Float64Dtype()),
+            "Sortie":          pd.array([None] * len(indicators), dtype=pd.Float64Dtype()),
+            "Progression (%)": pd.array([None] * len(indicators), dtype=pd.Float64Dtype()),
+        })
 
-    with st.expander("📊 VALD ForceDecks — Sauts (optionnel)"):
+    def _calc_prog_df(df):
+        df = df.copy()
+        def _p(row):
+            try:
+                e, s = float(row["Entrée"]), float(row["Sortie"])
+                if e == 0: return None
+                return round((s - e) / abs(e) * 100, 1)
+            except (ValueError, TypeError):
+                return None
+        df["Progression (%)"] = df.apply(_p, axis=1)
+        return df
+
+    for _k, _d in [("vald_cmj", _CMJ_IND), ("vald_dj", _DJ_IND), ("vald_slj", _SLJ_IND)]:
+        if _k not in st.session_state:
+            st.session_state[_k] = _vald_default_df(_d)
+
+    _col_cfg = lambda: {
+        "Indicateur":      st.column_config.TextColumn("Indicateur", width="large"),
+        "Entrée":          st.column_config.NumberColumn("Entrée",  format="%.2f"),
+        "Sortie":          st.column_config.NumberColumn("Sortie",  format="%.2f"),
+        "Progression (%)": st.column_config.NumberColumn("Progression (%)", format="%.1f", disabled=True),
+    }
+
+    slj_data, cmj_data = None, None   # compatibilité ascendante
+
+    with st.expander("🏋️ VALD ForceDecks — Saisie manuelle (optionnel)", expanded=False):
         st.caption(
-            "Chaque PDF contient les 2 sessions (entrée + sortie) exportées depuis VALD Hub · "
-            "Firefox → Imprimer → Enregistrer en PDF"
+            "Remplissez les valeurs d'entrée et de sortie pour chaque indicateur. "
+            "La progression est calculée automatiquement. "
+            "Vous pouvez ajouter des lignes avec le bouton ＋ en bas du tableau."
         )
+        tab_cmj, tab_dj, tab_slj = st.tabs(["CMJ", "Drop Jump", "SLJ"])
 
-        col_v1, col_v2 = st.columns(2)
-        with col_v1:
-            pdf_slj_up = st.file_uploader(
-                "📊 SLJ — PDF VALD Hub", type="pdf", key="vald_slj",
-                help="Export VALD Hub contenant 1 ou 2 sessions SLJ (Single-Leg Jump)"
+        with tab_cmj:
+            edited_cmj = st.data_editor(
+                st.session_state.vald_cmj,
+                num_rows="dynamic", use_container_width=True,
+                key="editor_cmj", column_config=_col_cfg(),
             )
-        with col_v2:
-            pdf_cmj_up = st.file_uploader(
-                "📊 CMJ — PDF VALD Hub", type="pdf", key="vald_cmj",
-                help="Export VALD Hub contenant 1 ou 2 sessions CMJ (Counter-Movement Jump)"
+            st.session_state.vald_cmj = _calc_prog_df(edited_cmj)
+
+        with tab_dj:
+            edited_dj = st.data_editor(
+                st.session_state.vald_dj,
+                num_rows="dynamic", use_container_width=True,
+                key="editor_dj", column_config=_col_cfg(),
             )
+            st.session_state.vald_dj = _calc_prog_df(edited_dj)
 
-        if pdf_slj_up:
-            try:
-                slj_data = parse_slj_pdf(io.BytesIO(pdf_slj_up.getvalue()))
-                infos = []
-                if slj_data.get("slj_hauteur_g_ent") is not None:
-                    infos.append(
-                        f"Haut G : {slj_data['slj_hauteur_g_ent']} → {slj_data['slj_hauteur_g_sort']} cm"
-                    )
-                if slj_data.get("slj_hauteur_d_ent") is not None:
-                    infos.append(
-                        f"Haut D : {slj_data['slj_hauteur_d_ent']} → {slj_data['slj_hauteur_d_sort']} cm"
-                    )
-                if slj_data.get("rsi_g_ent") is not None:
-                    infos.append(
-                        f"RSI G : {slj_data['rsi_g_ent']} → {slj_data['rsi_g_sort']} m/s"
-                    )
-                if slj_data.get("rsi_d_ent") is not None:
-                    infos.append(
-                        f"RSI D : {slj_data['rsi_d_ent']} → {slj_data['rsi_d_sort']} m/s"
-                    )
-                st.success("✅ SLJ lu · " + (" · ".join(infos) or "aucune valeur extraite"))
-            except Exception as _e:
-                st.error(f"Erreur PDF SLJ : {_e}")
+        with tab_slj:
+            edited_slj = st.data_editor(
+                st.session_state.vald_slj,
+                num_rows="dynamic", use_container_width=True,
+                key="editor_slj", column_config=_col_cfg(),
+            )
+            st.session_state.vald_slj = _calc_prog_df(edited_slj)
 
-        if pdf_cmj_up:
-            try:
-                cmj_data = parse_cmj_pdf(io.BytesIO(pdf_cmj_up.getvalue()))
-                infos = []
-                if cmj_data.get("cmj_hauteur_ent") is not None:
-                    infos.append(
-                        f"Hauteur : {cmj_data['cmj_hauteur_ent']} → {cmj_data['cmj_hauteur_sort']} cm"
-                    )
-                if cmj_data.get("cmj_rfd_ent") is not None:
-                    infos.append(
-                        f"RFD : {cmj_data['cmj_rfd_ent']} → {cmj_data['cmj_rfd_sort']} N/s"
-                    )
-                if cmj_data.get("cmj_ecc_vel_ent") is not None:
-                    infos.append(
-                        f"Vel.Ecc : {cmj_data['cmj_ecc_vel_ent']} → {cmj_data['cmj_ecc_vel_sort']} m/s"
-                    )
-                st.success("✅ CMJ lu · " + (" · ".join(infos) or "aucune valeur extraite"))
-            except Exception as _e:
-                st.error(f"Erreur PDF CMJ : {_e}")
+        if st.button("↺ Réinitialiser les tableaux VALD", key="reset_vald"):
+            st.session_state.vald_cmj = _vald_default_df(_CMJ_IND)
+            st.session_state.vald_dj  = _vald_default_df(_DJ_IND)
+            st.session_state.vald_slj = _vald_default_df(_SLJ_IND)
+            st.rerun()
+
+    # Conversion pour le rapport : liste de dicts (ignorer les lignes vides)
+    def _df_to_rows(df):
+        rows = []
+        for r in df.to_dict("records"):
+            if r.get("Indicateur") and (r.get("Entrée") is not None or r.get("Sortie") is not None):
+                rows.append({
+                    "indicateur":  str(r["Indicateur"]),
+                    "entree":      r["Entrée"],
+                    "sortie":      r["Sortie"],
+                    "progression": r["Progression (%)"],
+                })
+        return rows
+
+    vald_manual = {
+        "cmj": _df_to_rows(st.session_state.vald_cmj),
+        "dj":  _df_to_rows(st.session_state.vald_dj),
+        "slj": _df_to_rows(st.session_state.vald_slj),
+    }
+    _has_vald_manual = any(vald_manual[k] for k in vald_manual)
 
     # Parsing compte-rendu médical
     cr_data = None
@@ -986,6 +1030,7 @@ with col_right:
                 programme_prepa         = programme_prepa,
                 conclusion_sortie       = conclusion_sortie,
                 gps_data               = gps_data,
+                vald_manual            = vald_manual if _has_vald_manual else None,
             )
 
             progress.progress(90, text="📄 Traitement du résultat...")

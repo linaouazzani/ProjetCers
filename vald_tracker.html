@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CERS — Suivi VALD ForceDecks</title>
+<style>
+:root {
+  --blue:   #1c3f6e;
+  --blue2:  #2a6099;
+  --green:  #1a7a30;
+  --red:    #c0392b;
+  --yellow: #fff3cd;
+  --yellow-border: #f0b429;
+  --bg:     #f4f7fb;
+  --white:  #ffffff;
+  --border: #d0dae8;
+  --text:   #1a1a2e;
+  --gray:   #6b7280;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+
+/* ── HEADER ── */
+header {
+  background: var(--blue);
+  color: white;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+header h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.3px; }
+header p  { font-size: 11px; color: #a8c4e0; margin-top: 2px; }
+
+/* ── TOOLBAR ATHLÈTES ── */
+#toolbar {
+  background: white;
+  border-bottom: 2px solid var(--border);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+#toolbar label { font-size: 11px; font-weight: 700; color: var(--blue); text-transform: uppercase; }
+#athlete-select {
+  min-width: 200px;
+  padding: 5px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text);
+  background: white;
+}
+#athlete-select:focus { outline: none; border-color: var(--blue); }
+#new-name {
+  padding: 5px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  font-size: 13px;
+  width: 160px;
+}
+#new-name:focus { outline: none; border-color: var(--blue); }
+button { cursor: pointer; border: none; border-radius: 4px; padding: 6px 14px; font-size: 12px; font-weight: 600; transition: opacity .15s; }
+button:hover { opacity: .85; }
+.btn-primary { background: var(--blue); color: white; }
+.btn-danger  { background: var(--red);  color: white; }
+.btn-gray    { background: #6b7280;     color: white; }
+.btn-print   { background: #2a8a36;     color: white; margin-left: auto; }
+
+/* ── FICHE ATHLÈTE ── */
+#athlete-card {
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.card-field { display: flex; flex-direction: column; gap: 3px; }
+.card-field label { font-size: 10px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 0.4px; }
+.card-field input {
+  padding: 4px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  font-size: 13px;
+  width: 140px;
+}
+.card-field input[type=text] { width: 200px; }
+.card-field input:focus { outline: none; border-color: var(--blue); }
+
+/* ── TABS ── */
+#tabs {
+  background: white;
+  border-bottom: 2px solid var(--border);
+  display: flex;
+  gap: 0;
+  padding: 0 24px;
+}
+.tab {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+  user-select: none;
+}
+.tab:hover  { color: var(--blue); }
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* ── CONTENT ── */
+#content { padding: 20px 24px; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* ── TABLE ── */
+.test-table-wrap { overflow-x: auto; }
+table.vt {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 560px;
+}
+table.vt th, table.vt td {
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+table.vt thead tr {
+  background: var(--blue);
+  color: white;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+table.vt thead tr.sub-header {
+  background: #2a6099;
+  font-size: 11px;
+}
+table.vt th { text-align: center; font-weight: 700; }
+table.vt th.left { text-align: left; }
+table.vt td.indicator { font-weight: 600; color: var(--blue); background: #f0f4fa; min-width: 200px; }
+table.vt td.unit { color: var(--gray); text-align: center; font-size: 11px; width: 55px; }
+table.vt td.input-cell { text-align: center; padding: 4px; }
+table.vt td.prog { text-align: center; font-weight: 700; font-size: 12px; min-width: 80px; }
+table.vt tr:nth-child(even) td.indicator { background: #e8eef5; }
+table.vt tr.asym-row td.indicator { font-style: italic; font-size: 11px; padding-left: 20px; }
+table.vt td.highlight-asym { background: var(--yellow) !important; border-color: var(--yellow-border); }
+
+/* ── INPUTS dans les cellules ── */
+.val-input {
+  width: 72px;
+  padding: 3px 5px;
+  border: 1.5px solid var(--border);
+  border-radius: 3px;
+  text-align: center;
+  font-size: 12px;
+  font-family: inherit;
+}
+.val-input:focus { outline: none; border-color: var(--blue); background: #eef3fa; }
+.side-select {
+  width: 40px;
+  padding: 3px 2px;
+  border: 1.5px solid var(--border);
+  border-radius: 3px;
+  font-size: 11px;
+  text-align: center;
+  cursor: pointer;
+}
+.side-select:focus { outline: none; border-color: var(--blue); }
+
+/* ── PROGRESSION COLORS ── */
+.prog-pos { color: var(--green); }
+.prog-neg { color: var(--red); }
+.prog-null { color: var(--gray); font-style: italic; font-weight: 400; font-size: 11px; }
+
+/* ── EMPTY STATE ── */
+#empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--gray);
+}
+#empty-state h2 { font-size: 18px; margin-bottom: 8px; color: var(--blue); }
+
+/* ── MODAL RAPPORT ── */
+#report-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 1000;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+#report-modal.open { display: flex; }
+#report-box {
+  background: white;
+  border-radius: 6px;
+  max-width: 900px;
+  width: 100%;
+  padding: 32px;
+  position: relative;
+}
+#report-close {
+  position: absolute;
+  top: 12px; right: 16px;
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--gray);
+  background: none;
+  border: none;
+  padding: 0;
+}
+#report-close:hover { color: var(--red); }
+
+/* ── PRINT ── */
+@media print {
+  header, #toolbar, #athlete-card, #tabs, #report-close, button { display: none !important; }
+  #report-box { box-shadow: none; padding: 0; }
+  #report-modal { position: static; background: none; padding: 0; display: block !important; }
+  body { background: white; font-size: 11px; }
+  .rpt-table { font-size: 10px; }
+  .rpt-table th, .rpt-table td { padding: 4px 6px; }
+}
+
+/* ── RAPPORT TABLE ── */
+.rpt-section { margin-bottom: 24px; }
+.rpt-section h3 {
+  background: var(--blue);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 3px 3px 0 0;
+  font-size: 13px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.rpt-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rpt-table th, .rpt-table td { border: 1px solid var(--border); padding: 6px 8px; }
+.rpt-table thead th { background: #2a6099; color: white; text-align: center; font-size: 11px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.rpt-table thead th.left { text-align: left; }
+.rpt-table td.rpt-ind { background: #f0f4fa; font-weight: 600; color: var(--blue); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.rpt-table td.center { text-align: center; }
+.rpt-table td.asym-highlight { background: var(--yellow); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.rpt-pos { color: var(--green); font-weight: 700; }
+.rpt-neg { color: var(--red);   font-weight: 700; }
+.rpt-null { color: var(--gray); font-style: italic; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>CERS Capbreton — Suivi VALD ForceDecks</h1>
+    <p>Préparation physique · CMJ · Drop Jump · Single Leg Squat</p>
+  </div>
+</header>
+
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <label>Athlète</label>
+  <select id="athlete-select" onchange="selectAthlete(this.value)"><option value="">— Sélectionner —</option></select>
+  <input id="new-name" type="text" placeholder="Nouveau nom..." maxlength="60">
+  <button class="btn-primary" onclick="addAthlete()">＋ Ajouter</button>
+  <button class="btn-danger"  onclick="resetAthlete()">↺ Réinitialiser</button>
+  <button class="btn-gray"    onclick="deleteAthlete()">✕ Supprimer</button>
+  <button class="btn-print"   onclick="openReport()">📄 Générer le rapport</button>
+</div>
+
+<!-- FICHE -->
+<div id="athlete-card" style="display:none">
+  <div class="card-field">
+    <label>Nom complet</label>
+    <input type="text" id="cf-nom" placeholder="Nom Prénom" oninput="updateCard('nom',this.value)">
+  </div>
+  <div class="card-field">
+    <label>Date d'entrée</label>
+    <input type="date" id="cf-entree" oninput="updateCard('date_entree',this.value)">
+  </div>
+  <div class="card-field">
+    <label>Date de sortie</label>
+    <input type="date" id="cf-sortie" oninput="updateCard('date_sortie',this.value)">
+  </div>
+</div>
+
+<!-- TABS -->
+<div id="tabs" style="display:none">
+  <div class="tab active" onclick="switchTab('cmj',this)">CMJ</div>
+  <div class="tab"        onclick="switchTab('dj',this)">Drop Jump</div>
+  <div class="tab"        onclick="switchTab('sls',this)">SLS</div>
+</div>
+
+<!-- CONTENT -->
+<div id="content">
+  <div id="empty-state">
+    <h2>Aucun athlète sélectionné</h2>
+    <p>Saisissez un nom et cliquez sur « ＋ Ajouter » pour créer une fiche.</p>
+  </div>
+  <div class="section" id="sec-cmj"></div>
+  <div class="section" id="sec-dj"></div>
+  <div class="section" id="sec-sls"></div>
+</div>
+
+<!-- MODAL RAPPORT -->
+<div id="report-modal">
+  <div id="report-box">
+    <button id="report-close" onclick="closeReport()">✕</button>
+    <div id="report-content"></div>
+    <br>
+    <button class="btn-print" onclick="window.print()">🖨 Imprimer / Exporter PDF</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIG DES INDICATEURS
+// ══════════════════════════════════════════════
+const CMJ_IND = [
+  { k:'jump_height',      label:'Jump Height Imp-Mom',              unit:'cm',   type:'simple' },
+  { k:'peak_power_bm',    label:'Peak Power / BM',                  unit:'W/kg', type:'simple' },
+  { k:'rsi_modified',     label:'RSI Modified Imp-Mom',             unit:'m/s',  type:'simple' },
+  { k:'ecc_braking_asym', label:'Eccentric Braking Impulse % Asym', unit:'%',    type:'asym',   highlight:false },
+  { k:'conc_impulse_asym',label:'Concentric Impulse % Asym',        unit:'%',    type:'asym',   highlight:false },
+  { k:'peak_landing_asym',label:'Peak Landing Force % Asym',        unit:'%',    type:'asym',   highlight:true  },
+];
+
+const DJ_IND = [
+  { k:'jump_height',      label:'Jump Height Imp-Mom',              unit:'cm',   type:'simple' },
+  { k:'peak_power_bm',    label:'Peak Power / BM',                  unit:'W/kg', type:'simple' },
+  { k:'rsi_jh_ft_ct',    label:'RSI — JH Flight Time / Contact Time', unit:'m/s', type:'simple' },
+  { k:'ecc_impulse_asym', label:'Eccentric Impulse % Asym',         unit:'%',    type:'asym',   highlight:false },
+  { k:'conc_impulse_asym',label:'Concentric Impulse % Asym',        unit:'%',    type:'asym',   highlight:false },
+  { k:'peak_landing_asym',label:'Peak Landing Force % Asym',        unit:'%',    type:'asym',   highlight:true  },
+];
+
+// SLS : type 'simple' ou 'lr' (pair gauche/droite avec asym auto)
+const SLS_IND = [
+  { k:'max_jump_height',    label:'Max Jump Height',              unit:'cm',  type:'simple' },
+  { k:'rsi_modified',       label:'RSI Modified',                 unit:'m/s', type:'simple' },
+  { k:'ecc_braking_rfd_bm', label:'Eccentric Braking RFD / BM',  unit:'N/s', type:'simple' },
+  { k:'conc_pf',            label:'Concentric Peak Force',        unit:'N',   type:'lr'     },
+  { k:'ecc_pf',             label:'Eccentric Peak Force',         unit:'N',   type:'lr'     },
+  { k:'peak_force',         label:'Peak Force',                   unit:'N',   type:'lr'     },
+  { k:'ecc_decel_rfd',      label:'Eccentric Decel RFD',          unit:'N/s', type:'lr'     },
+];
+
+// ══════════════════════════════════════════════
+//  ÉTAT & LOCALSTORAGE
+// ══════════════════════════════════════════════
+let state = { athletes: [], currentId: null };
+
+function freshAthlete(nom) {
+  const makePair   = () => ({ e:'', s:'' });
+  const makeAsym   = () => ({ e:'', eS:'L', s:'', sS:'L' });
+  const makeLR     = () => ({ eL:'', eR:'', sL:'', sR:'' });
+  return {
+    id: Date.now() + Math.random().toString(36).slice(2),
+    nom, date_entree:'', date_sortie:'',
+    cmj: Object.fromEntries(CMJ_IND.map(i => [i.k, i.type==='asym' ? makeAsym() : makePair()])),
+    dj:  Object.fromEntries(DJ_IND.map(i  => [i.k, i.type==='asym' ? makeAsym() : makePair()])),
+    sls: Object.fromEntries(SLS_IND.map(i => [i.k, i.type==='lr'   ? makeLR()   : makePair()])),
+  };
+}
+
+function save() {
+  localStorage.setItem('cers_vald_v2', JSON.stringify(state));
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem('cers_vald_v2');
+    if (raw) state = JSON.parse(raw);
+  } catch(e) { state = { athletes:[], currentId:null }; }
+}
+
+function currentAthlete() {
+  return state.athletes.find(a => a.id === state.currentId) || null;
+}
+
+// ══════════════════════════════════════════════
+//  CALCULS
+// ══════════════════════════════════════════════
+function calcProg(e, s) {
+  const ev = parseFloat(e), sv = parseFloat(s);
+  if (isNaN(ev) || isNaN(sv) || ev === 0) return null;
+  return ((sv - ev) / Math.abs(ev)) * 100;
+}
+
+function calcAsym(L, R) {
+  const lv = parseFloat(L), rv = parseFloat(R);
+  if (isNaN(lv) || isNaN(rv)) return null;
+  const mx = Math.max(Math.abs(lv), Math.abs(rv));
+  if (mx === 0) return null;
+  return Math.abs(lv - rv) / mx * 100;
+}
+
+function fmtProg(val) {
+  if (val === null) return '<span class="prog-null">—</span>';
+  const sign = val >= 0 ? '↑' : '↓';
+  const cls  = val >= 0 ? 'prog-pos' : 'prog-neg';
+  return `<span class="${cls}">${sign} ${Math.abs(val).toFixed(1)} %</span>`;
+}
+
+function fmtProgRpt(val) {
+  if (val === null) return '<span class="rpt-null">—</span>';
+  const sign = val >= 0 ? '↑' : '↓';
+  const cls  = val >= 0 ? 'rpt-pos' : 'rpt-neg';
+  return `<span class="${cls}">${sign} ${Math.abs(val).toFixed(1)} %</span>`;
+}
+
+// ══════════════════════════════════════════════
+//  GESTION ATHLÈTES
+// ══════════════════════════════════════════════
+function renderAthleteSelect() {
+  const sel = document.getElementById('athlete-select');
+  sel.innerHTML = '<option value="">— Sélectionner —</option>';
+  state.athletes.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.textContent = a.nom || '(sans nom)';
+    if (a.id === state.currentId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function selectAthlete(id) {
+  state.currentId = id || null;
+  save();
+  renderAll();
+}
+
+function addAthlete() {
+  const inp = document.getElementById('new-name');
+  const nom = inp.value.trim();
+  if (!nom) { inp.focus(); return; }
+  const a = freshAthlete(nom);
+  state.athletes.push(a);
+  state.currentId = a.id;
+  inp.value = '';
+  save();
+  renderAll();
+}
+
+function resetAthlete() {
+  const a = currentAthlete();
+  if (!a) return;
+  if (!confirm(`Réinitialiser toutes les données de ${a.nom || 'cet athlète'} ?`)) return;
+  const fresh = freshAthlete(a.nom);
+  fresh.id           = a.id;
+  fresh.date_entree  = a.date_entree;
+  fresh.date_sortie  = a.date_sortie;
+  const idx = state.athletes.findIndex(x => x.id === a.id);
+  state.athletes[idx] = fresh;
+  save();
+  renderAll();
+}
+
+function deleteAthlete() {
+  const a = currentAthlete();
+  if (!a) return;
+  if (!confirm(`Supprimer ${a.nom || 'cet athlète'} définitivement ?`)) return;
+  state.athletes = state.athletes.filter(x => x.id !== a.id);
+  state.currentId = state.athletes[0]?.id || null;
+  save();
+  renderAll();
+}
+
+function updateCard(field, val) {
+  const a = currentAthlete();
+  if (!a) return;
+  a[field] = val;
+  save();
+}
+
+// ══════════════════════════════════════════════
+//  MISE À JOUR D'UNE VALEUR
+// ══════════════════════════════════════════════
+function updateVal(el) {
+  const a = currentAthlete();
+  if (!a) return;
+  const test = el.dataset.test;
+  const key  = el.dataset.key;
+  const col  = el.dataset.col;
+  a[test][key][col] = el.value;
+  save();
+  refreshRow(test, key);
+}
+
+function refreshRow(test, key) {
+  const a = currentAthlete();
+  if (!a) return;
+  const d   = a[test][key];
+  const progCell = document.getElementById(`prog-${test}-${key}`);
+  if (!progCell) return;
+
+  if (d.hasOwnProperty('eL')) {
+    // Ligne LR — pas de progression directe sur cette clé
+    // Recalcul de l'asym row
+    refreshAsymRow(test, key);
+  } else if (d.hasOwnProperty('eS')) {
+    // Type asym — progression sur la valeur
+    const pct = calcProg(d.e, d.s);
+    progCell.innerHTML = fmtProg(pct);
+    // Highlight si >10
+    const parent = progCell.closest('tr');
+    const cells  = parent.querySelectorAll('td:not(.indicator):not(.unit)');
+    const ind    = document.getElementById(`ind-${test}-${key}`);
+    const shouldHL = (parseFloat(d.e) > 10 || parseFloat(d.s) > 10);
+    // On cherche si c'est un indicateur highlight
+    // Mémorisation via data sur la ligne
+    const doHL = parent.dataset.highlight === 'true';
+    if (doHL) {
+      const eCell = document.getElementById(`e-cell-${test}-${key}`);
+      const sCell = document.getElementById(`s-cell-${test}-${key}`);
+      if (eCell) eCell.classList.toggle('highlight-asym', parseFloat(d.e) > 10);
+      if (sCell) sCell.classList.toggle('highlight-asym', parseFloat(d.s) > 10);
+    }
+  } else {
+    // Type simple
+    const pct = calcProg(d.e, d.s);
+    progCell.innerHTML = fmtProg(pct);
+  }
+}
+
+function refreshAsymRow(test, key) {
+  const a = currentAthlete();
+  if (!a) return;
+  const d = a[test][key];
+  const asymE = document.getElementById(`asym-e-${test}-${key}`);
+  const asymS = document.getElementById(`asym-s-${test}-${key}`);
+  if (asymE) asymE.textContent = calcAsym(d.eL, d.eR) !== null ? calcAsym(d.eL, d.eR).toFixed(1) + ' %' : '—';
+  if (asymS) asymS.textContent = calcAsym(d.sL, d.sR) !== null ? calcAsym(d.sL, d.sR).toFixed(1) + ' %' : '—';
+  // Highlight
+  const asymECell = document.getElementById(`asym-e-cell-${test}-${key}`);
+  const asymSCell = document.getElementById(`asym-s-cell-${test}-${key}`);
+  const ae = calcAsym(d.eL, d.eR);
+  const as = calcAsym(d.sL, d.sR);
+  if (asymECell) asymECell.classList.toggle('highlight-asym', ae !== null && ae > 10);
+  if (asymSCell) asymSCell.classList.toggle('highlight-asym', as !== null && as > 10);
+}
+
+// ══════════════════════════════════════════════
+//  RENDU D'UN TABLEAU TEST
+// ══════════════════════════════════════════════
+function renderTable(test, indicators, a) {
+  let html = `<div class="test-table-wrap"><table class="vt">
+  <thead>
+    <tr>
+      <th class="left" style="width:220px">Indicateur</th>
+      <th style="width:55px">Unité</th>
+      <th colspan="2">ENTRÉE</th>
+      <th colspan="2">SORTIE</th>
+      <th style="width:90px">PROGRESSION</th>
+    </tr>
+    <tr class="sub-header">
+      <th class="left"></th><th></th>
+      <th>Valeur</th><th>Côté</th>
+      <th>Valeur</th><th>Côté</th>
+      <th></th>
+    </tr>
+  </thead><tbody>`;
+
+  indicators.forEach(ind => {
+    const d = a[test][ind.k];
+
+    if (ind.type === 'simple') {
+      const pct = calcProg(d.e, d.s);
+      html += `<tr>
+        <td class="indicator">${ind.label}</td>
+        <td class="unit">${ind.unit}</td>
+        <td class="input-cell" colspan="1">
+          <input class="val-input" type="number" step="any" value="${d.e}"
+            data-test="${test}" data-key="${ind.k}" data-col="e" oninput="updateVal(this)">
+        </td>
+        <td class="unit" style="color:#ccc;font-size:10px">—</td>
+        <td class="input-cell">
+          <input class="val-input" type="number" step="any" value="${d.s}"
+            data-test="${test}" data-key="${ind.k}" data-col="s" oninput="updateVal(this)">
+        </td>
+        <td class="unit" style="color:#ccc;font-size:10px">—</td>
+        <td class="prog" id="prog-${test}-${ind.k}">${fmtProg(pct)}</td>
+      </tr>`;
+    }
+
+    else if (ind.type === 'asym') {
+      const pct    = calcProg(d.e, d.s);
+      const hlE    = ind.highlight && parseFloat(d.e) > 10;
+      const hlS    = ind.highlight && parseFloat(d.s) > 10;
+      html += `<tr data-highlight="${ind.highlight}">
+        <td class="indicator">${ind.label}</td>
+        <td class="unit">${ind.unit}</td>
+        <td class="input-cell${hlE?' highlight-asym':''}" id="e-cell-${test}-${ind.k}">
+          <input class="val-input" type="number" step="any" value="${d.e}"
+            data-test="${test}" data-key="${ind.k}" data-col="e" oninput="updateVal(this)">
+        </td>
+        <td class="input-cell">
+          <select class="side-select" data-test="${test}" data-key="${ind.k}" data-col="eS" onchange="updateVal(this)">
+            <option value="L" ${d.eS==='L'?'selected':''}>L</option>
+            <option value="R" ${d.eS==='R'?'selected':''}>R</option>
+          </select>
+        </td>
+        <td class="input-cell${hlS?' highlight-asym':''}" id="s-cell-${test}-${ind.k}">
+          <input class="val-input" type="number" step="any" value="${d.s}"
+            data-test="${test}" data-key="${ind.k}" data-col="s" oninput="updateVal(this)">
+        </td>
+        <td class="input-cell">
+          <select class="side-select" data-test="${test}" data-key="${ind.k}" data-col="sS" onchange="updateVal(this)">
+            <option value="L" ${d.sS==='L'?'selected':''}>L</option>
+            <option value="R" ${d.sS==='R'?'selected':''}>R</option>
+          </select>
+        </td>
+        <td class="prog" id="prog-${test}-${ind.k}">${fmtProg(pct)}</td>
+      </tr>`;
+    }
+
+    else if (ind.type === 'lr') {
+      const asymE = calcAsym(d.eL, d.eR);
+      const asymS = calcAsym(d.sL, d.sR);
+      const hlAE  = asymE !== null && asymE > 10;
+      const hlAS  = asymS !== null && asymS > 10;
+      const progL = calcProg(d.eL, d.sL);
+      const progR = calcProg(d.eR, d.sR);
+      html += `
+      <tr>
+        <td class="indicator">${ind.label} — <b>Gauche</b></td>
+        <td class="unit">${ind.unit}</td>
+        <td class="input-cell" colspan="2">
+          <input class="val-input" type="number" step="any" value="${d.eL}"
+            data-test="${test}" data-key="${ind.k}" data-col="eL" oninput="updateVal(this)">
+        </td>
+        <td class="input-cell" colspan="2">
+          <input class="val-input" type="number" step="any" value="${d.sL}"
+            data-test="${test}" data-key="${ind.k}" data-col="sL" oninput="updateVal(this)">
+        </td>
+        <td class="prog" id="prog-${test}-${ind.k}-L">${fmtProg(progL)}</td>
+      </tr>
+      <tr>
+        <td class="indicator">${ind.label} — <b>Droite</b></td>
+        <td class="unit">${ind.unit}</td>
+        <td class="input-cell" colspan="2">
+          <input class="val-input" type="number" step="any" value="${d.eR}"
+            data-test="${test}" data-key="${ind.k}" data-col="eR" oninput="updateVal(this)">
+        </td>
+        <td class="input-cell" colspan="2">
+          <input class="val-input" type="number" step="any" value="${d.sR}"
+            data-test="${test}" data-key="${ind.k}" data-col="sR" oninput="updateVal(this)">
+        </td>
+        <td class="prog" id="prog-${test}-${ind.k}-R">${fmtProg(progR)}</td>
+      </tr>
+      <tr class="asym-row">
+        <td class="indicator" style="padding-left:24px;font-style:italic;color:#888;font-size:11px">↳ Asymétrie auto-calculée</td>
+        <td class="unit">%</td>
+        <td class="input-cell${hlAE?' highlight-asym':''}" id="asym-e-cell-${test}-${ind.k}" colspan="2">
+          <span id="asym-e-${test}-${ind.k}" style="font-size:12px;font-weight:600;color:#1c3f6e">
+            ${asymE !== null ? asymE.toFixed(1)+' %' : '—'}
+          </span>
+        </td>
+        <td class="input-cell${hlAS?' highlight-asym':''}" id="asym-s-cell-${test}-${ind.k}" colspan="2">
+          <span id="asym-s-${test}-${ind.k}" style="font-size:12px;font-weight:600;color:#1c3f6e">
+            ${asymS !== null ? asymS.toFixed(1)+' %' : '—'}
+          </span>
+        </td>
+        <td class="prog" id="prog-${test}-${ind.k}"></td>
+      </tr>`;
+    }
+  });
+
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+// ══════════════════════════════════════════════
+//  RENDU PRINCIPAL
+// ══════════════════════════════════════════════
+function renderAll() {
+  renderAthleteSelect();
+  const a = currentAthlete();
+
+  document.getElementById('empty-state').style.display = a ? 'none' : 'block';
+  document.getElementById('athlete-card').style.display = a ? 'flex' : 'none';
+  document.getElementById('tabs').style.display         = a ? 'flex' : 'none';
+
+  ['sec-cmj','sec-dj','sec-sls'].forEach(id => {
+    document.getElementById(id).innerHTML = '';
+    document.getElementById(id).classList.remove('active');
+  });
+
+  if (!a) return;
+
+  // Remplir la fiche
+  document.getElementById('cf-nom').value    = a.nom;
+  document.getElementById('cf-entree').value = a.date_entree;
+  document.getElementById('cf-sortie').value = a.date_sortie;
+
+  // Rendu des 3 tableaux
+  document.getElementById('sec-cmj').innerHTML = renderTable('cmj', CMJ_IND, a);
+  document.getElementById('sec-dj').innerHTML  = renderTable('dj',  DJ_IND,  a);
+  document.getElementById('sec-sls').innerHTML = renderTable('sls', SLS_IND, a);
+
+  // Activer le tab courant
+  const activeTab = document.querySelector('.tab.active');
+  const tabName   = activeTab ? activeTab.onclick.toString().match(/'(\w+)'/)?.[1] : 'cmj';
+  document.getElementById(`sec-${tabName || 'cmj'}`).classList.add('active');
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['sec-cmj','sec-dj','sec-sls'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById(`sec-${name}`).classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+//  RAPPORT
+// ══════════════════════════════════════════════
+function buildReportTable(test, indicators, a, title) {
+  let html = `<div class="rpt-section">
+  <h3>${title}</h3>
+  <table class="rpt-table">
+  <thead><tr>
+    <th class="left" style="width:220px">Indicateur</th>
+    <th style="width:50px">Unité</th>
+    <th>Entrée</th>
+    <th>Sortie</th>
+    <th style="width:90px">Progression</th>
+  </tr></thead><tbody>`;
+
+  indicators.forEach(ind => {
+    const d = a[test][ind.k];
+
+    if (ind.type === 'simple') {
+      const pct = calcProg(d.e, d.s);
+      html += `<tr>
+        <td class="rpt-ind">${ind.label}</td>
+        <td class="center">${ind.unit}</td>
+        <td class="center">${d.e || '—'}</td>
+        <td class="center">${d.s || '—'}</td>
+        <td class="center">${fmtProgRpt(pct)}</td>
+      </tr>`;
+    }
+    else if (ind.type === 'asym') {
+      const pct = calcProg(d.e, d.s);
+      const hlE = ind.highlight && parseFloat(d.e) > 10;
+      const hlS = ind.highlight && parseFloat(d.s) > 10;
+      html += `<tr>
+        <td class="rpt-ind">${ind.label}</td>
+        <td class="center">${ind.unit}</td>
+        <td class="center${hlE?' asym-highlight':''}">${d.e ? d.e+' % ('+d.eS+')' : '—'}</td>
+        <td class="center${hlS?' asym-highlight':''}">${d.s ? d.s+' % ('+d.sS+')' : '—'}</td>
+        <td class="center">${fmtProgRpt(pct)}</td>
+      </tr>`;
+    }
+    else if (ind.type === 'lr') {
+      const asymE = calcAsym(d.eL, d.eR);
+      const asymS = calcAsym(d.sL, d.sR);
+      const hlAE  = asymE !== null && asymE > 10;
+      const hlAS  = asymS !== null && asymS > 10;
+      html += `
+      <tr>
+        <td class="rpt-ind">${ind.label} — Gauche</td>
+        <td class="center">${ind.unit}</td>
+        <td class="center">${d.eL || '—'}</td>
+        <td class="center">${d.sL || '—'}</td>
+        <td class="center">${fmtProgRpt(calcProg(d.eL, d.sL))}</td>
+      </tr>
+      <tr>
+        <td class="rpt-ind">${ind.label} — Droite</td>
+        <td class="center">${ind.unit}</td>
+        <td class="center">${d.eR || '—'}</td>
+        <td class="center">${d.sR || '—'}</td>
+        <td class="center">${fmtProgRpt(calcProg(d.eR, d.sR))}</td>
+      </tr>
+      <tr style="font-style:italic;font-size:11px;color:#888">
+        <td class="rpt-ind" style="padding-left:20px;font-style:italic;font-size:11px;color:#888">↳ Asymétrie</td>
+        <td class="center">%</td>
+        <td class="center${hlAE?' asym-highlight':''}">${asymE !== null ? asymE.toFixed(1)+' %' : '—'}</td>
+        <td class="center${hlAS?' asym-highlight':''}">${asymS !== null ? asymS.toFixed(1)+' %' : '—'}</td>
+        <td></td>
+      </tr>`;
+    }
+  });
+
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+function openReport() {
+  const a = currentAthlete();
+  if (!a) { alert('Sélectionnez un athlète d\'abord.'); return; }
+
+  const fmt = d => d ? new Date(d).toLocaleDateString('fr-FR') : '—';
+  let html = `
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;border-bottom:2px solid #1c3f6e;padding-bottom:14px;">
+    <div>
+      <div style="font-size:20px;font-weight:800;color:#1c3f6e;">${a.nom || 'Athlète'}</div>
+      <div style="font-size:12px;color:#555;margin-top:3px;">
+        Entrée : <b>${fmt(a.date_entree)}</b> &nbsp;·&nbsp; Sortie : <b>${fmt(a.date_sortie)}</b>
+        &nbsp;·&nbsp; CERS Capbreton — Préparation Physique
+      </div>
+    </div>
+  </div>`;
+
+  html += buildReportTable('cmj', CMJ_IND, a, '&#x25B6; CMJ — Counter Movement Jump');
+  html += buildReportTable('dj',  DJ_IND,  a, '&#x25B6; Drop Jump');
+  html += buildReportTable('sls', SLS_IND, a, '&#x25B6; SLS — Single Leg Squat');
+
+  html += `<div style="margin-top:16px;font-size:10px;color:#aaa;text-align:center;">
+    Généré le ${new Date().toLocaleDateString('fr-FR')} · CERS Capbreton · Groupe Ramsay Santé
+  </div>`;
+
+  document.getElementById('report-content').innerHTML = html;
+  document.getElementById('report-modal').classList.add('open');
+}
+
+function closeReport() {
+  document.getElementById('report-modal').classList.remove('open');
+}
+
+// Fermer modal au clic extérieur
+document.getElementById('report-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeReport();
+});
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+load();
+if (state.athletes.length > 0 && !state.currentId) {
+  state.currentId = state.athletes[0].id;
+}
+renderAll();
+</script>
+</body>
+</html>

@@ -431,6 +431,16 @@ body {
 .footer-logo-text { font-size: 8px; font-weight: 700; color: #1c3f6e; }
 .footer-mention { font-size: 7px; color: #777777; font-style: italic; text-align: center; flex: 1; padding: 0 8px; }
 .footer-page { font-size: 8px; color: #999999; white-space: nowrap; }
+
+/* ====== GPS CATAPULT ====== */
+.gps-td  { border: 1px solid #cccccc; padding: 4px 4px; text-align: center; font-weight: 400; }
+.gps-tdl { border: 1px solid #cccccc; padding: 4px 6px; text-align: left;   font-weight: 400; color: #1c3f6e; }
+.gps-key { font-weight: 700; }
+.gps-alt { background: #f0f4fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.gps-pos { color: #2a8a36; font-weight: 700; }
+.gps-neg { color: #c0392b; font-weight: 700; }
+.gps-neu { color: #888888; font-weight: 700; }
+.gps-nd  { color: #333333; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -2110,15 +2120,14 @@ body {
         ] %}
         {% for label, col in rows %}
         {% set is_key = col in ['distance_m','vmax_kmh','d_hsr'] %}
-        <tr {% if loop.index is odd %}style="background:#f0f4fa;-webkit-print-color-adjust:exact;print-color-adjust:exact;"{% endif %}>
-          <td style="border:1px solid #cccccc;padding:4px 6px;font-weight:{{ '700' if is_key else '400' }};color:#1c3f6e;">{{ label }}</td>
+        {% set pct = gps.progression[col] if gps.progression and col in gps.progression else none %}
+        <tr class="{% if loop.index is odd %}gps-alt{% endif %}">
+          <td class="gps-tdl {% if is_key %}gps-key{% endif %}">{{ label }}</td>
           {% for wk_key, wk in gps.semaines.items() %}
-          {% set val = wk[col] %}
-          <td style="border:1px solid #cccccc;padding:4px 4px;text-align:center;font-weight:{{ '700' if is_key else '400' }};">{{ val if val is not none else '—' }}</td>
+          <td class="gps-td {% if is_key %}gps-key{% endif %}">{{ wk[col] if wk[col] is not none else '—' }}</td>
           {% endfor %}
           {% if gps.progression %}
-          {% set pct = gps.progression[col] if col in gps.progression else none %}
-          <td style="border:1px solid #cccccc;padding:4px 4px;text-align:center;font-weight:700;color:{% if pct is not none %}{% if pct > 0 %}#2a8a36{% elif pct < 0 %}#c0392b{% else %}#888888{% endif %}{% else %}#333333{% endif %};">
+          <td class="gps-td {% if pct is not none %}{% if pct > 0 %}gps-pos{% elif pct < 0 %}gps-neg{% else %}gps-neu{% endif %}{% else %}gps-nd{% endif %}">
             {% if pct is not none %}{{ "%+.1f"|format(pct) }}%{% else %}—{% endif %}
           </td>
           {% endif %}

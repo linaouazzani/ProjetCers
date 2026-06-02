@@ -1,16 +1,18 @@
-# Python cache — NEVER commit these
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.egg-info/
 
-# Outputs générés
+# Outputs générés (rapports PDF/HTML temporaires)
 outputs/
 
-# Environnements
+# Environnements Python
 .env
 .venv/
 venv/
+env/
 
 # IDE
 .vscode/
@@ -19,3 +21,10 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Docker
+*.log
+
+# Données patients (confidentielles — jamais commitées)
+data/*.pdf
+data/*.csv

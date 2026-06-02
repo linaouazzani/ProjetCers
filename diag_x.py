@@ -1,4 +1,4 @@
-﻿import pdfplumber, re, sys
+import pdfplumber, re, sys
 
 def check_page(pdf_path, page_idx):
     with pdfplumber.open(pdf_path) as pdf:

@@ -1,4 +1,4 @@
-﻿import pdfplumber, sys
+import pdfplumber, sys
 
 pdf_path = sys.argv[1]
 with pdfplumber.open(pdf_path) as pdf:

@@ -849,6 +849,14 @@ body {
         {% if cr and cr.date_accident %}
         <div style="font-size:9pt; color:#888; margin-top:3px;">Accident : {{ cr.date_accident }}{% if cr.mecanisme %} &mdash; {{ cr.mecanisme }}{% endif %}</div>
         {% endif %}
+        {% if cr and cr.antecedents and cr.antecedents | length > 0 %}
+        <div style="margin-top:6px; padding-top:5px; border-top:1px solid #f0c0c0;">
+          <div style="font-size:7pt; color:#c0392b; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Ant&#233;c&#233;dents</div>
+          <div style="font-size:8pt; color:#555; line-height:1.5;">
+            {{ cr.antecedents | join(' &nbsp;&#183;&nbsp; ') }}
+          </div>
+        </div>
+        {% endif %}
       </div>
     </div>
     {% if show_intervention %}
@@ -2309,21 +2317,6 @@ body {
       Synth&#232;se du S&#233;jour &mdash; Programme de R&#233;&#233;ducation &amp; Conclusion
     </div>
 
-    <!-- ══ ANTÉCÉDENTS MÉDICAUX (avant résumé) ══ -->
-    {% if cr and cr.antecedents and cr.antecedents | length > 0 %}
-    <div style="border:2px solid #1c3f6e; border-radius:6px; overflow:hidden; margin-bottom:10px; flex-shrink:0;">
-      <div style="background:#1c3f6e; color:#ffffff; font-size:9.5pt; font-weight:700; padding:5px 12px; letter-spacing:0.3px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-        &#9656; Ant&#233;c&#233;dents m&#233;dicaux / chirurgicaux
-      </div>
-      <div style="padding:8px 14px; background:#f5f8fc;">
-        {% for atcd in cr.antecedents %}
-        <div style="font-size:9pt; color:#1c3f6e; line-height:1.6; margin-bottom:2px;">
-          <span style="font-weight:700; color:#1c3f6e;">&#9656;</span> {{ atcd }}
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
 
 
     <!-- ══ ENGAGEMENT DE L'ÉQUIPE PLURIDISCIPLINAIRE ══ -->

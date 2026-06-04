@@ -11,7 +11,6 @@ import os
 import base64
 import datetime
 import json
-import pandas as pd
 from clubs_database import search_clubs
 from cr_parser import parse_compte_rendu
 from gps_parser import parse_gps_pdf
@@ -469,33 +468,36 @@ with col_left:
     st.markdown('</div>', unsafe_allow_html=True)
 
     # 1b. VALD ForceDecks — saisie manuelle (3 tableaux)
-    _CMJ_IND = [
-        "Jump Height (cm)",
-        "Peak Power / BM (W/kg)",
-        "RSI Modified (m/s)",
-        "Concentric Impulse (%)",
-        "Peak Landing Force (%)",
-    ]
-    _DJ_IND = [
-        "Jump Height (cm)",
-        "Peak Power / BM (W/kg)",
-        "RSI JH — Flight Time / Contact Time (m/s)",
-        "Peak Landing Force (%)",
-    ]
-    _SLJ_IND = [
-        "Max Jump Height (cm)",
-        "RSI Modified (m/s)",
-        "Eccentric Braking RFD / BM (N/s)",
-    ]
-
-    # DataFrame à 3 colonnes SEULEMENT — pas de Progression dans le tableau éditable
-    # (évite le double-rerun qui force à taper les valeurs 2 fois)
-    def _vald_default_df(indicators):
-        return pd.DataFrame({
-            "Indicateur": indicators,
-            "Entrée":     pd.array([None] * len(indicators), dtype=pd.Float64Dtype()),
-            "Sortie":     pd.array([None] * len(indicators), dtype=pd.Float64Dtype()),
-        })
+    # Utilise st.number_input individuel par cellule (stable, pas de double-saisie)
+    _VALD_TESTS = {
+        "cmj": {
+            "label": "CMJ",
+            "inds": [
+                "Jump Height (cm)",
+                "Peak Power / BM (W/kg)",
+                "RSI Modified (m/s)",
+                "Concentric Impulse (%)",
+                "Peak Landing Force (%)",
+            ],
+        },
+        "dj": {
+            "label": "Drop Jump",
+            "inds": [
+                "Jump Height (cm)",
+                "Peak Power / BM (W/kg)",
+                "RSI JH — Flight Time / Contact Time (m/s)",
+                "Peak Landing Force (%)",
+            ],
+        },
+        "slj": {
+            "label": "SLJ",
+            "inds": [
+                "Max Jump Height (cm)",
+                "RSI Modified (m/s)",
+                "Eccentric Braking RFD / BM (N/s)",
+            ],
+        },
+    }
 
     def _prog(e, s):
         try:
@@ -504,90 +506,98 @@ with col_left:
         except (ValueError, TypeError):
             return None
 
-    def _prog_display(df):
-        """DataFrame lecture seule avec progression calculée à la volée."""
+    # Init listes d'indicateurs dans session_state (gère les lignes ajoutées)
+    for _tk, _tv in _VALD_TESTS.items():
+        _sk = f"vald_{_tk}_inds"
+        if _sk not in st.session_state:
+            st.session_state[_sk] = list(_tv["inds"])
+
+    def _render_vald_tab(test_key):
+        inds = st.session_state[f"vald_{test_key}_inds"]
+
+        # En-têtes colonnes
+        hc = st.columns([3.5, 1.4, 1.4, 1.7])
+        hc[0].markdown("**Indicateur**")
+        hc[1].markdown("**Entrée**")
+        hc[2].markdown("**Sortie**")
+        hc[3].markdown("**Progression**")
+        st.markdown('<hr style="margin:2px 0 6px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
+
+        for i, ind in enumerate(inds):
+            rc = st.columns([3.5, 1.4, 1.4, 1.7])
+            rc[0].write(ind)
+            e = rc[1].number_input(
+                "", key=f"v_{test_key}_e_{i}",
+                label_visibility="collapsed", value=None,
+                min_value=0.0, step=0.1, format="%.2f",
+            )
+            s = rc[2].number_input(
+                "", key=f"v_{test_key}_s_{i}",
+                label_visibility="collapsed", value=None,
+                min_value=0.0, step=0.1, format="%.2f",
+            )
+            p = _prog(e, s)
+            if p is not None:
+                arrow = "↑" if p >= 0 else "↓"
+                rc[3].markdown(
+                    f'<span style="color:{"#1a7a30" if p>=0 else "#c0392b"};'
+                    f'font-weight:700;font-size:14px;">{arrow} {abs(p):.1f} %</span>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                rc[3].markdown('<span style="color:#aaa;">—</span>', unsafe_allow_html=True)
+
+        # Ajouter une ligne
+        st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+        ac = st.columns([3.5, 2.0])
+        new_ind = ac[0].text_input(
+            "", key=f"v_{test_key}_new",
+            label_visibility="collapsed",
+            placeholder="Nom d'un indicateur supplémentaire...",
+        )
+        if ac[1].button("＋ Ajouter une ligne", key=f"v_{test_key}_add"):
+            if new_ind.strip():
+                st.session_state[f"vald_{test_key}_inds"].append(new_ind.strip())
+                st.rerun()
+
+    def _collect_vald_rows(test_key):
+        inds = st.session_state.get(f"vald_{test_key}_inds", [])
         rows = []
-        for r in df.to_dict("records"):
-            p = _prog(r.get("Entrée"), r.get("Sortie"))
-            arrow = ("↑ " if p > 0 else "↓ " if p < 0 else "→ ") if p is not None else ""
-            rows.append({
-                "Indicateur":      r.get("Indicateur") or "",
-                "Entrée":          r.get("Entrée"),
-                "Sortie":          r.get("Sortie"),
-                "Progression (%)": f"{arrow}{abs(p):.1f} %" if p is not None else "—",
-            })
-        return pd.DataFrame(rows)
-
-    for _k, _d in [("vald_cmj", _CMJ_IND), ("vald_dj", _DJ_IND), ("vald_slj", _SLJ_IND)]:
-        if _k not in st.session_state:
-            st.session_state[_k] = _vald_default_df(_d)
-
-    _edit_cfg = {
-        "Indicateur": st.column_config.TextColumn("Indicateur", width="large"),
-        "Entrée":     st.column_config.NumberColumn("Entrée",  format="%.2f"),
-        "Sortie":     st.column_config.NumberColumn("Sortie",  format="%.2f"),
-    }
+        for i, ind in enumerate(inds):
+            e = st.session_state.get(f"v_{test_key}_e_{i}")
+            s = st.session_state.get(f"v_{test_key}_s_{i}")
+            if e is not None or s is not None:
+                rows.append({
+                    "indicateur":  ind,
+                    "entree":      e,
+                    "sortie":      s,
+                    "progression": _prog(e, s),
+                })
+        return rows
 
     slj_data, cmj_data = None, None   # compatibilité ascendante
 
     with st.expander("🏋️ VALD ForceDecks — Saisie manuelle (optionnel)", expanded=False):
-        st.caption(
-            "Saisissez les valeurs d'entrée et de sortie. "
-            "La progression s'affiche automatiquement en dessous. "
-            "Utilisez le bouton ＋ pour ajouter un indicateur."
-        )
         tab_cmj, tab_dj, tab_slj = st.tabs(["CMJ", "Drop Jump", "SLJ"])
+        with tab_cmj:  _render_vald_tab("cmj")
+        with tab_dj:   _render_vald_tab("dj")
+        with tab_slj:  _render_vald_tab("slj")
 
-        with tab_cmj:
-            st.session_state.vald_cmj = st.data_editor(
-                st.session_state.vald_cmj,
-                num_rows="dynamic", use_container_width=True,
-                key="editor_cmj", column_config=_edit_cfg,
-            )
-            st.dataframe(_prog_display(st.session_state.vald_cmj),
-                         use_container_width=True, hide_index=True)
-
-        with tab_dj:
-            st.session_state.vald_dj = st.data_editor(
-                st.session_state.vald_dj,
-                num_rows="dynamic", use_container_width=True,
-                key="editor_dj", column_config=_edit_cfg,
-            )
-            st.dataframe(_prog_display(st.session_state.vald_dj),
-                         use_container_width=True, hide_index=True)
-
-        with tab_slj:
-            st.session_state.vald_slj = st.data_editor(
-                st.session_state.vald_slj,
-                num_rows="dynamic", use_container_width=True,
-                key="editor_slj", column_config=_edit_cfg,
-            )
-            st.dataframe(_prog_display(st.session_state.vald_slj),
-                         use_container_width=True, hide_index=True)
-
-        if st.button("↺ Réinitialiser les tableaux VALD", key="reset_vald"):
-            st.session_state.vald_cmj = _vald_default_df(_CMJ_IND)
-            st.session_state.vald_dj  = _vald_default_df(_DJ_IND)
-            st.session_state.vald_slj = _vald_default_df(_SLJ_IND)
+        st.markdown("---")
+        if st.button("↺ Réinitialiser tous les tableaux VALD", key="reset_vald"):
+            for _tk, _tv in _VALD_TESTS.items():
+                st.session_state[f"vald_{_tk}_inds"] = list(_tv["inds"])
+                n = len(_tv["inds"]) + 5
+                for i in range(n):
+                    for sfx in ["e", "s"]:
+                        st.session_state.pop(f"v_{_tk}_{sfx}_{i}", None)
+                st.session_state.pop(f"v_{_tk}_new", None)
             st.rerun()
 
-    # Conversion pour le rapport : progression calculée ici (pas dans l'éditeur)
-    def _df_to_rows(df):
-        rows = []
-        for r in df.to_dict("records"):
-            if r.get("Indicateur") and (r.get("Entrée") is not None or r.get("Sortie") is not None):
-                rows.append({
-                    "indicateur":  str(r["Indicateur"]),
-                    "entree":      r["Entrée"],
-                    "sortie":      r["Sortie"],
-                    "progression": _prog(r.get("Entrée"), r.get("Sortie")),
-                })
-        return rows
-
     vald_manual = {
-        "cmj": _df_to_rows(st.session_state.vald_cmj),
-        "dj":  _df_to_rows(st.session_state.vald_dj),
-        "slj": _df_to_rows(st.session_state.vald_slj),
+        "cmj": _collect_vald_rows("cmj"),
+        "dj":  _collect_vald_rows("dj"),
+        "slj": _collect_vald_rows("slj"),
     }
     _has_vald_manual = any(vald_manual[k] for k in vald_manual)
 

@@ -463,38 +463,61 @@ with col_left:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 1b. VALD ForceDecks — saisie manuelle (3 tableaux)
-    # Utilise st.number_input individuel par cellule (stable, pas de double-saisie)
-    _VALD_TESTS = {
-        "cmj": {
-            "label": "CMJ",
-            "inds": [
-                "Jump Height (cm)",
-                "Peak Power / BM (W/kg)",
-                "RSI Modified (m/s)",
-                "Concentric Impulse (%)",
-                "Peak Landing Force (%)",
-            ],
-        },
-        "dj": {
-            "label": "Drop Jump",
-            "inds": [
-                "Jump Height (cm)",
-                "Peak Power / BM (W/kg)",
-                "RSI JH — Flight Time / Contact Time (m/s)",
-                "Peak Landing Force (%)",
-            ],
-        },
-        "slj": {
-            "label": "SLJ",
-            "inds": [
-                "Max Jump Height (cm)",
-                "RSI Modified (m/s)",
-                "Eccentric Braking RFD / BM (N/s)",
-            ],
-        },
+    # ── Config statique de toutes les sections VALD ──────────────────
+    # (label, unité, type)  type: "simple" ou "lr"
+    # "lr" = Gauche + Droite + ligne asymétrie auto (jaune si >10%)
+    _VS = {
+        "cmj": ("CMJ — Counter Movement Jump", [
+            ("Jump Height Imp-Mom",              "cm",   "simple"),
+            ("Peak Power / BM",                  "W/kg", "simple"),
+            ("RSI Modified Imp-Mom",             "m/s",  "simple"),
+            ("Eccentric Braking Impulse % Asym", "%",    "simple"),
+            ("Concentric Impulse % Asym",        "%",    "simple"),
+            ("Peak Landing Force % Asym",        "%",    "simple"),
+        ]),
+        "dj": ("Drop Jump", [
+            ("Jump Height Imp-Mom",              "cm",   "simple"),
+            ("Peak Power / BM",                  "W/kg", "simple"),
+            ("RSI — JH (Flight Time/Contact Time)", "m/s", "simple"),
+            ("Eccentric Impulse % Asym",         "%",    "simple"),
+            ("Concentric Impulse % Asym",        "%",    "simple"),
+            ("Peak Landing Force % Asym",        "%",    "simple"),
+        ]),
+        "sls": ("SLS — Single Leg Squat", [
+            ("Max Jump Height",                  "cm",     "simple"),
+            ("RSI Modified",                     "m/s",    "simple"),
+            ("Eccentric Braking RFD / BM",       "N/s/kg", "simple"),
+            ("Concentric Peak Force",            "N",      "lr"),
+            ("Eccentric Peak Force",             "N",      "lr"),
+            ("Peak Force",                       "N",      "lr"),
+            ("Eccentric Decel RFD",              "N/s",    "lr"),
+        ]),
+        "shoulder": ("ASH Shoulder — Tests isométriques", [
+            ("Shoulder Iso-T — Max Peak Vertical Force", "N",   "lr"),
+            ("Shoulder Iso-T — Max RFD 200ms",           "N/s", "lr"),
+            ("Shoulder Iso-Y — Max Peak Vertical Force", "N",   "lr"),
+            ("Shoulder Iso-Y — Max RFD 200ms",           "N/s", "lr"),
+            ("Shoulder Iso-I — Max Peak Vertical Force", "N",   "lr"),
+            ("Shoulder Iso-I — Max RFD 200ms",           "N/s", "lr"),
+        ]),
+        "mollet_run": ("Mollet — Run-Specific Ankle Iso-Push", [
+            ("Max Peak Specific Force", "N",   "lr"),
+            ("Max RFD 200ms",           "N/s", "lr"),
+        ]),
+        "mollet_seated": ("Mollet — Seated Isometric Calf Raise", [
+            ("Max Peak Vertical Force", "N",   "lr"),
+            ("Max RFD 200ms",           "N/s", "lr"),
+        ]),
+        "nordic": ("Nordic Hamstring", [
+            ("Max Force", "N", "lr"),
+        ]),
+        "imtp": ("IMTP — Isometric Mid-Thigh Pull", [
+            ("Max Peak Vertical Force", "N",   "lr"),
+            ("Max RFD 200ms",           "N/s", "lr"),
+        ]),
     }
 
+    # ── Helpers ──────────────────────────────────────────────────────
     def _safe_float(s):
         if s is None or str(s).strip() == "":
             return None
@@ -509,30 +532,12 @@ with col_left:
             return None
         return round((sv - ev) / abs(ev) * 100, 1)
 
-    # Clés session_state par test
-    _SLJ_SFXS = ["eg", "ed", "sg", "sd"]   # SLJ : Entrée G/D + Sortie G/D
-    _STD_SFXS = ["e",  "s"]                 # CMJ / Drop Jump : Entrée + Sortie
-
-    def _sfxs(tk):
-        return _SLJ_SFXS if tk == "slj" else _STD_SFXS
-
-    def _delete_vald_row(test_key, idx):
-        inds = st.session_state[f"vald_{test_key}_inds"]
-        n = len(inds)
-        for j in range(idx, n - 1):
-            for sfx in _sfxs(test_key):
-                st.session_state[f"v_{test_key}_{sfx}_{j}"] = \
-                    st.session_state.get(f"v_{test_key}_{sfx}_{j+1}", "")
-        for sfx in _sfxs(test_key):
-            st.session_state.pop(f"v_{test_key}_{sfx}_{n-1}", None)
-        inds.pop(idx)
-        st.rerun()
-
-    # Init listes d'indicateurs dans session_state
-    for _tk, _tv in _VALD_TESTS.items():
-        _sk = f"vald_{_tk}_inds"
-        if _sk not in st.session_state:
-            st.session_state[_sk] = list(_tv["inds"])
+    def _asym(L, R):
+        lv, rv = _safe_float(L), _safe_float(R)
+        if lv is None or rv is None:
+            return None
+        mx = max(abs(lv), abs(rv))
+        return round(abs(lv - rv) / mx * 100, 1) if mx else None
 
     def _prog_html(p):
         if p is None:
@@ -541,121 +546,130 @@ with col_left:
         col = "#1a7a30" if p >= 0 else "#c0392b"
         return f'<span style="color:{col};font-weight:700;font-size:13px;">{arrow} {abs(p):.1f} %</span>'
 
-    def _add_row_ui(test_key):
-        st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
-        ac = st.columns([3.5, 1.8])
-        new_ind = ac[0].text_input("", key=f"v_{test_key}_new",
-                                   label_visibility="collapsed",
-                                   placeholder="Ajouter un indicateur...")
-        if ac[1].button("＋ Ajouter", key=f"v_{test_key}_add"):
-            if new_ind.strip():
-                st.session_state[f"vald_{test_key}_inds"].append(new_ind.strip())
-                st.session_state.pop(f"v_{test_key}_new", None)
-                st.rerun()
+    def _asym_html(a):
+        if a is None:
+            return '<span style="color:#aaa;">—</span>'
+        bg = "background:#fff3cd;border-radius:3px;padding:1px 4px;" if a > 10 else ""
+        col = "#b85c00" if a > 10 else "#555"
+        return f'<span style="font-size:12px;font-weight:600;color:{col};{bg}">{a:.1f} %</span>'
 
-    def _render_vald_tab(test_key):
-        inds = st.session_state[f"vald_{test_key}_inds"]
+    # ── Rendu d'une section ───────────────────────────────────────────
+    def _render_section(tk):
+        _, indicators = _VS[tk]
+        # En-têtes
+        hc = st.columns([3.2, 1.1, 1.1, 1.5])
+        hc[0].markdown("**Indicateur (Unité)**")
+        hc[1].markdown("**Entrée**")
+        hc[2].markdown("**Sortie**")
+        hc[3].markdown("**Progression**")
+        st.markdown('<hr style="margin:2px 0 5px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
 
-        if test_key == "slj":
-            # ── SLJ : 4 colonnes Entrée G / Entrée D / Sortie G / Sortie D ──
-            hc = st.columns([2.6, 0.95, 0.95, 0.95, 0.95, 1.3, 1.3, 0.4])
-            hc[0].markdown("**Indicateur**")
-            hc[1].markdown("**Ent. G**")
-            hc[2].markdown("**Ent. D**")
-            hc[3].markdown("**Sort. G**")
-            hc[4].markdown("**Sort. D**")
-            hc[5].markdown("**Prog. G**")
-            hc[6].markdown("**Prog. D**")
-            st.markdown('<hr style="margin:2px 0 4px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
+        for i, (label, unit, ind_type) in enumerate(indicators):
+            if ind_type == "simple":
+                rc = st.columns([3.2, 1.1, 1.1, 1.5])
+                rc[0].markdown(f"**{label}** <small style='color:#888;'>({unit})</small>",
+                               unsafe_allow_html=True)
+                e = rc[1].text_input("", key=f"v_{tk}_e_{i}",
+                                     label_visibility="collapsed", placeholder="0.00")
+                s = rc[2].text_input("", key=f"v_{tk}_s_{i}",
+                                     label_visibility="collapsed", placeholder="0.00")
+                rc[3].markdown(_prog_html(_prog(e, s)), unsafe_allow_html=True)
 
-            for i, ind in enumerate(inds):
-                rc = st.columns([2.6, 0.95, 0.95, 0.95, 0.95, 1.3, 1.3, 0.4])
-                rc[0].write(ind)
-                eg = rc[1].text_input("", key=f"v_slj_eg_{i}", label_visibility="collapsed", placeholder="G")
-                ed = rc[2].text_input("", key=f"v_slj_ed_{i}", label_visibility="collapsed", placeholder="D")
-                sg = rc[3].text_input("", key=f"v_slj_sg_{i}", label_visibility="collapsed", placeholder="G")
-                sd = rc[4].text_input("", key=f"v_slj_sd_{i}", label_visibility="collapsed", placeholder="D")
-                rc[5].markdown(_prog_html(_prog(eg, sg)), unsafe_allow_html=True)
-                rc[6].markdown(_prog_html(_prog(ed, sd)), unsafe_allow_html=True)
-                if rc[7].button("🗑️", key=f"v_slj_del_{i}", help="Supprimer"):
-                    _delete_vald_row("slj", i)
+            elif ind_type == "lr":
+                # Gauche
+                rc1 = st.columns([3.2, 1.1, 1.1, 1.5])
+                rc1[0].markdown(f"**{label} — Gauche** <small style='color:#888;'>({unit})</small>",
+                                unsafe_allow_html=True)
+                eL = rc1[1].text_input("", key=f"v_{tk}_eL_{i}",
+                                       label_visibility="collapsed", placeholder="G")
+                sL = rc1[2].text_input("", key=f"v_{tk}_sL_{i}",
+                                       label_visibility="collapsed", placeholder="G")
+                rc1[3].markdown(_prog_html(_prog(eL, sL)), unsafe_allow_html=True)
+                # Droite
+                rc2 = st.columns([3.2, 1.1, 1.1, 1.5])
+                rc2[0].markdown(f"**{label} — Droite** <small style='color:#888;'>({unit})</small>",
+                                unsafe_allow_html=True)
+                eR = rc2[1].text_input("", key=f"v_{tk}_eR_{i}",
+                                       label_visibility="collapsed", placeholder="D")
+                sR = rc2[2].text_input("", key=f"v_{tk}_sR_{i}",
+                                       label_visibility="collapsed", placeholder="D")
+                rc2[3].markdown(_prog_html(_prog(eR, sR)), unsafe_allow_html=True)
+                # Asymétrie auto
+                ae, as_ = _asym(eL, eR), _asym(sL, sR)
+                rc3 = st.columns([3.2, 1.1, 1.1, 1.5])
+                rc3[0].markdown(
+                    f'<span style="font-size:11px;color:#777;padding-left:12px;">'
+                    f'↳ Asymétrie — {label} (%)</span>',
+                    unsafe_allow_html=True,
+                )
+                rc3[1].markdown(_asym_html(ae), unsafe_allow_html=True)
+                rc3[2].markdown(_asym_html(as_), unsafe_allow_html=True)
+                rc3[3].write("")
+                st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
 
-        else:
-            # ── CMJ / Drop Jump : Entrée + Sortie ──
-            hc = st.columns([3.0, 1.3, 1.3, 1.7, 0.45])
-            hc[0].markdown("**Indicateur**")
-            hc[1].markdown("**Entrée**")
-            hc[2].markdown("**Sortie**")
-            hc[3].markdown("**Progression**")
-            st.markdown('<hr style="margin:2px 0 4px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
-
-            for i, ind in enumerate(inds):
-                rc = st.columns([3.0, 1.3, 1.3, 1.7, 0.45])
-                rc[0].write(ind)
-                e_str = rc[1].text_input("", key=f"v_{test_key}_e_{i}",
-                                         label_visibility="collapsed", placeholder="0.00")
-                s_str = rc[2].text_input("", key=f"v_{test_key}_s_{i}",
-                                         label_visibility="collapsed", placeholder="0.00")
-                rc[3].markdown(_prog_html(_prog(e_str, s_str)), unsafe_allow_html=True)
-                if rc[4].button("🗑️", key=f"v_{test_key}_del_{i}", help="Supprimer cette ligne"):
-                    _delete_vald_row(test_key, i)
-
-        _add_row_ui(test_key)
-
-    def _collect_vald_rows(test_key):
-        inds = st.session_state.get(f"vald_{test_key}_inds", [])
+    # ── Collecte pour le rapport ──────────────────────────────────────
+    def _collect_section(tk):
+        _, indicators = _VS[tk]
         rows = []
-        if test_key == "slj":
-            for i, ind in enumerate(inds):
-                eg = _safe_float(st.session_state.get(f"v_slj_eg_{i}", ""))
-                ed = _safe_float(st.session_state.get(f"v_slj_ed_{i}", ""))
-                sg = _safe_float(st.session_state.get(f"v_slj_sg_{i}", ""))
-                sd = _safe_float(st.session_state.get(f"v_slj_sd_{i}", ""))
-                if any(v is not None for v in [eg, ed, sg, sd]):
-                    rows.append({
-                        "indicateur": ind,
-                        "entree_g":   eg,   "entree_d":   ed,
-                        "sortie_g":   sg,   "sortie_d":   sd,
-                        "prog_g":     _prog(eg, sg),
-                        "prog_d":     _prog(ed, sd),
-                    })
-        else:
-            for i, ind in enumerate(inds):
-                e = _safe_float(st.session_state.get(f"v_{test_key}_e_{i}", ""))
-                s = _safe_float(st.session_state.get(f"v_{test_key}_s_{i}", ""))
+        for i, (label, unit, ind_type) in enumerate(indicators):
+            if ind_type == "simple":
+                e = _safe_float(st.session_state.get(f"v_{tk}_e_{i}", ""))
+                s = _safe_float(st.session_state.get(f"v_{tk}_s_{i}", ""))
                 if e is not None or s is not None:
-                    rows.append({
-                        "indicateur":  ind,
-                        "entree":      e,
-                        "sortie":      s,
-                        "progression": _prog(e, s),
-                    })
+                    rows.append({"indicateur": label, "unit": unit, "type": "simple",
+                                 "entree": e, "sortie": s, "progression": _prog(e, s)})
+            elif ind_type == "lr":
+                eL = _safe_float(st.session_state.get(f"v_{tk}_eL_{i}", ""))
+                eR = _safe_float(st.session_state.get(f"v_{tk}_eR_{i}", ""))
+                sL = _safe_float(st.session_state.get(f"v_{tk}_sL_{i}", ""))
+                sR = _safe_float(st.session_state.get(f"v_{tk}_sR_{i}", ""))
+                if any(v is not None for v in [eL, eR, sL, sR]):
+                    rows.append({"indicateur": f"{label} — Gauche", "unit": unit, "type": "simple",
+                                 "entree": eL, "sortie": sL, "progression": _prog(eL, sL)})
+                    rows.append({"indicateur": f"{label} — Droite", "unit": unit, "type": "simple",
+                                 "entree": eR, "sortie": sR, "progression": _prog(eR, sR)})
+                    ae, as_ = _asym(eL, eR), _asym(sL, sR)
+                    rows.append({"indicateur": f"  Asymétrie — {label}", "unit": "%",
+                                 "type": "asym", "asym_e": ae, "asym_s": as_})
         return rows
 
-    slj_data, cmj_data = None, None   # compatibilité ascendante
+    slj_data, cmj_data = None, None  # compatibilité ascendante
 
     with st.expander("🏋️ VALD ForceDecks — Saisie manuelle (optionnel)", expanded=False):
-        tab_cmj, tab_dj, tab_slj = st.tabs(["CMJ", "Drop Jump", "SLJ"])
-        with tab_cmj:  _render_vald_tab("cmj")
-        with tab_dj:   _render_vald_tab("dj")
-        with tab_slj:  _render_vald_tab("slj")
+        t_sauts, t_shoulder, t_mollet, t_nordic, t_imtp = st.tabs(
+            ["🏃 Sauts", "🤸 Épaule (ASH)", "🦶 Mollet", "🦵 Nordic", "💪 IMTP"]
+        )
+        with t_sauts:
+            s_cmj, s_dj, s_sls = st.tabs(["CMJ", "Drop Jump", "SLS"])
+            with s_cmj:  _render_section("cmj")
+            with s_dj:   _render_section("dj")
+            with s_sls:  _render_section("sls")
+        with t_shoulder:
+            _render_section("shoulder")
+        with t_mollet:
+            st.markdown("**Run-Specific Ankle Iso-Push**")
+            _render_section("mollet_run")
+            st.markdown("---")
+            st.markdown("**Seated Isometric Calf Raise**")
+            _render_section("mollet_seated")
+        with t_nordic:
+            _render_section("nordic")
+        with t_imtp:
+            _render_section("imtp")
 
         st.markdown("---")
         if st.button("↺ Réinitialiser tous les tableaux VALD", key="reset_vald"):
-            for _tk, _tv in _VALD_TESTS.items():
-                st.session_state[f"vald_{_tk}_inds"] = list(_tv["inds"])
-                n = len(_tv["inds"]) + 5
-                for i in range(n):
-                    for sfx in _sfxs(_tk):
-                        st.session_state.pop(f"v_{_tk}_{sfx}_{i}", None)
-                st.session_state.pop(f"v_{_tk}_new", None)
+            for tk2, (_, inds2) in _VS.items():
+                for i2, (_, _, t2) in enumerate(inds2):
+                    if t2 == "simple":
+                        for s2 in ["e", "s"]:
+                            st.session_state.pop(f"v_{tk2}_{s2}_{i2}", None)
+                    elif t2 == "lr":
+                        for s2 in ["eL", "eR", "sL", "sR"]:
+                            st.session_state.pop(f"v_{tk2}_{s2}_{i2}", None)
             st.rerun()
 
-    vald_manual = {
-        "cmj": _collect_vald_rows("cmj"),
-        "dj":  _collect_vald_rows("dj"),
-        "slj": _collect_vald_rows("slj"),
-    }
+    vald_manual = {tk: _collect_section(tk) for tk in _VS}
     _has_vald_manual = any(vald_manual[k] for k in vald_manual)
 
     # Parsing compte-rendu médical

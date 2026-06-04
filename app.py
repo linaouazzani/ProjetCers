@@ -488,70 +488,82 @@ with col_left:
         "Eccentric Braking RFD / BM (N/s)",
     ]
 
+    # DataFrame à 3 colonnes SEULEMENT — pas de Progression dans le tableau éditable
+    # (évite le double-rerun qui force à taper les valeurs 2 fois)
     def _vald_default_df(indicators):
         return pd.DataFrame({
-            "Indicateur":      indicators,
-            "Entrée":          pd.array([None] * len(indicators), dtype=pd.Float64Dtype()),
-            "Sortie":          pd.array([None] * len(indicators), dtype=pd.Float64Dtype()),
-            "Progression (%)": pd.array([None] * len(indicators), dtype=pd.Float64Dtype()),
+            "Indicateur": indicators,
+            "Entrée":     pd.array([None] * len(indicators), dtype=pd.Float64Dtype()),
+            "Sortie":     pd.array([None] * len(indicators), dtype=pd.Float64Dtype()),
         })
 
-    def _calc_prog_df(df):
-        df = df.copy()
-        def _p(row):
-            try:
-                e, s = float(row["Entrée"]), float(row["Sortie"])
-                if e == 0: return None
-                return round((s - e) / abs(e) * 100, 1)
-            except (ValueError, TypeError):
-                return None
-        df["Progression (%)"] = df.apply(_p, axis=1)
-        return df
+    def _prog(e, s):
+        try:
+            ev, sv = float(e), float(s)
+            return round((sv - ev) / abs(ev) * 100, 1) if ev != 0 else None
+        except (ValueError, TypeError):
+            return None
+
+    def _prog_display(df):
+        """DataFrame lecture seule avec progression calculée à la volée."""
+        rows = []
+        for r in df.to_dict("records"):
+            p = _prog(r.get("Entrée"), r.get("Sortie"))
+            arrow = ("↑ " if p > 0 else "↓ " if p < 0 else "→ ") if p is not None else ""
+            rows.append({
+                "Indicateur":      r.get("Indicateur") or "",
+                "Entrée":          r.get("Entrée"),
+                "Sortie":          r.get("Sortie"),
+                "Progression (%)": f"{arrow}{abs(p):.1f} %" if p is not None else "—",
+            })
+        return pd.DataFrame(rows)
 
     for _k, _d in [("vald_cmj", _CMJ_IND), ("vald_dj", _DJ_IND), ("vald_slj", _SLJ_IND)]:
         if _k not in st.session_state:
             st.session_state[_k] = _vald_default_df(_d)
 
-    _col_cfg = lambda: {
-        "Indicateur":      st.column_config.TextColumn("Indicateur", width="large"),
-        "Entrée":          st.column_config.NumberColumn("Entrée",  format="%.2f"),
-        "Sortie":          st.column_config.NumberColumn("Sortie",  format="%.2f"),
-        "Progression (%)": st.column_config.NumberColumn("Progression (%)", format="%.1f", disabled=True),
+    _edit_cfg = {
+        "Indicateur": st.column_config.TextColumn("Indicateur", width="large"),
+        "Entrée":     st.column_config.NumberColumn("Entrée",  format="%.2f"),
+        "Sortie":     st.column_config.NumberColumn("Sortie",  format="%.2f"),
     }
 
     slj_data, cmj_data = None, None   # compatibilité ascendante
 
     with st.expander("🏋️ VALD ForceDecks — Saisie manuelle (optionnel)", expanded=False):
         st.caption(
-            "Remplissez les valeurs d'entrée et de sortie pour chaque indicateur. "
-            "La progression est calculée automatiquement. "
-            "Vous pouvez ajouter des lignes avec le bouton ＋ en bas du tableau."
+            "Saisissez les valeurs d'entrée et de sortie. "
+            "La progression s'affiche automatiquement en dessous. "
+            "Utilisez le bouton ＋ pour ajouter un indicateur."
         )
         tab_cmj, tab_dj, tab_slj = st.tabs(["CMJ", "Drop Jump", "SLJ"])
 
         with tab_cmj:
-            edited_cmj = st.data_editor(
+            st.session_state.vald_cmj = st.data_editor(
                 st.session_state.vald_cmj,
                 num_rows="dynamic", use_container_width=True,
-                key="editor_cmj", column_config=_col_cfg(),
+                key="editor_cmj", column_config=_edit_cfg,
             )
-            st.session_state.vald_cmj = _calc_prog_df(edited_cmj)
+            st.dataframe(_prog_display(st.session_state.vald_cmj),
+                         use_container_width=True, hide_index=True)
 
         with tab_dj:
-            edited_dj = st.data_editor(
+            st.session_state.vald_dj = st.data_editor(
                 st.session_state.vald_dj,
                 num_rows="dynamic", use_container_width=True,
-                key="editor_dj", column_config=_col_cfg(),
+                key="editor_dj", column_config=_edit_cfg,
             )
-            st.session_state.vald_dj = _calc_prog_df(edited_dj)
+            st.dataframe(_prog_display(st.session_state.vald_dj),
+                         use_container_width=True, hide_index=True)
 
         with tab_slj:
-            edited_slj = st.data_editor(
+            st.session_state.vald_slj = st.data_editor(
                 st.session_state.vald_slj,
                 num_rows="dynamic", use_container_width=True,
-                key="editor_slj", column_config=_col_cfg(),
+                key="editor_slj", column_config=_edit_cfg,
             )
-            st.session_state.vald_slj = _calc_prog_df(edited_slj)
+            st.dataframe(_prog_display(st.session_state.vald_slj),
+                         use_container_width=True, hide_index=True)
 
         if st.button("↺ Réinitialiser les tableaux VALD", key="reset_vald"):
             st.session_state.vald_cmj = _vald_default_df(_CMJ_IND)
@@ -559,7 +571,7 @@ with col_left:
             st.session_state.vald_slj = _vald_default_df(_SLJ_IND)
             st.rerun()
 
-    # Conversion pour le rapport : liste de dicts (ignorer les lignes vides)
+    # Conversion pour le rapport : progression calculée ici (pas dans l'éditeur)
     def _df_to_rows(df):
         rows = []
         for r in df.to_dict("records"):
@@ -568,7 +580,7 @@ with col_left:
                     "indicateur":  str(r["Indicateur"]),
                     "entree":      r["Entrée"],
                     "sortie":      r["Sortie"],
-                    "progression": r["Progression (%)"],
+                    "progression": _prog(r.get("Entrée"), r.get("Sortie")),
                 })
         return rows
 

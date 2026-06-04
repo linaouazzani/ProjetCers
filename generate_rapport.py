@@ -25,9 +25,10 @@ import base64
 import re
 from dataclasses import dataclass, field
 from typing import Optional
+import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
-from biodex_parser import parse_biodex_pdf, comparer_tests, couleur_deficit, couleur_progression, parse_excentrique_pdf
+from biodex_parser import parse_biodex_pdf, comparer_tests, couleur_deficit, couleur_progression, parse_excentrique_pdf, PatientBiodex
 from graphiques import graphique_en_base64, generer_graphiques_progression, generer_graphiques_excentrique
 
 
@@ -1307,20 +1308,26 @@ def generer_rapport_biodex(
     print("  Plateforme : " + platform.system())
     print("█" * 60)
 
-    # ── Fallback : si un seul PDF est fourni, utiliser l'autre comme base ──
+    # ── Parsing PDFs Biodex (tous optionnels) ──────────────────────────────
     if not pdf_entree and not pdf_sortie:
-        raise ValueError("Au moins un PDF Biodex (Entrée ou Sortie) est requis.")
-    if not pdf_entree:
-        pdf_entree = pdf_sortie
-        print("  ⚠️  PDF Entrée absent — utilisation du PDF Sortie comme référence")
-    elif not pdf_sortie:
-        pdf_sortie = pdf_entree
-        print("  ⚠️  PDF Sortie absent — utilisation du PDF Entrée comme référence")
+        print("  ℹ️  Aucun PDF Biodex — rapport sans données isocinétiques")
+        entree = PatientBiodex(nom="—", date_test="—")
+        sortie = PatientBiodex(nom="—", date_test="—")
+        df_comp = pd.DataFrame(columns=["vitesse", "mouvement", "metrique",
+                                        "entree_sain_d", "entree_lese_g",
+                                        "sortie_sain_d", "sortie_lese_g"])
+    else:
+        if not pdf_entree:
+            pdf_entree = pdf_sortie
+            print("  ⚠️  PDF Entrée absent — utilisation du PDF Sortie comme référence")
+        elif not pdf_sortie:
+            pdf_sortie = pdf_entree
+            print("  ⚠️  PDF Sortie absent — utilisation du PDF Entrée comme référence")
 
-    print("\n📄 Parsing PDFs...")
-    entree = parse_biodex_pdf(pdf_entree)
-    sortie = parse_biodex_pdf(pdf_sortie)
-    print(f"  ✅ {entree.nom}  |  {entree.date_test} → {sortie.date_test}")
+        print("\n📄 Parsing PDFs...")
+        entree = parse_biodex_pdf(pdf_entree)
+        sortie = parse_biodex_pdf(pdf_sortie)
+        print(f"  ✅ {entree.nom}  |  {entree.date_test} → {sortie.date_test}")
 
     comparatif_data = {}
     if pdf_comparatif and os.path.exists(pdf_comparatif):

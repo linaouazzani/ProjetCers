@@ -499,14 +499,32 @@ with col_left:
         },
     }
 
-    def _prog(e, s):
+    def _safe_float(s):
+        if s is None or str(s).strip() == "":
+            return None
         try:
-            ev, sv = float(e), float(s)
-            return round((sv - ev) / abs(ev) * 100, 1) if ev != 0 else None
+            return float(str(s).replace(",", ".").strip())
         except (ValueError, TypeError):
             return None
 
-    # Init listes d'indicateurs dans session_state (gère les lignes ajoutées)
+    def _prog(e, s):
+        ev, sv = _safe_float(e), _safe_float(s)
+        if ev is None or sv is None or ev == 0:
+            return None
+        return round((sv - ev) / abs(ev) * 100, 1)
+
+    def _delete_vald_row(test_key, idx):
+        inds = st.session_state[f"vald_{test_key}_inds"]
+        n = len(inds)
+        for j in range(idx, n - 1):
+            for sfx in ["e", "s"]:
+                st.session_state[f"v_{test_key}_{sfx}_{j}"] = st.session_state.get(f"v_{test_key}_{sfx}_{j+1}", "")
+        for sfx in ["e", "s"]:
+            st.session_state.pop(f"v_{test_key}_{sfx}_{n-1}", None)
+        inds.pop(idx)
+        st.rerun()
+
+    # Init listes d'indicateurs dans session_state
     for _tk, _tv in _VALD_TESTS.items():
         _sk = f"vald_{_tk}_inds"
         if _sk not in st.session_state:
@@ -515,57 +533,51 @@ with col_left:
     def _render_vald_tab(test_key):
         inds = st.session_state[f"vald_{test_key}_inds"]
 
-        # En-têtes colonnes
-        hc = st.columns([3.5, 1.4, 1.4, 1.7])
+        hc = st.columns([3.0, 1.3, 1.3, 1.7, 0.45])
         hc[0].markdown("**Indicateur**")
         hc[1].markdown("**Entrée**")
         hc[2].markdown("**Sortie**")
         hc[3].markdown("**Progression**")
-        st.markdown('<hr style="margin:2px 0 6px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
+        st.markdown('<hr style="margin:2px 0 4px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
 
         for i, ind in enumerate(inds):
-            rc = st.columns([3.5, 1.4, 1.4, 1.7])
+            rc = st.columns([3.0, 1.3, 1.3, 1.7, 0.45])
             rc[0].write(ind)
-            e = rc[1].number_input(
-                "", key=f"v_{test_key}_e_{i}",
-                label_visibility="collapsed", value=None,
-                min_value=0.0, step=0.1, format="%.2f",
-            )
-            s = rc[2].number_input(
-                "", key=f"v_{test_key}_s_{i}",
-                label_visibility="collapsed", value=None,
-                min_value=0.0, step=0.1, format="%.2f",
-            )
-            p = _prog(e, s)
+            # text_input : compatible toutes versions Streamlit (pas de min_value/format)
+            e_str = rc[1].text_input("", key=f"v_{test_key}_e_{i}",
+                                     label_visibility="collapsed", placeholder="0.00")
+            s_str = rc[2].text_input("", key=f"v_{test_key}_s_{i}",
+                                     label_visibility="collapsed", placeholder="0.00")
+            p = _prog(e_str, s_str)
             if p is not None:
                 arrow = "↑" if p >= 0 else "↓"
                 rc[3].markdown(
                     f'<span style="color:{"#1a7a30" if p>=0 else "#c0392b"};'
-                    f'font-weight:700;font-size:14px;">{arrow} {abs(p):.1f} %</span>',
+                    f'font-weight:700;font-size:13px;">{arrow} {abs(p):.1f} %</span>',
                     unsafe_allow_html=True,
                 )
             else:
                 rc[3].markdown('<span style="color:#aaa;">—</span>', unsafe_allow_html=True)
+            if rc[4].button("🗑️", key=f"v_{test_key}_del_{i}", help="Supprimer cette ligne"):
+                _delete_vald_row(test_key, i)
 
-        # Ajouter une ligne
-        st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
-        ac = st.columns([3.5, 2.0])
-        new_ind = ac[0].text_input(
-            "", key=f"v_{test_key}_new",
-            label_visibility="collapsed",
-            placeholder="Nom d'un indicateur supplémentaire...",
-        )
-        if ac[1].button("＋ Ajouter une ligne", key=f"v_{test_key}_add"):
+        st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
+        ac = st.columns([3.5, 1.8])
+        new_ind = ac[0].text_input("", key=f"v_{test_key}_new",
+                                   label_visibility="collapsed",
+                                   placeholder="Ajouter un indicateur...")
+        if ac[1].button("＋ Ajouter", key=f"v_{test_key}_add"):
             if new_ind.strip():
                 st.session_state[f"vald_{test_key}_inds"].append(new_ind.strip())
+                st.session_state.pop(f"v_{test_key}_new", None)
                 st.rerun()
 
     def _collect_vald_rows(test_key):
         inds = st.session_state.get(f"vald_{test_key}_inds", [])
         rows = []
         for i, ind in enumerate(inds):
-            e = st.session_state.get(f"v_{test_key}_e_{i}")
-            s = st.session_state.get(f"v_{test_key}_s_{i}")
+            e = _safe_float(st.session_state.get(f"v_{test_key}_e_{i}", ""))
+            s = _safe_float(st.session_state.get(f"v_{test_key}_s_{i}", ""))
             if e is not None or s is not None:
                 rows.append({
                     "indicateur":  ind,
@@ -939,21 +951,12 @@ with col_right:
     # Génération
     st.markdown('<div class="card"><div class="card-title">🚀 Générer le Rapport PDF</div>', unsafe_allow_html=True)
 
-    erreurs = []
     if not pdf_entree and not pdf_sortie:
-        erreurs.append("Au moins un PDF Biodex requis (Entrée ou Sortie)")
-    if not st.session_state.get("club_selectionne") and not st.session_state.get("nom_club_cache"):
-        erreurs.append("Club non sélectionné")
+        st.info("ℹ️ Sans PDF Biodex, le rapport contiendra uniquement les données CR / VALD / GPS disponibles.")
 
-    for e in erreurs:
-        st.warning(f"⚠️ {e}")
-
-    btn_gen = st.button("🔄  Générer le Rapport PDF Complet", disabled=bool(erreurs), use_container_width=True)
+    btn_gen = st.button("🔄  Générer le Rapport PDF Complet", use_container_width=True)
 
     if btn_gen:
-        if not pdf_entree and not pdf_sortie:
-            st.error("❌ Aucun PDF Biodex disponible — veuillez uploader au moins un PDF (Entrée ou Sortie).")
-            st.stop()
 
         club = st.session_state.get("club_selectionne")
         nom_club = (club["nom"] if club else "") or st.session_state.get("nom_club_cache", "")

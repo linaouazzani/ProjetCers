@@ -166,26 +166,30 @@ st.markdown("""
 
 def _injecter_panneau_personnalisation(html: str) -> str:
     """Injecte un bandeau de contrôle interactif dans le HTML du rapport.
-    Permet de cocher/décocher des sections et d'imprimer via Chrome.
+    Permet de cocher/décocher des pages ET des sous-sections.
     Disparaît à l'impression (@media print).
     """
     import re as _re
 
     def assigner_sections(html_text):
-        # Assigner data-section aux div.page en ordre séquentiel
-        sequential = ["bilan-60", "bilan-240", "remarques", "bilan-vald",
-                      "vald-tableau", "section-5", "section-6"]
+        # Assigner data-section aux div.page qui n'en ont pas encore
+        # (ceux qui en ont déjà dans le template sont ignorés)
+        sequential = [
+            "page-garde", "bilan-60", "bilan-240", "analyse-clinique",
+            "bilan-vald", "excentrique", "vald-tableau",
+        ]
         pattern = r'(<div[^>]*class=["\'][^"\']*\bpage\b[^"\']*["\'][^>]*>)'
         parts = _re.split(pattern, html_text)
         result = []
         page_count = 0
         for part in parts:
             if _re.match(r'<div[^>]*class=["\'][^"\']*\bpage\b', part):
-                sid = sequential[page_count] if page_count < len(sequential) else f"section-{page_count}"
+                if 'data-section' not in part:
+                    sid = sequential[page_count] if page_count < len(sequential) \
+                          else f"section-{page_count}"
+                    part = part.rstrip('>')
+                    part = part + f' data-section="{sid}">'
                 page_count += 1
-                # Insérer data-section avant le > de fermeture
-                part = part.rstrip('>')
-                part = part + f' data-section="{sid}" data-printable="true">'
             result.append(part)
         return ''.join(result)
 
@@ -193,192 +197,168 @@ def _injecter_panneau_personnalisation(html: str) -> str:
 
     panneau = """
 <style>
+/* -- masquage universel : inline style ET classe .hidden -- */
+.hidden { display: none !important; }
+
 @media print {
     #ctrl-panel { display: none !important; }
     body { padding-top: 0 !important; margin-top: 0 !important; }
-    [data-section].hidden { display: none !important; }
+    .hidden { display: none !important; }
 }
 #ctrl-panel {
     position: fixed;
     top: 0; left: 0; right: 0;
     background: #1c3f6e;
     color: #fff;
-    padding: 8px 16px;
+    padding: 6px 14px;
     font-family: Arial, sans-serif;
-    font-size: 12px;
+    font-size: 11.5px;
     z-index: 99999;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
+.ctrl-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px 10px;
+    gap: 5px 8px;
     align-items: center;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-    min-height: 48px;
+    min-height: 34px;
 }
-.ctrl-title {
-    font-size: 13px;
+.ctrl-sep {
+    color: rgba(255,255,255,0.4);
+    font-size: 10px;
+    padding: 0 2px;
+    white-space: nowrap;
+}
+.ctrl-group-title {
+    font-size: 10px;
     font-weight: bold;
-    margin-right: 4px;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     white-space: nowrap;
 }
 .ctrl-label {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    background: rgba(255,255,255,0.13);
-    border: 1px solid rgba(255,255,255,0.2);
-    padding: 3px 9px;
-    border-radius: 4px;
+    gap: 4px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 2px 8px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 11.5px;
+    font-size: 11px;
     user-select: none;
-    transition: background 0.15s;
+    white-space: nowrap;
 }
 .ctrl-label:hover { background: rgba(255,255,255,0.22); }
-.ctrl-label input { cursor: pointer; width:13px; height:13px; }
-.ctrl-label.unchecked {
-    background: rgba(255,255,255,0.05);
-    opacity: 0.6;
-    text-decoration: line-through;
-}
-#edit-toggle {
-    background: rgba(255,255,255,0.13);
-    border: 1px solid rgba(255,255,255,0.25);
-    color: #fff;
-    padding: 3px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 11.5px;
-}
-#edit-toggle:hover { background: rgba(255,255,255,0.22); }
+.ctrl-label input { cursor: pointer; width:12px; height:12px; accent-color:#2a8a36; }
+.ctrl-label.unchecked { opacity: 0.45; text-decoration: line-through; }
+.ctrl-label.sub { font-size: 10.5px; background: rgba(255,255,255,0.07); font-style: italic; }
 #print-btn {
     background: #2a8a36;
     color: #fff;
     border: none;
-    padding: 6px 16px;
-    border-radius: 5px;
-    font-size: 13px;
+    padding: 5px 16px;
+    border-radius: 4px;
+    font-size: 12px;
     font-weight: bold;
     cursor: pointer;
     margin-left: auto;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 #print-btn:hover { background: #237030; }
-#edit-zone {
-    width: 100%;
-    display: none;
-    padding: 6px 0 2px;
-}
-#remarques-textarea {
-    width: 100%;
-    min-height: 50px;
-    padding: 5px 8px;
-    font-size: 12px;
-    border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.3);
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-    resize: vertical;
-    box-sizing: border-box;
-}
-#remarques-textarea::placeholder { color: rgba(255,255,255,0.5); }
-body { padding-top: 58px; box-sizing: border-box; }
+body { padding-top: 72px; box-sizing: border-box; }
 </style>
 
 <div id="ctrl-panel">
-  <span class="ctrl-title">Personnaliser :</span>
+  <!-- LIGNE 1 : pages entières -->
+  <div class="ctrl-row">
+    <span class="ctrl-group-title">Pages :</span>
 
-  <label class="ctrl-label" id="lbl-page-garde">
-    <input type="checkbox" checked
-           onchange="toggleSection('page-garde', this)">
-    Page de garde
-  </label>
-  <label class="ctrl-label" id="lbl-bilan-60">
-    <input type="checkbox" checked
-           onchange="toggleSection('bilan-60', this)">
-    Bilan 60°/s
-  </label>
-  <label class="ctrl-label" id="lbl-bilan-240">
-    <input type="checkbox" checked
-           onchange="toggleSection('bilan-240', this)">
-    Bilan 240°/s
-  </label>
-  <label class="ctrl-label" id="lbl-remarques">
-    <input type="checkbox" checked
-           onchange="toggleSection('remarques', this)">
-    Analyse clinique
-  </label>
-  <label class="ctrl-label" id="lbl-bilan-vald">
-    <input type="checkbox" checked
-           onchange="toggleSection('bilan-vald', this)">
-    VALD
-  </label>
-  <label class="ctrl-label" id="lbl-vald-tableau">
-    <input type="checkbox" checked
-           onchange="toggleSection('vald-tableau', this)">
-    VALD Tableau
-  </label>
-  <label class="ctrl-label" id="lbl-conclusion-programme">
-    <input type="checkbox" checked
-           onchange="toggleSection('conclusion-programme', this)">
-    Conclusion
-  </label>
+    <label class="ctrl-label" id="lbl-page-garde">
+      <input type="checkbox" checked onchange="toggle('page-garde',this)"> Page de garde
+    </label>
+    <label class="ctrl-label" id="lbl-bilan-60">
+      <input type="checkbox" checked onchange="toggle('bilan-60',this)"> Bilan 60°/s
+    </label>
+    <label class="ctrl-label" id="lbl-bilan-240">
+      <input type="checkbox" checked onchange="toggle('bilan-240',this)"> Bilan 240°/s
+    </label>
+    <label class="ctrl-label" id="lbl-analyse-clinique">
+      <input type="checkbox" checked onchange="toggle('analyse-clinique',this)"> Analyse clinique
+    </label>
+    <label class="ctrl-label" id="lbl-bilan-vald">
+      <input type="checkbox" checked onchange="toggle('bilan-vald',this)"> VALD (ancien)
+    </label>
+    <label class="ctrl-label" id="lbl-excentrique">
+      <input type="checkbox" checked onchange="toggle('excentrique',this)"> Excentrique
+    </label>
+    <label class="ctrl-label" id="lbl-vald-tableau">
+      <input type="checkbox" checked onchange="toggle('vald-tableau',this)"> VALD tableau
+    </label>
+    <label class="ctrl-label" id="lbl-vald-manuel">
+      <input type="checkbox" checked onchange="toggle('vald-manuel',this)"> VALD ForceDecks
+    </label>
+    <label class="ctrl-label" id="lbl-gps-catapult">
+      <input type="checkbox" checked onchange="toggle('gps-catapult',this)"> GPS Catapult
+    </label>
+    <label class="ctrl-label" id="lbl-conclusion-programme">
+      <input type="checkbox" checked onchange="toggle('conclusion-programme',this)"> Synthèse / Conclusion
+    </label>
 
-  <button id="edit-toggle" onclick="toggleEdit()">
-    ✏️ Remarques
-  </button>
+    <button id="print-btn" onclick="window.print()">🖨 Imprimer / PDF</button>
+  </div>
 
-  <button id="print-btn" onclick="imprimerRapport()">
-    Imprimer / PDF
-  </button>
+  <!-- LIGNE 2 : sous-sections -->
+  <div class="ctrl-row" style="padding-top:3px;border-top:1px solid rgba(255,255,255,0.15);margin-top:3px;">
+    <span class="ctrl-group-title">Sections :</span>
 
-  <div id="edit-zone">
-    <textarea id="remarques-textarea"
-              placeholder="Saisir les remarques médicales ici..."
-              oninput="syncRemarques(this.value)"></textarea>
+    <label class="ctrl-label sub" id="lbl-guard-fonctionnel">
+      <input type="checkbox" checked onchange="toggle('guard-fonctionnel',this)"> Bilan fonctionnel
+    </label>
+    <label class="ctrl-label sub" id="lbl-guard-resume">
+      <input type="checkbox" checked onchange="toggle('guard-resume',this)"> Résumé du séjour
+    </label>
   </div>
 </div>
 
 <script>
+// Initialisation : cacher les labels des pages absentes du rapport
 document.addEventListener('DOMContentLoaded', function() {
-    var rem = document.querySelector('[data-remarques-content]');
-    var ta  = document.getElementById('remarques-textarea');
-    if (rem && ta) ta.value = rem.innerText.trim();
-
-    var sections = ['page-garde','bilan-60','bilan-240','remarques','bilan-vald','vald-tableau','conclusion-programme'];
-    sections.forEach(function(sid) {
+    var allIds = [
+        'page-garde','bilan-60','bilan-240','analyse-clinique',
+        'bilan-vald','excentrique','vald-tableau',
+        'vald-manuel','gps-catapult','conclusion-programme'
+    ];
+    allIds.forEach(function(sid) {
         var el  = document.querySelector('[data-section="'+sid+'"]');
+        var lbl = document.getElementById('lbl-'+sid);
+        if (!el && lbl) lbl.style.display = 'none';
+    });
+    // Sous-sections
+    ['guard-fonctionnel','guard-resume'].forEach(function(sid) {
+        var el  = document.querySelector('[data-subsection="'+sid+'"]');
         var lbl = document.getElementById('lbl-'+sid);
         if (!el && lbl) lbl.style.display = 'none';
     });
 });
 
-function toggleSection(sid, checkbox) {
-    var els = document.querySelectorAll('[data-section="'+sid+'"]');
+// toggle() gère PAGES (data-section) ET SOUS-SECTIONS (data-subsection)
+function toggle(sid, checkbox) {
+    var sel = '[data-section="'+sid+'"],[data-subsection="'+sid+'"]';
+    var els = document.querySelectorAll(sel);
     var lbl = document.getElementById('lbl-'+sid);
     els.forEach(function(el) {
-        el.style.display = checkbox.checked ? '' : 'none';
+        if (checkbox.checked) {
+            el.style.display = '';
+            el.classList.remove('hidden');
+        } else {
+            el.style.display = 'none';
+            el.classList.add('hidden');
+        }
     });
     if (lbl) lbl.classList.toggle('unchecked', !checkbox.checked);
-}
-
-function toggleEdit() {
-    var zone = document.getElementById('edit-zone');
-    zone.style.display = (zone.style.display === 'none' || zone.style.display === '')
-                         ? 'block' : 'none';
-}
-
-function syncRemarques(val) {
-    var rems = document.querySelectorAll('[data-remarques-content]');
-    rems.forEach(function(el) {
-        el.innerText = val;
-        el.style.display = val.trim() ? '' : 'none';
-    });
-    var bloc = document.querySelector('[data-section="remarques-medicales"]');
-    if (bloc) bloc.style.display = val.trim() ? '' : 'none';
-}
-
-function imprimerRapport() {
-    window.print();
 }
 </script>
 """

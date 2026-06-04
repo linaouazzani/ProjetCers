@@ -442,10 +442,8 @@ body {
 .gps-neu { color: #888888; font-weight: 700; }
 .gps-nd  { color: #333333; font-weight: 700; }
 
-/* ====== VALD MANUEL — bleu CERS cohérent ====== */
-.vm-h1 { background: #1c3f6e; color: #fff; font-size: 9pt; font-weight: 700; padding: 4px 12px; border-radius: 2px 2px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.vm-h2 { background: #2176c7; color: #fff; font-size: 9pt; font-weight: 700; padding: 4px 12px; border-radius: 2px 2px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.vm-h3 { background: #2a6099; color: #fff; font-size: 9pt; font-weight: 700; padding: 4px 12px; border-radius: 2px 2px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+/* ====== VALD MANUEL — memes 2 couleurs CERS pour CMJ / Drop Jump / SLJ ====== */
+.vm-h1, .vm-h2, .vm-h3 { background: #1c3f6e; color: #fff; font-size: 9pt; font-weight: 700; padding: 4px 12px; border-radius: 2px 2px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .vm-td { border: 1px solid #cccccc; padding: 5px 6px; text-align: center; font-weight: 700; }
 .vm-pos { color: #1a7a30; }
 .vm-neg { color: #c0392b; }
@@ -880,6 +878,7 @@ body {
   <!-- ── BILAN FONCTIONNEL : tableau HORIZONTAL (tests en colonnes) ── -->
   {% set has_fonctionnel = cr and (cr.marche_entree or cr.squat_entree or cr.saut_entree or cr.appui_mono_entree or cr.marche_sortie or cr.squat_sortie or cr.saut_sortie or cr.appui_mono_sortie) %}
   {% if has_fonctionnel %}
+  <div data-subsection="guard-fonctionnel">
   {# Déterminer quelles colonnes ont des données (éviter les colonnes entièrement vides) #}
   {% set show_marche = cr.marche_entree or cr.marche_sortie %}
   {% set show_squat  = cr.squat_entree  or cr.squat_sortie  %}
@@ -934,12 +933,13 @@ body {
       </tr>
     </table>
   </div>
+  </div><!-- /guard-fonctionnel -->
   {% endif %}
 
 
   <!-- ── RÉSUMÉ DU SÉJOUR (déplacé depuis page finale) ──────────── -->
   {% if resume_override or (cr and cr.conclusion and cr.conclusion | trim) %}
-  <div style="padding:8px 18px 10px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
+  <div data-subsection="guard-resume" style="padding:8px 18px 10px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
     <div style="border:1.5px solid #1c3f6e; border-radius:4px; overflow:visible; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
       <div style="background:#1c3f6e; color:#ffffff; font-size:9.5pt; font-weight:700; padding:5px 12px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
         R&#233;sum&#233; du s&#233;jour au CERS &mdash; Prise en charge &amp; &#233;volution
@@ -2353,17 +2353,17 @@ body {
               <span style="font-weight:700; color:#1c3f6e;">{{ parts[0].strip() }} :</span> {{ parts[1:]|join(':')|trim }}
             </div>
             {% else %}
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">&#9656; {{ ligne.strip() }}</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">{{ ligne.strip() }}</div>
             {% endif %}
             {% endif %}{% endfor %}
           </div>
           {% else %}
           <div style="font-size:8.5pt; color:#374151; line-height:1.7;">
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">&#9656; Renforcement musculaire progressif et analytique</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">&#9656; Travail proprioceptif et stabilisation articulaire</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">&#9656; R&#233;cup&#233;ration des amplitudes articulaires</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">&#9656; R&#233;&#233;ducation fonctionnelle et r&#233;int&#233;gration gestuelle</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">&#9656; Suivi et &#233;valuation continue du membre l&#233;s&#233;</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">Renforcement musculaire progressif et analytique</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">Travail proprioceptif et stabilisation articulaire</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">R&#233;cup&#233;ration des amplitudes articulaires</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">R&#233;&#233;ducation fonctionnelle et r&#233;int&#233;gration gestuelle</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">Suivi et &#233;valuation continue du membre l&#233;s&#233;</div>
           </div>
           {% endif %}
         </div>
@@ -2382,17 +2382,17 @@ body {
               <span style="font-weight:700; color:#2176c7;">{{ parts[0].strip() }} :</span> {{ parts[1:]|join(':')|trim }}
             </div>
             {% else %}
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">&#9656; {{ ligne.strip() }}</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">{{ ligne.strip() }}</div>
             {% endif %}
             {% endif %}{% endfor %}
           </div>
           {% else %}
           <div style="font-size:8.5pt; color:#374151; line-height:1.7;">
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">&#9656; Travail cardio-vasculaire adapt&#233; et progressif</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">&#9656; Renforcement global, gainage et stabilit&#233; du tronc</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">&#9656; Pliom&#233;trie progressive et travail explosif</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">&#9656; R&#233;int&#233;gration des exercices sportifs sp&#233;cifiques</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">&#9656; Pr&#233;paration au retour au sport comp&#233;titif</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">Travail cardio-vasculaire adapt&#233; et progressif</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">Renforcement global, gainage et stabilit&#233; du tronc</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">Pli&#233;om&#233;trie progressive et travail explosif</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">R&#233;int&#233;gration des exercices sportifs sp&#233;cifiques</div>
+            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">Pr&#233;paration au retour au sport comp&#233;titif</div>
           </div>
           {% endif %}
         </div>

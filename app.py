@@ -172,11 +172,11 @@ def _injecter_panneau_personnalisation(html: str) -> str:
     import re as _re
 
     def assigner_sections(html_text):
-        # Assigner data-section aux div.page qui n'en ont pas encore
-        # (ceux qui en ont déjà dans le template sont ignorés)
+        # La page de garde utilise <div data-section="page-garde" style="...">
+        # (PAS class="page") — elle est déjà taguée dans le template.
+        # Les <div class="page"> suivants sont : bilan-60, bilan-240, analyse-clinique
         sequential = [
-            "page-garde", "bilan-60", "bilan-240", "analyse-clinique",
-            "bilan-vald", "excentrique", "vald-tableau",
+            "bilan-60", "bilan-240", "analyse-clinique",
         ]
         pattern = r'(<div[^>]*class=["\'][^"\']*\bpage\b[^"\']*["\'][^>]*>)'
         parts = _re.split(pattern, html_text)
@@ -310,53 +310,64 @@ body { padding-top: 72px; box-sizing: border-box; }
     <button id="print-btn" onclick="window.print()">🖨 Imprimer / PDF</button>
   </div>
 
-  <!-- LIGNE 2 : sous-sections -->
+  <!-- LIGNE 2 : sous-sections page de garde -->
   <div class="ctrl-row" style="padding-top:3px;border-top:1px solid rgba(255,255,255,0.15);margin-top:3px;">
-    <span class="ctrl-group-title">Sections :</span>
+    <span class="ctrl-group-title">Page de garde :</span>
 
+    <label class="ctrl-label sub" id="lbl-guard-hero">
+      <input type="checkbox" checked onchange="toggle('guard-hero',this)"> Photo / Infos patient
+    </label>
+    <label class="ctrl-label sub" id="lbl-guard-info-bande">
+      <input type="checkbox" checked onchange="toggle('guard-info-bande',this)"> S&#233;jour / M&#233;decin / C&#244;t&#233;
+    </label>
+    <label class="ctrl-label sub" id="lbl-guard-diagnostic">
+      <input type="checkbox" checked onchange="toggle('guard-diagnostic',this)"> Diagnostic + Intervention
+    </label>
+    <label class="ctrl-label sub" id="lbl-guard-antecedents">
+      <input type="checkbox" checked onchange="toggle('guard-antecedents',this)"> Ant&#233;c&#233;dents
+    </label>
     <label class="ctrl-label sub" id="lbl-guard-fonctionnel">
       <input type="checkbox" checked onchange="toggle('guard-fonctionnel',this)"> Bilan fonctionnel
     </label>
     <label class="ctrl-label sub" id="lbl-guard-resume">
-      <input type="checkbox" checked onchange="toggle('guard-resume',this)"> Résumé du séjour
+      <input type="checkbox" checked onchange="toggle('guard-resume',this)"> R&#233;sum&#233; du s&#233;jour
     </label>
   </div>
 </div>
 
 <script>
-// Initialisation : cacher les labels des pages absentes du rapport
+var ALL_PAGES = [
+    'page-garde','bilan-60','bilan-240','analyse-clinique',
+    'bilan-vald','excentrique','vald-tableau',
+    'vald-manuel','gps-catapult','conclusion-programme'
+];
+var ALL_SUBS = [
+    'guard-hero','guard-info-bande','guard-diagnostic','guard-antecedents',
+    'guard-fonctionnel','guard-resume'
+];
+
+// Au chargement : masquer les labels des sections absentes du rapport
 document.addEventListener('DOMContentLoaded', function() {
-    var allIds = [
-        'page-garde','bilan-60','bilan-240','analyse-clinique',
-        'bilan-vald','excentrique','vald-tableau',
-        'vald-manuel','gps-catapult','conclusion-programme'
-    ];
-    allIds.forEach(function(sid) {
+    ALL_PAGES.forEach(function(sid) {
         var el  = document.querySelector('[data-section="'+sid+'"]');
         var lbl = document.getElementById('lbl-'+sid);
         if (!el && lbl) lbl.style.display = 'none';
     });
-    // Sous-sections
-    ['guard-fonctionnel','guard-resume'].forEach(function(sid) {
+    ALL_SUBS.forEach(function(sid) {
         var el  = document.querySelector('[data-subsection="'+sid+'"]');
         var lbl = document.getElementById('lbl-'+sid);
         if (!el && lbl) lbl.style.display = 'none';
     });
 });
 
-// toggle() gère PAGES (data-section) ET SOUS-SECTIONS (data-subsection)
+// toggle() : masque/affiche via classe .hidden UNIQUEMENT
+// (.hidden { display:none !important } fonctionne aussi à l'impression)
 function toggle(sid, checkbox) {
     var sel = '[data-section="'+sid+'"],[data-subsection="'+sid+'"]';
     var els = document.querySelectorAll(sel);
     var lbl = document.getElementById('lbl-'+sid);
     els.forEach(function(el) {
-        if (checkbox.checked) {
-            el.style.display = '';
-            el.classList.remove('hidden');
-        } else {
-            el.style.display = 'none';
-            el.classList.add('hidden');
-        }
+        el.classList.toggle('hidden', !checkbox.checked);
     });
     if (lbl) lbl.classList.toggle('unchecked', !checkbox.checked);
 }

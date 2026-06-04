@@ -762,7 +762,7 @@ body {
   </div>
 
   <!-- ── ZONE HERO : Photo + Nom + Infos ─────────────────────── -->
-  <div style="display:table; width:100%; table-layout:fixed; border-bottom:1px solid #dde8f2;">
+  <div data-subsection="guard-hero" style="display:table; width:100%; table-layout:fixed; border-bottom:1px solid #dde8f2;">
 
     <!-- Colonne photo -->
     <div style="display:table-cell; width:158px; vertical-align:middle; background:#f0f4f8; border-right:1px solid #dde8f2; padding:20px 14px; text-align:center; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
@@ -804,7 +804,7 @@ body {
   </div>
 
   <!-- ── BANDE INFO : Séjour · Médecin · Côté · Délai ─────────── -->
-  <div style="display:table; width:100%; table-layout:fixed; background:#eef3fa; border-bottom:3px solid #1c3f6e; padding:12px 18px; box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+  <div data-subsection="guard-info-bande" style="display:table; width:100%; table-layout:fixed; background:#eef3fa; border-bottom:3px solid #1c3f6e; padding:12px 18px; box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
     <div style="display:table-cell; width:28%; vertical-align:middle; padding-right:12px; border-right:1px solid #c8d8ea;">
       <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px;">S&#233;jour CERS</div>
       <div style="font-size:11pt; color:#1c3f6e; font-weight:bold; margin-top:3px;">{{ entree.date_test }} &rarr; {{ sortie.date_test }}</div>
@@ -830,7 +830,7 @@ body {
 
   <!-- ── DIAGNOSTIC + INTERVENTION ──────────────────────────────── -->
   {% set show_intervention = intervention_override or (cr and cr.intervention) %}
-  <div style="display:table; width:100%; table-layout:fixed; padding:12px 18px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
+  <div data-subsection="guard-diagnostic" style="display:table; width:100%; table-layout:fixed; padding:12px 18px; box-sizing:border-box; border-bottom:1px solid #e8eef5;">
     {% if show_intervention %}
     <div style="display:table-cell; width:50%; vertical-align:top; padding-right:10px; border-right:1px solid #e8eef5;">
     {% else %}
@@ -848,7 +848,7 @@ body {
         <div style="font-size:9pt; color:#888; margin-top:3px;">Accident : {{ cr.date_accident }}{% if cr.mecanisme %} &mdash; {{ cr.mecanisme }}{% endif %}</div>
         {% endif %}
         {% if cr and cr.antecedents and cr.antecedents | length > 0 %}
-        <div style="margin-top:6px; padding-top:5px; border-top:1px solid #f0c0c0;">
+        <div data-subsection="guard-antecedents" style="margin-top:6px; padding-top:5px; border-top:1px solid #f0c0c0;">
           <div style="font-size:7pt; color:#c0392b; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Ant&#233;c&#233;dents</div>
           <div style="font-size:8pt; color:#555; line-height:1.5;">
             {{ cr.antecedents | join(' &nbsp;&#183;&nbsp; ') }}

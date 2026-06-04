@@ -173,17 +173,22 @@ def _injecter_panneau_personnalisation(html: str) -> str:
 
     def assigner_sections(html_text):
         # La page de garde utilise <div data-section="page-garde" style="...">
-        # (PAS class="page") — elle est déjà taguée dans le template.
-        # Les <div class="page"> suivants sont : bilan-60, bilan-240, analyse-clinique
-        sequential = [
-            "bilan-60", "bilan-240", "analyse-clinique",
-        ]
-        pattern = r'(<div[^>]*class=["\'][^"\']*\bpage\b[^"\']*["\'][^>]*>)'
+        # (PAS class="page") — déjà taguée dans le template.
+        # Les <div class="page"> suivants (sans data-section) :
+        #   bilan-60, bilan-240, analyse-clinique
+        #
+        # IMPORTANT : on cible class="page" EXACTEMENT (guillemets inclus)
+        # pour ne PAS matcher <div class="page-content"> qui contient aussi "page"
+        sequential = ["bilan-60", "bilan-240", "analyse-clinique"]
+
+        # Regex stricte : class="page" suivi d'un espace, > ou "
+        # Ne match PAS "page-content", "page-garde", etc.
+        pattern = r'(<div[^>]*\bclass="page"[^>]*>)'
         parts = _re.split(pattern, html_text)
         result = []
         page_count = 0
         for part in parts:
-            if _re.match(r'<div[^>]*class=["\'][^"\']*\bpage\b', part):
+            if _re.match(r'<div[^>]*\bclass="page"', part):
                 if 'data-section' not in part:
                     sid = sequential[page_count] if page_count < len(sequential) \
                           else f"section-{page_count}"

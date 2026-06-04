@@ -493,13 +493,21 @@ with col_left:
             return None
         return round((sv - ev) / abs(ev) * 100, 1)
 
+    # Clés session_state par test
+    _SLJ_SFXS = ["eg", "ed", "sg", "sd"]   # SLJ : Entrée G/D + Sortie G/D
+    _STD_SFXS = ["e",  "s"]                 # CMJ / Drop Jump : Entrée + Sortie
+
+    def _sfxs(tk):
+        return _SLJ_SFXS if tk == "slj" else _STD_SFXS
+
     def _delete_vald_row(test_key, idx):
         inds = st.session_state[f"vald_{test_key}_inds"]
         n = len(inds)
         for j in range(idx, n - 1):
-            for sfx in ["e", "s"]:
-                st.session_state[f"v_{test_key}_{sfx}_{j}"] = st.session_state.get(f"v_{test_key}_{sfx}_{j+1}", "")
-        for sfx in ["e", "s"]:
+            for sfx in _sfxs(test_key):
+                st.session_state[f"v_{test_key}_{sfx}_{j}"] = \
+                    st.session_state.get(f"v_{test_key}_{sfx}_{j+1}", "")
+        for sfx in _sfxs(test_key):
             st.session_state.pop(f"v_{test_key}_{sfx}_{n-1}", None)
         inds.pop(idx)
         st.rerun()
@@ -510,37 +518,14 @@ with col_left:
         if _sk not in st.session_state:
             st.session_state[_sk] = list(_tv["inds"])
 
-    def _render_vald_tab(test_key):
-        inds = st.session_state[f"vald_{test_key}_inds"]
+    def _prog_html(p):
+        if p is None:
+            return '<span style="color:#aaa;">—</span>'
+        arrow = "↑" if p >= 0 else "↓"
+        col = "#1a7a30" if p >= 0 else "#c0392b"
+        return f'<span style="color:{col};font-weight:700;font-size:13px;">{arrow} {abs(p):.1f} %</span>'
 
-        hc = st.columns([3.0, 1.3, 1.3, 1.7, 0.45])
-        hc[0].markdown("**Indicateur**")
-        hc[1].markdown("**Entrée**")
-        hc[2].markdown("**Sortie**")
-        hc[3].markdown("**Progression**")
-        st.markdown('<hr style="margin:2px 0 4px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
-
-        for i, ind in enumerate(inds):
-            rc = st.columns([3.0, 1.3, 1.3, 1.7, 0.45])
-            rc[0].write(ind)
-            # text_input : compatible toutes versions Streamlit (pas de min_value/format)
-            e_str = rc[1].text_input("", key=f"v_{test_key}_e_{i}",
-                                     label_visibility="collapsed", placeholder="0.00")
-            s_str = rc[2].text_input("", key=f"v_{test_key}_s_{i}",
-                                     label_visibility="collapsed", placeholder="0.00")
-            p = _prog(e_str, s_str)
-            if p is not None:
-                arrow = "↑" if p >= 0 else "↓"
-                rc[3].markdown(
-                    f'<span style="color:{"#1a7a30" if p>=0 else "#c0392b"};'
-                    f'font-weight:700;font-size:13px;">{arrow} {abs(p):.1f} %</span>',
-                    unsafe_allow_html=True,
-                )
-            else:
-                rc[3].markdown('<span style="color:#aaa;">—</span>', unsafe_allow_html=True)
-            if rc[4].button("🗑️", key=f"v_{test_key}_del_{i}", help="Supprimer cette ligne"):
-                _delete_vald_row(test_key, i)
-
+    def _add_row_ui(test_key):
         st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
         ac = st.columns([3.5, 1.8])
         new_ind = ac[0].text_input("", key=f"v_{test_key}_new",
@@ -552,19 +537,83 @@ with col_left:
                 st.session_state.pop(f"v_{test_key}_new", None)
                 st.rerun()
 
+    def _render_vald_tab(test_key):
+        inds = st.session_state[f"vald_{test_key}_inds"]
+
+        if test_key == "slj":
+            # ── SLJ : 4 colonnes Entrée G / Entrée D / Sortie G / Sortie D ──
+            hc = st.columns([2.6, 0.95, 0.95, 0.95, 0.95, 1.3, 1.3, 0.4])
+            hc[0].markdown("**Indicateur**")
+            hc[1].markdown("**Ent. G**")
+            hc[2].markdown("**Ent. D**")
+            hc[3].markdown("**Sort. G**")
+            hc[4].markdown("**Sort. D**")
+            hc[5].markdown("**Prog. G**")
+            hc[6].markdown("**Prog. D**")
+            st.markdown('<hr style="margin:2px 0 4px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
+
+            for i, ind in enumerate(inds):
+                rc = st.columns([2.6, 0.95, 0.95, 0.95, 0.95, 1.3, 1.3, 0.4])
+                rc[0].write(ind)
+                eg = rc[1].text_input("", key=f"v_slj_eg_{i}", label_visibility="collapsed", placeholder="G")
+                ed = rc[2].text_input("", key=f"v_slj_ed_{i}", label_visibility="collapsed", placeholder="D")
+                sg = rc[3].text_input("", key=f"v_slj_sg_{i}", label_visibility="collapsed", placeholder="G")
+                sd = rc[4].text_input("", key=f"v_slj_sd_{i}", label_visibility="collapsed", placeholder="D")
+                rc[5].markdown(_prog_html(_prog(eg, sg)), unsafe_allow_html=True)
+                rc[6].markdown(_prog_html(_prog(ed, sd)), unsafe_allow_html=True)
+                if rc[7].button("🗑️", key=f"v_slj_del_{i}", help="Supprimer"):
+                    _delete_vald_row("slj", i)
+
+        else:
+            # ── CMJ / Drop Jump : Entrée + Sortie ──
+            hc = st.columns([3.0, 1.3, 1.3, 1.7, 0.45])
+            hc[0].markdown("**Indicateur**")
+            hc[1].markdown("**Entrée**")
+            hc[2].markdown("**Sortie**")
+            hc[3].markdown("**Progression**")
+            st.markdown('<hr style="margin:2px 0 4px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
+
+            for i, ind in enumerate(inds):
+                rc = st.columns([3.0, 1.3, 1.3, 1.7, 0.45])
+                rc[0].write(ind)
+                e_str = rc[1].text_input("", key=f"v_{test_key}_e_{i}",
+                                         label_visibility="collapsed", placeholder="0.00")
+                s_str = rc[2].text_input("", key=f"v_{test_key}_s_{i}",
+                                         label_visibility="collapsed", placeholder="0.00")
+                rc[3].markdown(_prog_html(_prog(e_str, s_str)), unsafe_allow_html=True)
+                if rc[4].button("🗑️", key=f"v_{test_key}_del_{i}", help="Supprimer cette ligne"):
+                    _delete_vald_row(test_key, i)
+
+        _add_row_ui(test_key)
+
     def _collect_vald_rows(test_key):
         inds = st.session_state.get(f"vald_{test_key}_inds", [])
         rows = []
-        for i, ind in enumerate(inds):
-            e = _safe_float(st.session_state.get(f"v_{test_key}_e_{i}", ""))
-            s = _safe_float(st.session_state.get(f"v_{test_key}_s_{i}", ""))
-            if e is not None or s is not None:
-                rows.append({
-                    "indicateur":  ind,
-                    "entree":      e,
-                    "sortie":      s,
-                    "progression": _prog(e, s),
-                })
+        if test_key == "slj":
+            for i, ind in enumerate(inds):
+                eg = _safe_float(st.session_state.get(f"v_slj_eg_{i}", ""))
+                ed = _safe_float(st.session_state.get(f"v_slj_ed_{i}", ""))
+                sg = _safe_float(st.session_state.get(f"v_slj_sg_{i}", ""))
+                sd = _safe_float(st.session_state.get(f"v_slj_sd_{i}", ""))
+                if any(v is not None for v in [eg, ed, sg, sd]):
+                    rows.append({
+                        "indicateur": ind,
+                        "entree_g":   eg,   "entree_d":   ed,
+                        "sortie_g":   sg,   "sortie_d":   sd,
+                        "prog_g":     _prog(eg, sg),
+                        "prog_d":     _prog(ed, sd),
+                    })
+        else:
+            for i, ind in enumerate(inds):
+                e = _safe_float(st.session_state.get(f"v_{test_key}_e_{i}", ""))
+                s = _safe_float(st.session_state.get(f"v_{test_key}_s_{i}", ""))
+                if e is not None or s is not None:
+                    rows.append({
+                        "indicateur":  ind,
+                        "entree":      e,
+                        "sortie":      s,
+                        "progression": _prog(e, s),
+                    })
         return rows
 
     slj_data, cmj_data = None, None   # compatibilité ascendante
@@ -581,7 +630,7 @@ with col_left:
                 st.session_state[f"vald_{_tk}_inds"] = list(_tv["inds"])
                 n = len(_tv["inds"]) + 5
                 for i in range(n):
-                    for sfx in ["e", "s"]:
+                    for sfx in _sfxs(_tk):
                         st.session_state.pop(f"v_{_tk}_{sfx}_{i}", None)
                 st.session_state.pop(f"v_{_tk}_new", None)
             st.rerun()

@@ -2067,7 +2067,47 @@ body {
 
     {{ vald_table(vald_manual.cmj, "CMJ — Counter Movement Jump", "vm-h1") }}
     {{ vald_table(vald_manual.dj,  "Drop Jump",                   "vm-h2") }}
-    {{ vald_table(vald_manual.slj, "SLJ — Single Leg Jump",       "vm-h3") }}
+
+    {# SLJ : tableau avec colonnes Gauche / Droite pour Entrée et Sortie #}
+    {% macro vald_table_lr(rows, titre, header_cls) %}
+    {% if rows %}
+    <div style="margin-bottom:12px;">
+      <div class="{{ header_cls }}">{{ titre }}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:8.5pt;table-layout:fixed;">
+        <thead>
+          <tr style="-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:left;width:34%;">Indicateur</th>
+            <th style="background:#1c3f6e;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:10%;">Ent. G</th>
+            <th style="background:#1c3f6e;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:10%;">Ent. D</th>
+            <th style="background:#2176c7;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:10%;">Sort. G</th>
+            <th style="background:#2176c7;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:10%;">Sort. D</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:13%;">Prog. G</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:13%;">Prog. D</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          {% set pg = row.prog_g %}
+          {% set pd = row.prog_d %}
+          {% set pg_cls = 'vm-pos' if pg is not none and pg > 0 else ('vm-neg' if pg is not none and pg < 0 else ('vm-neu' if pg is not none else 'vm-null')) %}
+          {% set pd_cls = 'vm-pos' if pd is not none and pd > 0 else ('vm-neg' if pd is not none and pd < 0 else ('vm-neu' if pd is not none else 'vm-null')) %}
+          <tr class="{% if loop.index is odd %}gps-alt{% endif %}">
+            <td style="border:1px solid #cccccc;padding:5px 8px;font-weight:600;color:#1c3f6e;">{{ row.indicateur }}</td>
+            <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;">{{ row.entree_g if row.entree_g is not none else '—' }}</td>
+            <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;">{{ row.entree_d if row.entree_d is not none else '—' }}</td>
+            <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;">{{ row.sortie_g if row.sortie_g is not none else '—' }}</td>
+            <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;">{{ row.sortie_d if row.sortie_d is not none else '—' }}</td>
+            <td class="vm-td {{ pg_cls }}">{% if pg is not none %}{% if pg > 0 %}&#8593;{% elif pg < 0 %}&#8595;{% else %}&#8594;{% endif %} {{ "%.1f"|format(pg|abs) }}&nbsp;%{% else %}—{% endif %}</td>
+            <td class="vm-td {{ pd_cls }}">{% if pd is not none %}{% if pd > 0 %}&#8593;{% elif pd < 0 %}&#8595;{% else %}&#8594;{% endif %} {{ "%.1f"|format(pd|abs) }}&nbsp;%{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+    {% endmacro %}
+
+    {{ vald_table_lr(vald_manual.slj, "SLJ — Single Leg Jump (Gauche / Droite)", "vm-h3") }}
 
     <div class="footer">
       <div class="footer-logo">

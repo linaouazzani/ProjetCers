@@ -442,10 +442,10 @@ body {
 .gps-neu { color: #888888; font-weight: 700; }
 .gps-nd  { color: #333333; font-weight: 700; }
 
-/* ====== VALD MANUEL ====== */
+/* ====== VALD MANUEL — bleu CERS cohérent ====== */
 .vm-h1 { background: #1c3f6e; color: #fff; font-size: 9pt; font-weight: 700; padding: 4px 12px; border-radius: 2px 2px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.vm-h2 { background: #2a6099; color: #fff; font-size: 9pt; font-weight: 700; padding: 4px 12px; border-radius: 2px 2px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.vm-h3 { background: #374151; color: #fff; font-size: 9pt; font-weight: 700; padding: 4px 12px; border-radius: 2px 2px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.vm-h2 { background: #2176c7; color: #fff; font-size: 9pt; font-weight: 700; padding: 4px 12px; border-radius: 2px 2px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.vm-h3 { background: #2a6099; color: #fff; font-size: 9pt; font-weight: 700; padding: 4px 12px; border-radius: 2px 2px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .vm-td { border: 1px solid #cccccc; padding: 5px 6px; text-align: center; font-weight: 700; }
 .vm-pos { color: #1a7a30; }
 .vm-neg { color: #c0392b; }
@@ -825,7 +825,7 @@ body {
     <div style="display:table-cell; width:20%; vertical-align:middle; padding-left:12px;">
       {% if (cr and cr.delai_postop_jours) or delai_post_op %}
       <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px;">D&#233;lai post-op.</div>
-      <div style="font-size:11pt; color:#1c3f6e; font-weight:bold; margin-top:3px;">{% if cr and cr.delai_postop_jours %}J+{{ cr.delai_postop_jours }} j{% else %}{{ delai_post_op }}{% endif %}</div>
+      <div style="font-size:11pt; color:#1c3f6e; font-weight:bold; margin-top:3px;">{% if cr and cr.delai_postop_jours %}{{ cr.delai_postop_jours }} j{% else %}{{ delai_post_op }}{% endif %}</div>
       {% endif %}
     </div>
   </div>
@@ -2297,17 +2297,18 @@ body {
 
   <div class="page-content" style="overflow:visible !important;">
     {# Variables effectives : CR en priorité (liste), sinon manuel (string→split) #}
-    {% if cr and cr.programme_kine %}
-      {% set eff_kine_lines = cr.programme_kine %}
-    {% elif programme_kine %}
+    {# Priorité : saisie manuelle dans l'app > contenu extrait du CR médical #}
+    {% if programme_kine and programme_kine | trim %}
       {% set eff_kine_lines = programme_kine.split('\n') %}
+    {% elif cr and cr.programme_kine %}
+      {% set eff_kine_lines = cr.programme_kine %}
     {% else %}
       {% set eff_kine_lines = [] %}
     {% endif %}
-    {% if cr and cr.programme_prepa %}
-      {% set eff_prepa_lines = cr.programme_prepa %}
-    {% elif programme_prepa %}
+    {% if programme_prepa and programme_prepa | trim %}
       {% set eff_prepa_lines = programme_prepa.split('\n') %}
+    {% elif cr and cr.programme_prepa %}
+      {% set eff_prepa_lines = cr.programme_prepa %}
     {% else %}
       {% set eff_prepa_lines = [] %}
     {% endif %}

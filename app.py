@@ -463,61 +463,32 @@ with col_left:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── Config statique de toutes les sections VALD ──────────────────
-    # (label, unité, type)  type: "simple" ou "lr"
-    # "lr" = Gauche + Droite + ligne asymétrie auto (jaune si >10%)
-    _VS = {
-        "cmj": ("CMJ — Counter Movement Jump", [
-            ("Jump Height Imp-Mom",              "cm",   "simple"),
-            ("Peak Power / BM",                  "W/kg", "simple"),
-            ("RSI Modified Imp-Mom",             "m/s",  "simple"),
-            ("Eccentric Braking Impulse % Asym", "%",    "simple"),
-            ("Concentric Impulse % Asym",        "%",    "simple"),
-            ("Peak Landing Force % Asym",        "%",    "simple"),
-        ]),
-        "dj": ("Drop Jump", [
-            ("Jump Height Imp-Mom",              "cm",   "simple"),
-            ("Peak Power / BM",                  "W/kg", "simple"),
-            ("RSI — JH (Flight Time/Contact Time)", "m/s", "simple"),
-            ("Eccentric Impulse % Asym",         "%",    "simple"),
-            ("Concentric Impulse % Asym",        "%",    "simple"),
-            ("Peak Landing Force % Asym",        "%",    "simple"),
-        ]),
-        "sls": ("SLS — Single Leg Squat", [
-            ("Max Jump Height",                  "cm",     "simple"),
-            ("RSI Modified",                     "m/s",    "simple"),
-            ("Eccentric Braking RFD / BM",       "N/s/kg", "simple"),
-            ("Concentric Peak Force",            "N",      "lr"),
-            ("Eccentric Peak Force",             "N",      "lr"),
-            ("Peak Force",                       "N",      "lr"),
-            ("Eccentric Decel RFD",              "N/s",    "lr"),
-        ]),
-        "shoulder": ("ASH Shoulder — Tests isométriques", [
-            ("Shoulder Iso-T — Max Peak Vertical Force", "N",   "lr"),
-            ("Shoulder Iso-T — Max RFD 200ms",           "N/s", "lr"),
-            ("Shoulder Iso-Y — Max Peak Vertical Force", "N",   "lr"),
-            ("Shoulder Iso-Y — Max RFD 200ms",           "N/s", "lr"),
-            ("Shoulder Iso-I — Max Peak Vertical Force", "N",   "lr"),
-            ("Shoulder Iso-I — Max RFD 200ms",           "N/s", "lr"),
-        ]),
-        "mollet_run": ("Mollet — Run-Specific Ankle Iso-Push", [
-            ("Max Peak Specific Force", "N",   "lr"),
-            ("Max RFD 200ms",           "N/s", "lr"),
-        ]),
-        "mollet_seated": ("Mollet — Seated Isometric Calf Raise", [
-            ("Max Peak Vertical Force", "N",   "lr"),
-            ("Max RFD 200ms",           "N/s", "lr"),
-        ]),
-        "nordic": ("Nordic Hamstring", [
-            ("Max Force", "N", "lr"),
-        ]),
-        "imtp": ("IMTP — Isometric Mid-Thigh Pull", [
-            ("Max Peak Vertical Force", "N",   "lr"),
-            ("Max RFD 200ms",           "N/s", "lr"),
-        ]),
+    # 1b. VALD ForceDecks — saisie manuelle
+    # CMJ / DJ : listes dynamiques (ajout/suppression de lignes)
+    # SLJ + sections LR : 4 colonnes Ent.G / Ent.D / Sort.G / Sort.D
+    _CMJ_IND = [
+        "Jump Height (cm)", "Peak Power / BM (W/kg)", "RSI Modified Imp-Mom (m/s)",
+        "Eccentric Braking Impulse % Asym", "Concentric Impulse % Asym",
+        "Peak Landing Force % Asym",
+    ]
+    _DJ_IND = [
+        "Jump Height (cm)", "Peak Power / BM (W/kg)",
+        "RSI JH — Flight Time / Contact Time (m/s)",
+        "Eccentric Impulse % Asym", "Concentric Impulse % Asym",
+        "Peak Landing Force % Asym",
+    ]
+    # Sections LR : indicateurs fixes
+    _LR_INDS = {
+        "slj":          ["Max Jump Height (cm)", "RSI Modified (m/s)", "Eccentric Braking RFD / BM (N/s)"],
+        "shoulder":     ["Iso-T — Max Peak Vertical Force (N)", "Iso-T — Max RFD 200ms (N/s)",
+                         "Iso-Y — Max Peak Vertical Force (N)", "Iso-Y — Max RFD 200ms (N/s)",
+                         "Iso-I — Max Peak Vertical Force (N)", "Iso-I — Max RFD 200ms (N/s)"],
+        "mollet_run":   ["Max Peak Specific Force (N)", "Max RFD 200ms (N/s)"],
+        "mollet_seated":["Max Peak Vertical Force (N)", "Max RFD 200ms (N/s)"],
+        "nordic":       ["Max Force (N)"],
+        "imtp":         ["Max Peak Vertical Force (N)", "Max RFD 200ms (N/s)"],
     }
 
-    # ── Helpers ──────────────────────────────────────────────────────
     def _safe_float(s):
         if s is None or str(s).strip() == "":
             return None
@@ -532,13 +503,6 @@ with col_left:
             return None
         return round((sv - ev) / abs(ev) * 100, 1)
 
-    def _asym(L, R):
-        lv, rv = _safe_float(L), _safe_float(R)
-        if lv is None or rv is None:
-            return None
-        mx = max(abs(lv), abs(rv))
-        return round(abs(lv - rv) / mx * 100, 1) if mx else None
-
     def _prog_html(p):
         if p is None:
             return '<span style="color:#aaa;">—</span>'
@@ -546,130 +510,149 @@ with col_left:
         col = "#1a7a30" if p >= 0 else "#c0392b"
         return f'<span style="color:{col};font-weight:700;font-size:13px;">{arrow} {abs(p):.1f} %</span>'
 
-    def _asym_html(a):
-        if a is None:
-            return '<span style="color:#aaa;">—</span>'
-        bg = "background:#fff3cd;border-radius:3px;padding:1px 4px;" if a > 10 else ""
-        col = "#b85c00" if a > 10 else "#555"
-        return f'<span style="font-size:12px;font-weight:600;color:{col};{bg}">{a:.1f} %</span>'
+    # Init session state listes
+    for _k, _d in [("cmj", _CMJ_IND), ("dj", _DJ_IND)]:
+        if f"vald_{_k}_inds" not in st.session_state:
+            st.session_state[f"vald_{_k}_inds"] = list(_d)
+    for _k, _d in _LR_INDS.items():
+        if f"vald_{_k}_inds" not in st.session_state:
+            st.session_state[f"vald_{_k}_inds"] = list(_d)
 
-    # ── Rendu d'une section ───────────────────────────────────────────
-    def _render_section(tk):
-        _, indicators = _VS[tk]
-        # En-têtes
-        hc = st.columns([3.2, 1.1, 1.1, 1.5])
-        hc[0].markdown("**Indicateur (Unité)**")
-        hc[1].markdown("**Entrée**")
-        hc[2].markdown("**Sortie**")
-        hc[3].markdown("**Progression**")
-        st.markdown('<hr style="margin:2px 0 5px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
+    # ── Suppression d'une ligne (CMJ/DJ uniquement) ───────────────────
+    def _del_row(tk, idx):
+        inds = st.session_state[f"vald_{tk}_inds"]
+        n = len(inds)
+        for j in range(idx, n - 1):
+            for sfx in ["e", "s"]:
+                st.session_state[f"v_{tk}_{sfx}_{j}"] = st.session_state.get(f"v_{tk}_{sfx}_{j+1}", "")
+        for sfx in ["e", "s"]:
+            st.session_state.pop(f"v_{tk}_{sfx}_{n-1}", None)
+        inds.pop(idx)
+        st.rerun()
 
-        for i, (label, unit, ind_type) in enumerate(indicators):
-            if ind_type == "simple":
-                rc = st.columns([3.2, 1.1, 1.1, 1.5])
-                rc[0].markdown(f"**{label}** <small style='color:#888;'>({unit})</small>",
-                               unsafe_allow_html=True)
-                e = rc[1].text_input("", key=f"v_{tk}_e_{i}",
-                                     label_visibility="collapsed", placeholder="0.00")
-                s = rc[2].text_input("", key=f"v_{tk}_s_{i}",
-                                     label_visibility="collapsed", placeholder="0.00")
-                rc[3].markdown(_prog_html(_prog(e, s)), unsafe_allow_html=True)
+    # ── Rendu CMJ / DJ (simple Entrée/Sortie + supprimer) ────────────
+    def _render_simple(tk):
+        inds = st.session_state[f"vald_{tk}_inds"]
+        hc = st.columns([3.0, 1.3, 1.3, 1.7, 0.45])
+        hc[0].markdown("**Indicateur**"); hc[1].markdown("**Entrée**")
+        hc[2].markdown("**Sortie**");     hc[3].markdown("**Progression**")
+        st.markdown('<hr style="margin:2px 0 4px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
+        for i, ind in enumerate(inds):
+            rc = st.columns([3.0, 1.3, 1.3, 1.7, 0.45])
+            rc[0].write(ind)
+            e = rc[1].text_input("", key=f"v_{tk}_e_{i}", label_visibility="collapsed", placeholder="0.00")
+            s = rc[2].text_input("", key=f"v_{tk}_s_{i}", label_visibility="collapsed", placeholder="0.00")
+            rc[3].markdown(_prog_html(_prog(e, s)), unsafe_allow_html=True)
+            if rc[4].button("🗑", key=f"v_{tk}_del_{i}", help="Supprimer"):
+                _del_row(tk, i)
+        st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
+        ac = st.columns([3.5, 1.8])
+        new_ind = ac[0].text_input("", key=f"v_{tk}_new", label_visibility="collapsed", placeholder="Ajouter un indicateur...")
+        if ac[1].button("+ Ajouter", key=f"v_{tk}_add"):
+            if new_ind.strip():
+                st.session_state[f"vald_{tk}_inds"].append(new_ind.strip())
+                st.session_state.pop(f"v_{tk}_new", None)
+                st.rerun()
 
-            elif ind_type == "lr":
-                # Gauche
-                rc1 = st.columns([3.2, 1.1, 1.1, 1.5])
-                rc1[0].markdown(f"**{label} — Gauche** <small style='color:#888;'>({unit})</small>",
-                                unsafe_allow_html=True)
-                eL = rc1[1].text_input("", key=f"v_{tk}_eL_{i}",
-                                       label_visibility="collapsed", placeholder="G")
-                sL = rc1[2].text_input("", key=f"v_{tk}_sL_{i}",
-                                       label_visibility="collapsed", placeholder="G")
-                rc1[3].markdown(_prog_html(_prog(eL, sL)), unsafe_allow_html=True)
-                # Droite
-                rc2 = st.columns([3.2, 1.1, 1.1, 1.5])
-                rc2[0].markdown(f"**{label} — Droite** <small style='color:#888;'>({unit})</small>",
-                                unsafe_allow_html=True)
-                eR = rc2[1].text_input("", key=f"v_{tk}_eR_{i}",
-                                       label_visibility="collapsed", placeholder="D")
-                sR = rc2[2].text_input("", key=f"v_{tk}_sR_{i}",
-                                       label_visibility="collapsed", placeholder="D")
-                rc2[3].markdown(_prog_html(_prog(eR, sR)), unsafe_allow_html=True)
-                # Asymétrie auto
-                ae, as_ = _asym(eL, eR), _asym(sL, sR)
-                rc3 = st.columns([3.2, 1.1, 1.1, 1.5])
-                rc3[0].markdown(
-                    f'<span style="font-size:11px;color:#777;padding-left:12px;">'
-                    f'↳ Asymétrie — {label} (%)</span>',
-                    unsafe_allow_html=True,
-                )
-                rc3[1].markdown(_asym_html(ae), unsafe_allow_html=True)
-                rc3[2].markdown(_asym_html(as_), unsafe_allow_html=True)
-                rc3[3].write("")
-                st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
+    # ── Rendu LR — 4 colonnes : Ent.G / Ent.D / Sort.G / Sort.D ─────
+    def _render_lr(tk):
+        inds = st.session_state[f"vald_{tk}_inds"]
+        hc = st.columns([2.6, 0.95, 0.95, 0.95, 0.95, 1.3, 1.3, 0.4])
+        hc[0].markdown("**Indicateur**")
+        hc[1].markdown("**Ent. G**"); hc[2].markdown("**Ent. D**")
+        hc[3].markdown("**Sort. G**"); hc[4].markdown("**Sort. D**")
+        hc[5].markdown("**Prog. G**"); hc[6].markdown("**Prog. D**")
+        st.markdown('<hr style="margin:2px 0 4px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
+        for i, ind in enumerate(inds):
+            rc = st.columns([2.6, 0.95, 0.95, 0.95, 0.95, 1.3, 1.3, 0.4])
+            rc[0].write(ind)
+            eg = rc[1].text_input("", key=f"v_{tk}_eg_{i}", label_visibility="collapsed", placeholder="G")
+            ed = rc[2].text_input("", key=f"v_{tk}_ed_{i}", label_visibility="collapsed", placeholder="D")
+            sg = rc[3].text_input("", key=f"v_{tk}_sg_{i}", label_visibility="collapsed", placeholder="G")
+            sd = rc[4].text_input("", key=f"v_{tk}_sd_{i}", label_visibility="collapsed", placeholder="D")
+            rc[5].markdown(_prog_html(_prog(eg, sg)), unsafe_allow_html=True)
+            rc[6].markdown(_prog_html(_prog(ed, sd)), unsafe_allow_html=True)
+            if rc[7].button("🗑", key=f"v_{tk}_del_{i}", help="Supprimer"):
+                _del_lr_row(tk, i)
+
+    def _del_lr_row(tk, idx):
+        inds = st.session_state[f"vald_{tk}_inds"]
+        n = len(inds)
+        for j in range(idx, n - 1):
+            for sfx in ["eg", "ed", "sg", "sd"]:
+                st.session_state[f"v_{tk}_{sfx}_{j}"] = st.session_state.get(f"v_{tk}_{sfx}_{j+1}", "")
+        for sfx in ["eg", "ed", "sg", "sd"]:
+            st.session_state.pop(f"v_{tk}_{sfx}_{n-1}", None)
+        inds.pop(idx)
+        st.rerun()
 
     # ── Collecte pour le rapport ──────────────────────────────────────
-    def _collect_section(tk):
-        _, indicators = _VS[tk]
+    def _collect_simple(tk):
         rows = []
-        for i, (label, unit, ind_type) in enumerate(indicators):
-            if ind_type == "simple":
-                e = _safe_float(st.session_state.get(f"v_{tk}_e_{i}", ""))
-                s = _safe_float(st.session_state.get(f"v_{tk}_s_{i}", ""))
-                if e is not None or s is not None:
-                    rows.append({"indicateur": label, "unit": unit, "type": "simple",
-                                 "entree": e, "sortie": s, "progression": _prog(e, s)})
-            elif ind_type == "lr":
-                eL = _safe_float(st.session_state.get(f"v_{tk}_eL_{i}", ""))
-                eR = _safe_float(st.session_state.get(f"v_{tk}_eR_{i}", ""))
-                sL = _safe_float(st.session_state.get(f"v_{tk}_sL_{i}", ""))
-                sR = _safe_float(st.session_state.get(f"v_{tk}_sR_{i}", ""))
-                if any(v is not None for v in [eL, eR, sL, sR]):
-                    rows.append({"indicateur": f"{label} — Gauche", "unit": unit, "type": "simple",
-                                 "entree": eL, "sortie": sL, "progression": _prog(eL, sL)})
-                    rows.append({"indicateur": f"{label} — Droite", "unit": unit, "type": "simple",
-                                 "entree": eR, "sortie": sR, "progression": _prog(eR, sR)})
-                    ae, as_ = _asym(eL, eR), _asym(sL, sR)
-                    rows.append({"indicateur": f"  Asymétrie — {label}", "unit": "%",
-                                 "type": "asym", "asym_e": ae, "asym_s": as_})
+        for i, ind in enumerate(st.session_state.get(f"vald_{tk}_inds", [])):
+            e = _safe_float(st.session_state.get(f"v_{tk}_e_{i}", ""))
+            s = _safe_float(st.session_state.get(f"v_{tk}_s_{i}", ""))
+            if e is not None or s is not None:
+                rows.append({"indicateur": ind, "entree": e, "sortie": s, "progression": _prog(e, s)})
+        return rows
+
+    def _collect_lr(tk):
+        rows = []
+        for i, ind in enumerate(st.session_state.get(f"vald_{tk}_inds", [])):
+            eg = _safe_float(st.session_state.get(f"v_{tk}_eg_{i}", ""))
+            ed = _safe_float(st.session_state.get(f"v_{tk}_ed_{i}", ""))
+            sg = _safe_float(st.session_state.get(f"v_{tk}_sg_{i}", ""))
+            sd = _safe_float(st.session_state.get(f"v_{tk}_sd_{i}", ""))
+            if any(v is not None for v in [eg, ed, sg, sd]):
+                rows.append({
+                    "indicateur": ind,
+                    "entree_g": eg, "entree_d": ed,
+                    "sortie_g": sg, "sortie_d": sd,
+                    "prog_g": _prog(eg, sg), "prog_d": _prog(ed, sd),
+                })
         return rows
 
     slj_data, cmj_data = None, None  # compatibilité ascendante
 
-    with st.expander("🏋️ VALD ForceDecks — Saisie manuelle (optionnel)", expanded=False):
-        t_sauts, t_shoulder, t_mollet, t_nordic, t_imtp = st.tabs(
-            ["🏃 Sauts", "🤸 Épaule (ASH)", "🦶 Mollet", "🦵 Nordic", "💪 IMTP"]
-        )
-        with t_sauts:
-            s_cmj, s_dj, s_sls = st.tabs(["CMJ", "Drop Jump", "SLS"])
-            with s_cmj:  _render_section("cmj")
-            with s_dj:   _render_section("dj")
-            with s_sls:  _render_section("sls")
-        with t_shoulder:
-            _render_section("shoulder")
-        with t_mollet:
-            st.markdown("**Run-Specific Ankle Iso-Push**")
-            _render_section("mollet_run")
-            st.markdown("---")
-            st.markdown("**Seated Isometric Calf Raise**")
-            _render_section("mollet_seated")
-        with t_nordic:
-            _render_section("nordic")
-        with t_imtp:
-            _render_section("imtp")
+    with st.expander("VALD ForceDecks — Saisie manuelle (optionnel)", expanded=False):
+        tabs = st.tabs(["CMJ", "Drop Jump", "SLJ", "Epaule", "Mollet", "Nordic", "IMTP"])
+        with tabs[0]: _render_simple("cmj")
+        with tabs[1]: _render_simple("dj")
+        with tabs[2]: _render_lr("slj")
+        with tabs[3]: _render_lr("shoulder")
+        with tabs[4]:
+            st.caption("Run-Specific Ankle Iso-Push")
+            _render_lr("mollet_run")
+            st.divider()
+            st.caption("Seated Isometric Calf Raise")
+            _render_lr("mollet_seated")
+        with tabs[5]: _render_lr("nordic")
+        with tabs[6]: _render_lr("imtp")
 
         st.markdown("---")
-        if st.button("↺ Réinitialiser tous les tableaux VALD", key="reset_vald"):
-            for tk2, (_, inds2) in _VS.items():
-                for i2, (_, _, t2) in enumerate(inds2):
-                    if t2 == "simple":
-                        for s2 in ["e", "s"]:
-                            st.session_state.pop(f"v_{tk2}_{s2}_{i2}", None)
-                    elif t2 == "lr":
-                        for s2 in ["eL", "eR", "sL", "sR"]:
-                            st.session_state.pop(f"v_{tk2}_{s2}_{i2}", None)
+        if st.button("Reinitialiser tous les tableaux VALD", key="reset_vald"):
+            for _tk, _d in [("cmj", _CMJ_IND), ("dj", _DJ_IND)]:
+                st.session_state[f"vald_{_tk}_inds"] = list(_d)
+                for i in range(len(_d) + 5):
+                    for sfx in ["e", "s"]:
+                        st.session_state.pop(f"v_{_tk}_{sfx}_{i}", None)
+            for _tk, _d in _LR_INDS.items():
+                st.session_state[f"vald_{_tk}_inds"] = list(_d)
+                for i in range(len(_d) + 2):
+                    for sfx in ["eg", "ed", "sg", "sd"]:
+                        st.session_state.pop(f"v_{_tk}_{sfx}_{i}", None)
             st.rerun()
 
-    vald_manual = {tk: _collect_section(tk) for tk in _VS}
+    vald_manual = {
+        "cmj":          _collect_simple("cmj"),
+        "dj":           _collect_simple("dj"),
+        "slj":          _collect_lr("slj"),
+        "shoulder":     _collect_lr("shoulder"),
+        "mollet_run":   _collect_lr("mollet_run"),
+        "mollet_seated":_collect_lr("mollet_seated"),
+        "nordic":        _collect_lr("nordic"),
+        "imtp":          _collect_lr("imtp"),
+    }
     _has_vald_manual = any(vald_manual[k] for k in vald_manual)
 
     # Parsing compte-rendu médical

@@ -2030,48 +2030,69 @@ body {
       &#9654; VALD ForceDecks &mdash; Bilan des tests de force
     </div>
 
-    {# Macro universelle : gère simple (Entrée/Sortie/Prog) ET asym (ligne jaune si >10%) #}
+    {# Macro tableau simple : Indicateur / Entrée / Sortie / Progression #}
     {% macro vald_table(rows, titre, header_cls) %}
     {% if rows %}
-    <div style="margin-bottom:12px;">
+    <div style="margin-bottom:10px;">
       <div class="{{ header_cls }}">{{ titre }}</div>
       <table style="width:100%;border-collapse:collapse;font-size:8.5pt;table-layout:fixed;">
         <thead>
           <tr style="-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:left;width:46%;">Indicateur</th>
-            <th style="background:#2a6099;color:#fff;padding:5px 6px;border:1px solid #99aac4;text-align:center;width:8%;">Unit&#233;</th>
-            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:center;width:15%;">Entr&#233;e</th>
-            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:center;width:15%;">Sortie</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:left;width:52%;">Indicateur</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:center;width:16%;">Entr&#233;e</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:center;width:16%;">Sortie</th>
             <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:center;width:16%;">Progression</th>
           </tr>
         </thead>
         <tbody>
           {% for row in rows %}
-          {% if row.type == "asym" %}
-          {% set hl_e = row.asym_e is not none and row.asym_e > 10 %}
-          {% set hl_s = row.asym_s is not none and row.asym_s > 10 %}
-          <tr>
-            <td style="border:1px solid #cccccc;padding:4px 8px 4px 20px;font-style:italic;color:#777;font-size:8pt;">{{ row.indicateur }}</td>
-            <td style="border:1px solid #cccccc;padding:4px 4px;text-align:center;color:#888;font-size:7.5pt;">%</td>
-            <td class="{% if hl_e %}highlight-asym{% endif %}" style="border:1px solid #cccccc;padding:4px 6px;text-align:center;font-weight:600;">
-              {% if row.asym_e is not none %}{{ "%.1f"|format(row.asym_e) }}&nbsp;%{% else %}—{% endif %}
-            </td>
-            <td class="{% if hl_s %}highlight-asym{% endif %}" style="border:1px solid #cccccc;padding:4px 6px;text-align:center;font-weight:600;">
-              {% if row.asym_s is not none %}{{ "%.1f"|format(row.asym_s) }}&nbsp;%{% else %}—{% endif %}
-            </td>
-            <td style="border:1px solid #cccccc;padding:4px 6px;text-align:center;color:#aaa;">—</td>
-          </tr>
-          {% else %}
           {% set prog = row.progression %}
           {% set prog_cls = 'vm-pos' if prog is not none and prog > 0 else ('vm-neg' if prog is not none and prog < 0 else ('vm-neu' if prog is not none else 'vm-null')) %}
           <tr class="{% if loop.index is odd %}gps-alt{% endif %}">
             <td style="border:1px solid #cccccc;padding:5px 8px;font-weight:600;color:#1c3f6e;">{{ row.indicateur }}</td>
-            <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;color:#888;font-size:7.5pt;">{{ row.unit if row.unit else '' }}</td>
             <td style="border:1px solid #cccccc;padding:5px 6px;text-align:center;">{{ row.entree if row.entree is not none else '—' }}</td>
             <td style="border:1px solid #cccccc;padding:5px 6px;text-align:center;">{{ row.sortie if row.sortie is not none else '—' }}</td>
             <td class="vm-td {{ prog_cls }}">{% if prog is not none %}{% if prog > 0 %}&#8593;{% elif prog < 0 %}&#8595;{% else %}&#8594;{% endif %} {{ "%.1f"|format(prog|abs) }}&nbsp;%{% else %}—{% endif %}</td>
           </tr>
-          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+    {% endmacro %}
+
+    {# Macro tableau LR : Indicateur / Ent.G / Ent.D / Sort.G / Sort.D / Prog.G / Prog.D #}
+    {% macro vald_table_lr(rows, titre, header_cls) %}
+    {% if rows %}
+    <div style="margin-bottom:10px;">
+      <div class="{{ header_cls }}">{{ titre }}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:8.5pt;table-layout:fixed;">
+        <thead>
+          <tr style="-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:left;width:30%;">Indicateur</th>
+            <th style="background:#1c3f6e;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:11%;">Ent. G</th>
+            <th style="background:#1c3f6e;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:11%;">Ent. D</th>
+            <th style="background:#2176c7;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:11%;">Sort. G</th>
+            <th style="background:#2176c7;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:11%;">Sort. D</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:13%;">Prog. G</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:13%;">Prog. D</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          {% set pg = row.prog_g %}
+          {% set pd = row.prog_d %}
+          {% set pg_cls = 'vm-pos' if pg is not none and pg > 0 else ('vm-neg' if pg is not none and pg < 0 else ('vm-neu' if pg is not none else 'vm-null')) %}
+          {% set pd_cls = 'vm-pos' if pd is not none and pd > 0 else ('vm-neg' if pd is not none and pd < 0 else ('vm-neu' if pd is not none else 'vm-null')) %}
+          <tr class="{% if loop.index is odd %}gps-alt{% endif %}">
+            <td style="border:1px solid #cccccc;padding:5px 8px;font-weight:600;color:#1c3f6e;">{{ row.indicateur }}</td>
+            <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;">{{ row.entree_g if row.entree_g is not none else '—' }}</td>
+            <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;">{{ row.entree_d if row.entree_d is not none else '—' }}</td>
+            <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;">{{ row.sortie_g if row.sortie_g is not none else '—' }}</td>
+            <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;">{{ row.sortie_d if row.sortie_d is not none else '—' }}</td>
+            <td class="vm-td {{ pg_cls }}">{% if pg is not none %}{% if pg > 0 %}&#8593;{% elif pg < 0 %}&#8595;{% else %}&#8594;{% endif %} {{ "%.1f"|format(pg|abs) }}&nbsp;%{% else %}—{% endif %}</td>
+            <td class="vm-td {{ pd_cls }}">{% if pd is not none %}{% if pd > 0 %}&#8593;{% elif pd < 0 %}&#8595;{% else %}&#8594;{% endif %} {{ "%.1f"|format(pd|abs) }}&nbsp;%{% else %}—{% endif %}</td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
@@ -2082,47 +2103,31 @@ body {
     {# ── Section 1 : Sauts ── #}
     {{ vald_table(vald_manual.cmj, "CMJ — Counter Movement Jump", "vm-h1") }}
     {{ vald_table(vald_manual.dj,  "Drop Jump",                   "vm-h1") }}
-    {{ vald_table(vald_manual.sls, "SLS — Single Leg Squat",      "vm-h1") }}
+    {{ vald_table_lr(vald_manual.slj, "SLJ — Single Leg Jump",   "vm-h1") }}
 
     {# ── Section 2 : ASH Shoulder ── #}
     {% if vald_manual.shoulder %}
-    <div style="margin-bottom:4px;margin-top:10px;">
-      <div style="background:#374151;color:#fff;font-size:8pt;font-weight:700;padding:3px 10px;border-radius:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-        &#9654; Section 2 &mdash; ASH Shoulder
-      </div>
-    </div>
-    {{ vald_table(vald_manual.shoulder, "Tests Isométriques Épaule", "vm-h2") }}
+    <div style="margin:10px 0 4px;"><div style="background:#374151;color:#fff;font-size:8pt;font-weight:700;padding:3px 10px;border-radius:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">ASH Shoulder</div></div>
+    {{ vald_table_lr(vald_manual.shoulder, "Tests Isometriques Epaule (Iso-T / Iso-Y / Iso-I)", "vm-h2") }}
     {% endif %}
 
     {# ── Section 3 : Mollet ── #}
     {% if vald_manual.mollet_run or vald_manual.mollet_seated %}
-    <div style="margin-bottom:4px;margin-top:10px;">
-      <div style="background:#374151;color:#fff;font-size:8pt;font-weight:700;padding:3px 10px;border-radius:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-        &#9654; Section 3 &mdash; Mollet
-      </div>
-    </div>
-    {{ vald_table(vald_manual.mollet_run,    "Run-Specific Ankle Iso-Push",    "vm-h2") }}
-    {{ vald_table(vald_manual.mollet_seated, "Seated Isometric Calf Raise",    "vm-h2") }}
+    <div style="margin:10px 0 4px;"><div style="background:#374151;color:#fff;font-size:8pt;font-weight:700;padding:3px 10px;border-radius:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">Mollet</div></div>
+    {{ vald_table_lr(vald_manual.mollet_run,    "Run-Specific Ankle Iso-Push",  "vm-h2") }}
+    {{ vald_table_lr(vald_manual.mollet_seated, "Seated Isometric Calf Raise",  "vm-h2") }}
     {% endif %}
 
     {# ── Section 4 : Nordic ── #}
     {% if vald_manual.nordic %}
-    <div style="margin-bottom:4px;margin-top:10px;">
-      <div style="background:#374151;color:#fff;font-size:8pt;font-weight:700;padding:3px 10px;border-radius:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-        &#9654; Section 4 &mdash; Nordic
-      </div>
-    </div>
-    {{ vald_table(vald_manual.nordic, "Nordic Hamstring", "vm-h2") }}
+    <div style="margin:10px 0 4px;"><div style="background:#374151;color:#fff;font-size:8pt;font-weight:700;padding:3px 10px;border-radius:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">Nordic</div></div>
+    {{ vald_table_lr(vald_manual.nordic, "Nordic Hamstring", "vm-h2") }}
     {% endif %}
 
     {# ── Section 5 : IMTP ── #}
     {% if vald_manual.imtp %}
-    <div style="margin-bottom:4px;margin-top:10px;">
-      <div style="background:#374151;color:#fff;font-size:8pt;font-weight:700;padding:3px 10px;border-radius:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-        &#9654; Section 5 &mdash; IMTP
-      </div>
-    </div>
-    {{ vald_table(vald_manual.imtp, "Isometric Mid-Thigh Pull (IMTP)", "vm-h2") }}
+    <div style="margin:10px 0 4px;"><div style="background:#374151;color:#fff;font-size:8pt;font-weight:700;padding:3px 10px;border-radius:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">IMTP — Isometric Mid-Thigh Pull</div></div>
+    {{ vald_table_lr(vald_manual.imtp, "IMTP", "vm-h2") }}
     {% endif %}
 
     <div class="footer">

@@ -11,9 +11,9 @@ import os
 import base64
 import datetime
 import json
-from clubs_database import search_clubs
 from cr_parser import parse_compte_rendu
 from gps_parser import parse_gps_pdf
+from database import rechercher_clubs, enregistrer_club, get_club
 
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 CLUBS_DB_PATH    = os.path.join(_APP_DIR, "clubs_db.json")
@@ -122,17 +122,21 @@ def get_logo(nom_club: str, couleur: str) -> str:
 
 
 def charger_clubs_db() -> dict:
-    if os.path.exists(CLUBS_DB_PATH):
-        with open(CLUBS_DB_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
+    """Compatibilité ascendante — retourne les clubs custom depuis SQLite."""
+    from database import lister_clubs_custom
+    clubs = lister_clubs_custom()
+    return {c["nom"].lower(): c for c in clubs}
 
 
 def sauvegarder_club_db(nom: str, data: dict):
-    db = charger_clubs_db()
-    db[nom.lower().strip()] = data
-    with open(CLUBS_DB_PATH, "w", encoding="utf-8") as f:
-        json.dump(db, f, ensure_ascii=False, indent=2)
+    """Compatibilité ascendante — délègue à SQLite."""
+    enregistrer_club(
+        nom      = nom,
+        sport    = data.get("sport", "Autre"),
+        division = data.get("division", "Autre"),
+        couleur  = data.get("couleur", "#1c3f6e"),
+        logo_b64 = data.get("logo_b64"),
+    )
 
 
 # ── État session ──────────────────────────────────────────────────────────────
@@ -792,44 +796,30 @@ with col_left:
         )
 
         if recherche_club and len(recherche_club) >= 2:
-            matches = {k: v for k, v in clubs_db_locale.items()
-                       if recherche_club.lower() in k}
-            if matches:
-                for cle, cdata in list(matches.items())[:4]:
+            # Recherche unifiée dans SQLite (clubs prédéfinis + clubs ajoutés + logos)
+            resultats = rechercher_clubs(recherche_club, limite=6)
+            if resultats:
+                for club in resultats:
                     col_l, col_b = st.columns([1, 5])
                     with col_l:
-                        if cdata.get("logo_b64"):
+                        if club.get("logo_b64"):
                             st.markdown(
-                                f'<img src="{cdata["logo_b64"]}" style="height:32px;border-radius:4px;">',
+                                f'<img src="{club["logo_b64"]}" style="height:32px;border-radius:4px;">',
+                                unsafe_allow_html=True
+                            )
+                        else:
+                            logo_svg = get_logo(club["nom"], club.get("couleur", "#1c3f6e"))
+                            st.markdown(
+                                f'<img src="{logo_svg}" style="height:32px;border-radius:4px;">',
                                 unsafe_allow_html=True
                             )
                     with col_b:
-                        if st.button(
-                            f"{cdata.get('nom', cle)}  ·  {cdata.get('sport', '')}",
-                            key=f"loc_{cle}", use_container_width=True
-                        ):
-                            st.session_state.club_selectionne = cdata
-                            st.session_state.nom_club_cache = cdata.get("nom", cle)
-                            st.rerun()
-            else:
-                resultats = search_clubs(recherche_club)
-                for club in resultats[:4]:
-                    logo_b64 = get_logo(club["nom"], club["couleur"])
-                    col_l, col_b = st.columns([1, 5])
-                    with col_l:
-                        st.markdown(
-                            f'<img src="{logo_b64}" style="height:32px;border-radius:4px;">',
-                            unsafe_allow_html=True
-                        )
-                    with col_b:
-                        if st.button(
-                            f"{club['nom']}  ·  {club['sport']} — {club['division']}",
-                            key=f"db_{club['nom']}", use_container_width=True
-                        ):
+                        label = f"{club['nom']}  ·  {club.get('sport','')} — {club.get('division','')}"
+                        if st.button(label, key=f"db_{club['nom']}", use_container_width=True):
                             st.session_state.club_selectionne = club
                             st.session_state.nom_club_cache = club["nom"]
                             st.rerun()
-                if not resultats:
+            if not resultats:
                     st.info("Aucun club trouvé — remplir le formulaire ci-dessous.")
 
         st.markdown("---")

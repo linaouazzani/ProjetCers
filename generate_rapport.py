@@ -357,6 +357,7 @@ def construire_contexte(
     conclusion_sortie: str = "",
     gps_data: dict = None,
     vald_manual: dict = None,
+    has_biodex: bool = True,
 ) -> dict:
 
     poids        = entree.poids_kg or sortie.poids_kg or 101.0
@@ -1148,6 +1149,7 @@ def construire_contexte(
         "conclusion_sortie":      conclusion_sortie,
         "gps":                    gps_data,
         "vald_manual":            vald_manual,
+        "has_biodex":             has_biodex,
     }
 
 
@@ -1309,13 +1311,21 @@ def generer_rapport_biodex(
     print("█" * 60)
 
     # ── Parsing PDFs Biodex (tous optionnels) ──────────────────────────────
+    has_biodex = bool(pdf_entree or pdf_sortie)
+
+    _EMPTY_COLS = [
+        "vitesse", "mouvement", "metrique", "unite",
+        "entree_sain_d", "entree_lese_g", "entree_deficit_pct",
+        "sortie_sain_d", "sortie_lese_g", "sortie_deficit_pct",
+        "progression_pct", "couleur_progression",
+        "couleur_deficit_entree", "couleur_deficit_sortie",
+    ]
+
     if not pdf_entree and not pdf_sortie:
         print("  ℹ️  Aucun PDF Biodex — rapport sans données isocinétiques")
         entree = PatientBiodex(nom="—", date_test="—")
         sortie = PatientBiodex(nom="—", date_test="—")
-        df_comp = pd.DataFrame(columns=["vitesse", "mouvement", "metrique",
-                                        "entree_sain_d", "entree_lese_g",
-                                        "sortie_sain_d", "sortie_lese_g"])
+        df_comp = pd.DataFrame(columns=_EMPTY_COLS)
     else:
         if not pdf_entree:
             pdf_entree = pdf_sortie
@@ -1329,6 +1339,10 @@ def generer_rapport_biodex(
         sortie = parse_biodex_pdf(pdf_sortie)
         print(f"  ✅ {entree.nom}  |  {entree.date_test} → {sortie.date_test}")
 
+        print("\n📊 Calcul progressions...")
+        df_comp = comparer_tests(entree, sortie)
+        print(f"  ✅ {len(df_comp)} métriques calculées")
+
     comparatif_data = {}
     if pdf_comparatif and os.path.exists(pdf_comparatif):
         print("\n📋 Parsing comparatif lésé...")
@@ -1339,25 +1353,15 @@ def generer_rapport_biodex(
         print("\n📋 Parsing comparatif sain...")
         comparatif_sain_data = parse_comparatif_sain(pdf_comparatif_sain)
 
-    print("DEBUG pdf_excentrique recu:", pdf_excentrique)
-    if pdf_excentrique:
-        print("DEBUG fichier existe:", os.path.exists(pdf_excentrique))
-        if os.path.exists(pdf_excentrique):
-            print("DEBUG taille:", os.path.getsize(pdf_excentrique))
-
     excentrique_data = None
     if pdf_excentrique and os.path.exists(pdf_excentrique):
         print("\n📋 Parsing test excentrique...")
         excentrique_data = parse_excentrique_pdf(pdf_excentrique)
-    print("DEBUG excentrique_data:", excentrique_data)
-
-    print("\n📊 Calcul progressions...")
-    df_comp = comparer_tests(entree, sortie)
-    print(f"  ✅ {len(df_comp)} métriques calculées")
 
     print("\n🏗️  Assemblage contexte...")
     ctx = construire_contexte(
         entree, sortie, df_comp,
+        has_biodex=has_biodex,
         comparatif_data=comparatif_data,
         comparatif_sain_data=comparatif_sain_data,
         nom_club=nom_club,

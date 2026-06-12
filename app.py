@@ -173,42 +173,11 @@ st.markdown("""
 # ── Panneau personnalisation HTML ────────────────────────────────────────────
 
 def _injecter_panneau_personnalisation(html: str) -> str:
-    """Injecte un bandeau de contrôle interactif dans le HTML du rapport.
-    Permet de cocher/décocher des pages ET des sous-sections.
-    Disparaît à l'impression (@media print).
+    """Le template rapport.html embarque déjà #ctrl-bar complet.
+    Cette fonction est conservée pour compatibilité mais ne modifie plus le HTML.
     """
-    import re as _re
 
-    def assigner_sections(html_text):
-        # La page de garde utilise <div data-section="page-garde" style="...">
-        # (PAS class="page") — déjà taguée dans le template.
-        # Les <div class="page"> suivants (sans data-section) :
-        #   bilan-60, bilan-240, analyse-clinique
-        #
-        # IMPORTANT : on cible class="page" EXACTEMENT (guillemets inclus)
-        # pour ne PAS matcher <div class="page-content"> qui contient aussi "page"
-        sequential = ["bilan-60", "bilan-240", "analyse-clinique"]
-
-        # Regex stricte : class="page" suivi d'un espace, > ou "
-        # Ne match PAS "page-content", "page-garde", etc.
-        pattern = r'(<div[^>]*\bclass="page"[^>]*>)'
-        parts = _re.split(pattern, html_text)
-        result = []
-        page_count = 0
-        for part in parts:
-            if _re.match(r'<div[^>]*\bclass="page"', part):
-                if 'data-section' not in part:
-                    sid = sequential[page_count] if page_count < len(sequential) \
-                          else f"section-{page_count}"
-                    part = part.rstrip('>')
-                    part = part + f' data-section="{sid}">'
-                page_count += 1
-            result.append(part)
-        return ''.join(result)
-
-    html = assigner_sections(html)
-
-    panneau = """
+    _panneau_legacy = """
 <style>
 /* -- masquage universel : inline style ET classe .hidden -- */
 .hidden { display: none !important; }
@@ -386,11 +355,6 @@ function toggle(sid, checkbox) {
 }
 </script>
 """
-
-    if '<body' in html:
-        html = _re.sub(r'(<body[^>]*>)', r'\1\n' + panneau, html, count=1)
-    else:
-        html = panneau + html
 
     return html
 

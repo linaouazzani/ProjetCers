@@ -1,0 +1,1325 @@
+<?php
+// api.php — configuration de l'URL de l'API Flask
+// En local : http://localhost:5000 | En production IIS : http://localhost:5000 (même serveur)
+$API_URL = "http://localhost:5000";
+?>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CERS Capbreton — Bilan Complet Patient</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f0f4f8;
+  color: #222;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── API status bar ── */
+#api-bar {
+  background: #1c3f6e;
+  color: #fff;
+  padding: 6px 20px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#api-dot { width: 10px; height: 10px; border-radius: 50%; background: #888; flex-shrink: 0; }
+#api-dot.ok  { background: #2ecc71; }
+#api-dot.err { background: #e74c3c; }
+
+/* ── Hero header ── */
+.hero {
+  background: linear-gradient(135deg, #1c3f6e 0%, #2176c7 100%);
+  padding: 18px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(28,63,110,.25);
+}
+.hero h1 { color: #fff; font-size: 20px; font-weight: 800; }
+.hero p  { color: #a8c4e0; font-size: 12px; margin-top: 3px; }
+.hero-badge {
+  background: rgba(255,255,255,.15); color: #fff;
+  border-radius: 8px; padding: 5px 12px; font-size: 11px; font-weight: 600;
+}
+
+/* ── Layout ── */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 20px;
+  padding: 20px 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+/* ── Card ── */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+.card-title {
+  font-size: 12px; font-weight: 700; color: #1c3f6e;
+  text-transform: uppercase; letter-spacing: .5px;
+  margin-bottom: 12px; padding-bottom: 7px;
+  border-bottom: 2px solid #e8eef5;
+}
+
+/* ── Accordion ── */
+.accordion { margin-bottom: 10px; }
+.acc-header {
+  background: #f8fafd; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 10px 14px; cursor: pointer; user-select: none;
+  display: flex; align-items: center; justify-content: space-between;
+  font-weight: 600; font-size: 13px; color: #1c3f6e;
+  transition: background .15s;
+}
+.acc-header:hover { background: #eef3fa; }
+.acc-arrow { transition: transform .2s; font-size: 11px; }
+.acc-body { display: none; padding: 12px 4px 4px; }
+.acc-body.open { display: block; }
+
+/* ── Dropzone ── */
+.dropzone {
+  border: 2px dashed #b0c4de;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  background: #f8fafd;
+  position: relative;
+}
+.dropzone:hover, .dropzone.drag { border-color: #1c3f6e; background: #eef3fa; }
+.dropzone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.dropzone-icon { font-size: 28px; margin-bottom: 6px; }
+.dropzone-label { font-size: 12px; color: #555; }
+.dropzone-label strong { display: block; font-size: 13px; color: #1c3f6e; margin-bottom: 3px; }
+.dropzone.has-file { border-color: #27ae60; background: #f0faf4; }
+.dropzone.has-file .dropzone-icon::after { content: " ✅"; }
+.file-name {
+  font-size: 11px; color: #27ae60; font-weight: 600;
+  margin-top: 4px; word-break: break-all;
+}
+
+/* ── Badge ── */
+.badge {
+  display: inline-block; padding: 2px 9px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; margin: 2px;
+}
+.badge-ok   { background: #d4edda; color: #1a6b2a; }
+.badge-opt  { background: #e2e8f0; color: #555; }
+.badge-wait { background: #fff3cd; color: #8a6200; }
+
+/* ── Tabs (VALD) ── */
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.tab-btn {
+  padding: 5px 12px; border: 1px solid #d0dae8; border-radius: 6px;
+  background: #f8fafd; cursor: pointer; font-size: 12px; font-weight: 600;
+  color: #555; transition: all .15s;
+}
+.tab-btn.active { background: #1c3f6e; color: #fff; border-color: #1c3f6e; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── VALD tables ── */
+.vald-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.vald-table th {
+  background: #1c3f6e; color: #fff; padding: 5px 8px;
+  text-align: left; font-weight: 600;
+}
+.vald-table td { padding: 4px 6px; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
+.vald-table tr:nth-child(even) td { background: #f8fafd; }
+.vald-table input[type=text] {
+  width: 100%; border: 1px solid #d0dae8; border-radius: 4px;
+  padding: 3px 6px; font-size: 12px;
+}
+.vald-table input[type=text]:focus { outline: none; border-color: #1c3f6e; }
+.prog-cell { font-weight: 700; font-size: 12px; white-space: nowrap; }
+
+/* ── Buttons ── */
+.btn {
+  border: none; border-radius: 8px; padding: 9px 18px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: opacity .15s;
+}
+.btn:hover { opacity: .88; }
+.btn-primary {
+  background: linear-gradient(135deg, #1c3f6e, #1a5fa8);
+  color: #fff; width: 100%; padding: 13px;
+  font-size: 15px; border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(28,63,110,.3);
+}
+.btn-download {
+  background: linear-gradient(135deg, #2a8a36, #237030);
+  color: #fff; width: 100%; padding: 11px;
+  font-size: 14px; border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(42,138,54,.3);
+  margin-top: 6px;
+}
+.btn-sm {
+  background: #e74c3c; color: #fff;
+  padding: 2px 7px; font-size: 11px; border-radius: 4px;
+}
+.btn-add {
+  background: #1c3f6e; color: #fff;
+  padding: 4px 12px; font-size: 12px; border-radius: 5px;
+}
+.btn-secondary {
+  background: #eef3fa; color: #1c3f6e; border: 1px solid #c5d5e8;
+  padding: 7px 14px; font-size: 12px; border-radius: 7px;
+}
+
+/* ── Progress bar ── */
+#progress-wrap { display: none; margin: 12px 0; }
+#progress-bar-bg {
+  background: #e2e8f0; border-radius: 99px; height: 8px; overflow: hidden;
+}
+#progress-bar { height: 100%; background: #1c3f6e; width: 0%; transition: width .4s; border-radius: 99px; }
+#progress-text { font-size: 12px; color: #555; margin-top: 5px; text-align: center; }
+
+/* ── Club ── */
+.club-selected {
+  display: flex; align-items: center; gap: 10px;
+  background: #eef3fa; border: 2px solid #1c3f6e; border-radius: 10px;
+  padding: 10px 14px; font-weight: 600; color: #1c3f6e;
+  margin-top: 8px;
+}
+.club-selected img { height: 35px; border-radius: 6px; }
+.club-name { font-size: 14px; }
+.club-info { font-size: 11px; color: #555; font-weight: 400; }
+
+/* ── Success box ── */
+.success-box {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  border: 1.5px solid #28a745; border-radius: 12px;
+  padding: 12px 16px; text-align: center; margin: 10px 0;
+}
+.success-box h3 { color: #155724; font-size: 15px; }
+.success-box p  { color: #1e7e34; font-size: 11px; margin-top: 2px; }
+
+/* ── Info box ── */
+.info-box {
+  background: #eef3fa; border-left: 4px solid #1c3f6e;
+  border-radius: 0 8px 8px 0; padding: 8px 12px;
+  font-size: 12px; color: #1c3f6e; margin: 4px 0;
+}
+
+/* ── Form elements ── */
+label.field-label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: #1c3f6e; margin-bottom: 4px;
+}
+input[type=text], input[type=number], input[type=date],
+select, textarea {
+  width: 100%; border: 1px solid #d0dae8; border-radius: 7px;
+  padding: 7px 10px; font-size: 13px; font-family: inherit;
+  transition: border-color .15s;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: #1c3f6e;
+  box-shadow: 0 0 0 2px rgba(28,63,110,.15);
+}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.mt-8  { margin-top: 8px; }
+.mb-8  { margin-bottom: 8px; }
+.mt-12 { margin-top: 12px; }
+
+/* ── Autocomplete ── */
+#club-results {
+  background: #fff; border: 1px solid #d0dae8; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  max-height: 240px; overflow-y: auto;
+  position: absolute; width: 100%; z-index: 999; display: none;
+}
+.club-result-item {
+  padding: 8px 12px; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid #f0f4f8;
+}
+.club-result-item:hover { background: #eef3fa; }
+.club-result-item img { height: 26px; border-radius: 3px; }
+.search-wrap { position: relative; }
+
+/* ── Col grid for optional PDFs ── */
+.opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── Footer ── */
+footer {
+  text-align: center; color: #888; font-size: 11px;
+  padding: 16px; border-top: 1px solid #e2e8f0; margin-top: 10px;
+}
+
+/* ── 2-col grid inside card ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.two-col-dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     BARRE STATUT API
+     ═══════════════════════════════════════════════════ -->
+<div id="api-bar">
+  <div id="api-dot"></div>
+  <span id="api-msg">Vérification de l'API...</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     EN-TÊTE HERO
+     ═══════════════════════════════════════════════════ -->
+<div class="hero">
+  <div>
+    <h1>CERS Capbreton — Bilan Complet Patient</h1>
+    <p>Rapport automatique · Isocinétique Biodex &nbsp;·&nbsp; Sauts VALD ForceDecks &nbsp;·&nbsp; GPS Catapult</p>
+  </div>
+  <div class="hero-badge">Suivi de progression · PDF A4</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     LAYOUT 2 COLONNES
+     ═══════════════════════════════════════════════════ -->
+<div class="layout">
+
+  <!-- ╔═══════════════════════════════════╗
+       ║  COLONNE GAUCHE — INPUTS         ║
+       ╚═══════════════════════════════════╝ -->
+  <div id="col-left">
+
+    <!-- ── 1. PDFs Biodex ─────────────────────── -->
+    <div class="card">
+      <div class="card-title">📄 Fichiers Biodex</div>
+
+      <div class="two-col">
+        <div>
+          <div class="dropzone" id="dz-entree" onclick="document.getElementById('f-entree').click()">
+            <input type="file" id="f-entree" accept=".pdf" style="display:none">
+            <div class="dropzone-icon">📥</div>
+            <div class="dropzone-label">
+              <strong>Test d'ENTRÉE</strong>
+              Optionnel si Sortie fournie
+            </div>
+            <div class="file-name" id="fn-entree"></div>
+          </div>
+        </div>
+        <div>
+          <div class="dropzone" id="dz-sortie" onclick="document.getElementById('f-sortie').click()">
+            <input type="file" id="f-sortie" accept=".pdf" style="display:none">
+            <div class="dropzone-icon">📤</div>
+            <div class="dropzone-label">
+              <strong>Test de SORTIE</strong>
+              Optionnel si Entrée fournie
+            </div>
+            <div class="file-name" id="fn-sortie"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="biodex-hint" class="info-box mt-8">
+        💡 Fournissez au moins un PDF Biodex (Entrée <strong>ou</strong> Sortie) pour les données isocinétiques.
+      </div>
+
+      <!-- Badges statut -->
+      <div id="badges-wrap" style="margin-top:10px;"></div>
+
+      <!-- PDFs optionnels -->
+      <div class="accordion mt-12">
+        <div class="acc-header" onclick="toggleAcc('acc-opt')">
+          <span>📎 PDFs optionnels</span>
+          <span class="acc-arrow" id="arr-acc-opt">▶</span>
+        </div>
+        <div class="acc-body" id="acc-opt">
+          <div class="opt-grid">
+            <div>
+              <div class="dropzone small" id="dz-exc" onclick="document.getElementById('f-exc').click()">
+                <input type="file" id="f-exc" accept=".pdf" style="display:none">
+                <div class="dropzone-label"><strong>Excentrique 30°/s</strong></div>
+                <div class="file-name" id="fn-exc"></div>
+              </div>
+            </div>
+            <div>
+              <div class="dropzone small" id="dz-comp" onclick="document.getElementById('f-comp').click()">
+                <input type="file" id="f-comp" accept=".pdf" style="display:none">
+                <div class="dropzone-label"><strong>Comparatif Lésé</strong></div>
+                <div class="file-name" id="fn-comp"></div>
+              </div>
+            </div>
+            <div>
+              <div class="dropzone small" id="dz-comp-sain" onclick="document.getElementById('f-comp-sain').click()">
+                <input type="file" id="f-comp-sain" accept=".pdf" style="display:none">
+                <div class="dropzone-label"><strong>Comparatif Sain</strong></div>
+                <div class="file-name" id="fn-comp-sain"></div>
+              </div>
+            </div>
+            <div>
+              <div class="dropzone small" id="dz-cr" onclick="document.getElementById('f-cr').click()">
+                <input type="file" id="f-cr" accept=".pdf" style="display:none">
+                <div class="dropzone-label"><strong>Compte-rendu médical</strong></div>
+                <div class="file-name" id="fn-cr"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2. VALD ForceDecks — saisie manuelle ─ -->
+    <div class="accordion">
+      <div class="acc-header" onclick="toggleAcc('acc-vald')">
+        <span>⚡ VALD ForceDecks — Saisie manuelle (optionnel)</span>
+        <span class="acc-arrow" id="arr-acc-vald">▶</span>
+      </div>
+      <div class="acc-body" id="acc-vald">
+        <div class="card" style="margin-bottom:0">
+          <div class="tabs" id="vald-tabs">
+            <button class="tab-btn active" onclick="switchTab('cmj',this)">CMJ</button>
+            <button class="tab-btn" onclick="switchTab('dj',this)">Drop Jump</button>
+            <button class="tab-btn" onclick="switchTab('slj',this)">SLJ</button>
+            <button class="tab-btn" onclick="switchTab('shoulder',this)">Épaule</button>
+            <button class="tab-btn" onclick="switchTab('mollet',this)">Mollet</button>
+            <button class="tab-btn" onclick="switchTab('nordic',this)">Nordic</button>
+            <button class="tab-btn" onclick="switchTab('imtp',this)">IMTP</button>
+          </div>
+
+          <!-- CMJ -->
+          <div class="tab-panel active" id="tab-cmj">
+            <div id="table-cmj"></div>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <input type="text" id="new-ind-cmj" placeholder="Ajouter un indicateur..." style="flex:1">
+              <button class="btn btn-add" onclick="addSimpleRow('cmj')">+ Ajouter</button>
+            </div>
+          </div>
+
+          <!-- Drop Jump -->
+          <div class="tab-panel" id="tab-dj">
+            <div id="table-dj"></div>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <input type="text" id="new-ind-dj" placeholder="Ajouter un indicateur..." style="flex:1">
+              <button class="btn btn-add" onclick="addSimpleRow('dj')">+ Ajouter</button>
+            </div>
+          </div>
+
+          <!-- SLJ -->
+          <div class="tab-panel" id="tab-slj">
+            <div id="table-slj"></div>
+          </div>
+
+          <!-- Épaule -->
+          <div class="tab-panel" id="tab-shoulder">
+            <div id="table-shoulder"></div>
+          </div>
+
+          <!-- Mollet -->
+          <div class="tab-panel" id="tab-mollet">
+            <p style="font-size:11px;color:#888;margin-bottom:4px;">Run-Specific Ankle Iso-Push</p>
+            <div id="table-mollet_run"></div>
+            <hr style="margin:10px 0;">
+            <p style="font-size:11px;color:#888;margin-bottom:4px;">Seated Isometric Calf Raise</p>
+            <div id="table-mollet_seated"></div>
+          </div>
+
+          <!-- Nordic -->
+          <div class="tab-panel" id="tab-nordic">
+            <div id="table-nordic"></div>
+          </div>
+
+          <!-- IMTP -->
+          <div class="tab-panel" id="tab-imtp">
+            <div id="table-imtp"></div>
+          </div>
+
+          <div style="margin-top:10px;text-align:right;">
+            <button class="btn btn-secondary" onclick="resetVald()">↺ Réinitialiser les tableaux</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 3. GPS Catapult ─────────────────────── -->
+    <div class="accordion">
+      <div class="acc-header" onclick="toggleAcc('acc-gps')">
+        <span>📡 GPS Catapult — PDF OpenField (optionnel)</span>
+        <span class="acc-arrow" id="arr-acc-gps">▶</span>
+      </div>
+      <div class="acc-body" id="acc-gps">
+        <div class="dropzone" id="dz-gps" onclick="document.getElementById('f-gps').click()">
+          <input type="file" id="f-gps" accept=".pdf" style="display:none">
+          <div class="dropzone-icon">📡</div>
+          <div class="dropzone-label">
+            <strong>Rapport GPS Catapult — PDF OpenField</strong>
+            Glissez le fichier ou cliquez
+          </div>
+          <div class="file-name" id="fn-gps"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 4. Informations patient ─────────────── -->
+    <div class="accordion">
+      <div class="acc-header" onclick="toggleAcc('acc-patient')">
+        <span>⚙️ Informations complémentaires patient</span>
+        <span class="acc-arrow" id="arr-acc-patient">▶</span>
+      </div>
+      <div class="acc-body" id="acc-patient">
+        <div class="grid-3 mb-8">
+          <div>
+            <label class="field-label">Sport</label>
+            <select id="sport">
+              <option value="">— Sélectionner —</option>
+              <option>Rugby</option><option>Football</option>
+              <option>Basketball</option><option>Handball</option>
+              <option>Tennis</option><option>Natation</option>
+              <option>Athlétisme</option><option>Autre</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Date d'opération (optionnel)</label>
+            <input type="date" id="date-operation">
+          </div>
+          <div>
+            <label class="field-label">Type de blessure (optionnel)</label>
+            <select id="type-blessure">
+              <option value="">— Sélectionner —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-3 mb-8">
+          <div>
+            <label class="field-label">Score ACL-RSI % (optionnel)</label>
+            <input type="number" id="acl-rsi" min="0" max="100" value="0">
+          </div>
+          <div>
+            <label class="field-label">Photo joueur (optionnel)</label>
+            <div class="dropzone" style="padding:10px" id="dz-photo" onclick="document.getElementById('f-photo').click()">
+              <input type="file" id="f-photo" accept=".png,.jpg,.jpeg" style="display:none">
+              <div class="dropzone-label"><strong>Photo .jpg/.png</strong></div>
+              <div class="file-name" id="fn-photo"></div>
+            </div>
+          </div>
+          <div></div>
+        </div>
+
+        <div class="mb-8">
+          <label class="field-label">Remarques médicales (optionnel)</label>
+          <textarea id="remarques-medecin" rows="3" placeholder="Zone libre pour le professionnel de santé..."></textarea>
+        </div>
+
+        <hr style="margin:10px 0; border-color:#e2e8f0;">
+        <p style="font-size:11px;color:#888;margin-bottom:8px;">📋 Programme de rééducation (apparaît dans la dernière page du rapport)</p>
+
+        <div class="grid-2 mb-8">
+          <div>
+            <label class="field-label">Programme kinésithérapie</label>
+            <textarea id="programme-kine" rows="5" placeholder="Semaine 1-2 : Drainage, mobilisation..."></textarea>
+          </div>
+          <div>
+            <label class="field-label">Programme préparation physique</label>
+            <textarea id="programme-prepa" rows="5" placeholder="Phase 1 : Vélo, gainage statique..."></textarea>
+          </div>
+        </div>
+
+        <div>
+          <label class="field-label">Conclusion de sortie / Recommandations (optionnel)</label>
+          <textarea id="conclusion-sortie" rows="3" placeholder="Conclusion médicale personnalisée..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 5. Club du joueur ───────────────────── -->
+    <div class="accordion">
+      <div class="acc-header" onclick="toggleAcc('acc-club')">
+        <span>🏆 Club du joueur</span>
+        <span class="acc-arrow" id="arr-acc-club">▶</span>
+      </div>
+      <div class="acc-body" id="acc-club">
+        <div class="search-wrap mb-8">
+          <label class="field-label">Rechercher un club enregistré</label>
+          <input type="text" id="club-search" placeholder="Ex: Oyonnax, Clermont..."
+                 oninput="searchClubs(this.value)" autocomplete="off">
+          <div id="club-results"></div>
+        </div>
+
+        <hr style="margin:10px 0; border-color:#e2e8f0;">
+        <p style="font-size:11px;color:#888;margin-bottom:8px;">Nouveau club ou modification</p>
+
+        <div class="grid-2 mb-8">
+          <div>
+            <label class="field-label">Nom du club *</label>
+            <input type="text" id="club-nom" placeholder="Ex: Oyonnax Rugby">
+          </div>
+          <div>
+            <label class="field-label">Sport</label>
+            <select id="club-sport">
+              <option>Rugby</option><option>Football</option>
+              <option>Basketball</option><option>Handball</option>
+              <option>Volleyball</option><option>Autre</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-8">
+          <label class="field-label">Logo du club (PNG recommandé)</label>
+          <div class="dropzone" id="dz-logo" onclick="document.getElementById('f-logo').click()">
+            <input type="file" id="f-logo" accept=".png,.jpg,.jpeg" style="display:none">
+            <div class="dropzone-label"><strong>Logo .png/.jpg</strong></div>
+            <div class="file-name" id="fn-logo"></div>
+          </div>
+          <img id="logo-preview" src="" alt="" style="height:40px;margin-top:6px;display:none;border-radius:4px;">
+        </div>
+
+        <div class="grid-2">
+          <button class="btn btn-secondary" onclick="useClub()">✅ Utiliser ce club</button>
+          <button class="btn btn-secondary" onclick="saveClub()">💾 Enregistrer dans la base</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bandeau club sélectionné -->
+    <div id="club-selected-wrap" style="display:none" class="card">
+      <div class="card-title">🏆 Club sélectionné</div>
+      <div class="club-selected">
+        <img id="selected-logo" src="" alt="">
+        <div>
+          <div class="club-name" id="selected-name"></div>
+          <div class="club-info" id="selected-info"></div>
+        </div>
+        <button class="btn btn-sm" onclick="clearClub()" style="margin-left:auto;">✏️ Changer</button>
+      </div>
+    </div>
+
+  </div><!-- fin col-left -->
+
+
+  <!-- ╔═══════════════════════════════════════════╗
+       ║  COLONNE DROITE — APERÇU + GÉNÉRATION   ║
+       ╚═══════════════════════════════════════════╝ -->
+  <div id="col-right">
+
+    <!-- Aperçu données -->
+    <div class="card">
+      <div class="card-title">📋 Aperçu des données</div>
+      <div id="preview-zone">
+        <div class="info-box">👈 Déposez les PDFs Biodex pour voir l'aperçu ici.</div>
+      </div>
+    </div>
+
+    <!-- Génération -->
+    <div class="card">
+      <div class="card-title">🚀 Générer le Rapport PDF</div>
+      <div id="gen-hint" class="info-box mb-8" style="display:none">
+        ℹ️ Sans PDF Biodex, le rapport contiendra uniquement les données CR / VALD / GPS disponibles.
+      </div>
+
+      <button class="btn btn-primary" onclick="generateReport()">
+        🔄 Générer le Rapport PDF Complet
+      </button>
+
+      <div id="progress-wrap">
+        <div id="progress-bar-bg"><div id="progress-bar"></div></div>
+        <div id="progress-text">Initialisation...</div>
+      </div>
+
+      <div id="error-box" style="display:none;color:#c0392b;background:#fdecea;border-radius:8px;padding:10px;margin-top:10px;font-size:12px;"></div>
+
+      <!-- Téléchargements -->
+      <div id="download-zone" style="display:none">
+        <div class="success-box">
+          <h3>✓ Rapport généré !</h3>
+          <p>Téléchargez en PDF ou en HTML personnalisable</p>
+        </div>
+        <div class="two-col-dl">
+          <button class="btn btn-download" id="btn-pdf" onclick="dlPdf()">⬇️ Télécharger PDF</button>
+          <button class="btn btn-download" id="btn-html" onclick="dlHtml()" style="background:linear-gradient(135deg,#1c3f6e,#1a5fa8)">
+            🎛️ Personnaliser (HTML)
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- fin col-right -->
+
+</div><!-- fin layout -->
+
+<footer>CERS Capbreton · Groupe Ramsay Santé · Bilan Isocinétique Biodex v6 · API Flask + Front PHP</footer>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────────────────────────
+   CONFIG
+   ───────────────────────────────────────────────────────────── */
+const API = "<?= $API_URL ?>";
+
+/* État global */
+const STATE = {
+  pdfB64:  null,
+  htmlB64: null,
+  club:    null,
+};
+
+/* ─────────────────────────────────────────────────────────────
+   VALD — données initiales
+   ───────────────────────────────────────────────────────────── */
+const VALD_SIMPLE = {
+  cmj: {
+    inds: [
+      "Jump Height (cm)",
+      "Peak Power / BM (W/kg)",
+      "RSI Modified Imp-Mom (m/s)",
+      "Eccentric Braking Impulse % Asym",
+      "Concentric Impulse % Asym",
+      "Peak Landing Force % Asym",
+    ],
+    rows: [],  // [{e, s}]
+  },
+  dj: {
+    inds: [
+      "Jump Height (cm)",
+      "Peak Power / BM (W/kg)",
+      "RSI JH — Flight Time / Contact Time (m/s)",
+      "Eccentric Impulse % Asym",
+      "Concentric Impulse % Asym",
+      "Peak Landing Force % Asym",
+    ],
+    rows: [],
+  },
+};
+
+const VALD_LR = {
+  slj:           { inds: ["Max Jump Height (cm)", "RSI Modified (m/s)", "Eccentric Braking RFD / BM (N/s)"], rows: [] },
+  shoulder:      { inds: ["Iso-T — Max Peak Vertical Force (N)", "Iso-T — Max RFD 200ms (N/s)", "Iso-Y — Max Peak Vertical Force (N)", "Iso-Y — Max RFD 200ms (N/s)", "Iso-I — Max Peak Vertical Force (N)", "Iso-I — Max RFD 200ms (N/s)"], rows: [] },
+  mollet_run:    { inds: ["Max Peak Specific Force (N)", "Max RFD 200ms (N/s)"], rows: [] },
+  mollet_seated: { inds: ["Max Peak Vertical Force (N)", "Max RFD 200ms (N/s)"], rows: [] },
+  nordic:        { inds: ["Max Force (N)"], rows: [] },
+  imtp:          { inds: ["Max Peak Vertical Force (N)", "Max RFD 200ms (N/s)"], rows: [] },
+};
+
+/* ─────────────────────────────────────────────────────────────
+   UTILITAIRES
+   ───────────────────────────────────────────────────────────── */
+function safeFloat(v) {
+  if (v === null || v === undefined || String(v).trim() === "") return null;
+  const n = parseFloat(String(v).replace(",", ".").trim());
+  return isNaN(n) ? null : n;
+}
+
+function calcProg(e, s) {
+  const ev = safeFloat(e), sv = safeFloat(s);
+  if (ev === null || sv === null || ev === 0) return null;
+  return Math.round((sv - ev) / Math.abs(ev) * 1000) / 10;
+}
+
+function progHtml(p) {
+  if (p === null) return '<span style="color:#aaa">—</span>';
+  const arrow = p >= 0 ? "↑" : "↓";
+  const col   = p >= 0 ? "#1a7a30" : "#c0392b";
+  return `<span style="color:${col};font-weight:700">${arrow} ${Math.abs(p).toFixed(1)} %</span>`;
+}
+
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ACCORDÉONS
+   ───────────────────────────────────────────────────────────── */
+function toggleAcc(id) {
+  const body = document.getElementById(id);
+  const arr  = document.getElementById("arr-" + id);
+  const open = body.classList.toggle("open");
+  if (arr) arr.textContent = open ? "▼" : "▶";
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ONGLETS VALD
+   ───────────────────────────────────────────────────────────── */
+function switchTab(tab, btn) {
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("tab-" + tab).classList.add("active");
+  btn.classList.add("active");
+}
+
+/* ─────────────────────────────────────────────────────────────
+   VALD SIMPLE (CMJ / DJ)
+   ───────────────────────────────────────────────────────────── */
+function initValdSimple(tk) {
+  const s = VALD_SIMPLE[tk];
+  if (s.rows.length === 0) {
+    s.rows = s.inds.map(() => ({e: "", s: ""}));
+  }
+  renderSimple(tk);
+}
+
+function renderSimple(tk) {
+  const s   = VALD_SIMPLE[tk];
+  const el  = document.getElementById("table-" + tk);
+  let html  = '<table class="vald-table"><thead><tr>'
+            + '<th style="width:40%">Indicateur</th>'
+            + '<th style="width:18%">Entrée</th>'
+            + '<th style="width:18%">Sortie</th>'
+            + '<th style="width:20%">Progression</th>'
+            + '<th style="width:4%"></th>'
+            + '</tr></thead><tbody>';
+  s.rows.forEach((row, i) => {
+    const ind  = s.inds[i] || "";
+    const prog = calcProg(row.e, row.s);
+    html += `<tr>
+      <td>${esc(ind)}</td>
+      <td><input type="text" value="${esc(row.e)}" placeholder="0.00"
+           oninput="valdSimpleInput('${tk}',${i},'e',this.value)"></td>
+      <td><input type="text" value="${esc(row.s)}" placeholder="0.00"
+           oninput="valdSimpleInput('${tk}',${i},'s',this.value)"></td>
+      <td class="prog-cell">${progHtml(prog)}</td>
+      <td><button class="btn btn-sm" onclick="delSimpleRow('${tk}',${i})">🗑</button></td>
+    </tr>`;
+  });
+  html += "</tbody></table>";
+  el.innerHTML = html;
+}
+
+function valdSimpleInput(tk, i, field, val) {
+  VALD_SIMPLE[tk].rows[i][field] = val;
+  // Mise à jour uniquement de la cellule prog sans re-render complet
+  const tbl  = document.getElementById("table-" + tk);
+  const rows = tbl.querySelectorAll("tbody tr");
+  if (rows[i]) {
+    const r    = VALD_SIMPLE[tk].rows[i];
+    const prog = calcProg(r.e, r.s);
+    rows[i].querySelector(".prog-cell").innerHTML = progHtml(prog);
+  }
+}
+
+function delSimpleRow(tk, i) {
+  VALD_SIMPLE[tk].inds.splice(i, 1);
+  VALD_SIMPLE[tk].rows.splice(i, 1);
+  renderSimple(tk);
+}
+
+function addSimpleRow(tk) {
+  const inp = document.getElementById("new-ind-" + tk);
+  const val = (inp.value || "").trim();
+  if (!val) return;
+  VALD_SIMPLE[tk].inds.push(val);
+  VALD_SIMPLE[tk].rows.push({e: "", s: ""});
+  inp.value = "";
+  renderSimple(tk);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   VALD LR (SLJ / Shoulder / Mollet / Nordic / IMTP)
+   ───────────────────────────────────────────────────────────── */
+function initValdLr(tk, targetId) {
+  const s = VALD_LR[tk];
+  if (s.rows.length === 0) {
+    s.rows = s.inds.map(() => ({eg:"",ed:"",sg:"",sd:""}));
+  }
+  renderLr(tk, targetId);
+}
+
+function renderLr(tk, targetId) {
+  const id = targetId || ("table-" + tk);
+  const s  = VALD_LR[tk];
+  const el = document.getElementById(id);
+  if (!el) return;
+  let html = '<table class="vald-table"><thead><tr>'
+           + '<th style="width:28%">Indicateur</th>'
+           + '<th style="width:10%">Ent.G</th>'
+           + '<th style="width:10%">Ent.D</th>'
+           + '<th style="width:10%">Sort.G</th>'
+           + '<th style="width:10%">Sort.D</th>'
+           + '<th style="width:14%">Prog.G</th>'
+           + '<th style="width:14%">Prog.D</th>'
+           + '<th style="width:4%"></th>'
+           + '</tr></thead><tbody>';
+  s.rows.forEach((row, i) => {
+    const ind = s.inds[i] || "";
+    const pg  = calcProg(row.eg, row.sg);
+    const pd  = calcProg(row.ed, row.sd);
+    const mkInput = (f) => `<input type="text" value="${esc(row[f])}" placeholder="${f[1].toUpperCase()}"
+      oninput="valdLrInput('${tk}','${id}',${i},'${f}',this.value)">`;
+    html += `<tr>
+      <td>${esc(ind)}</td>
+      <td>${mkInput("eg")}</td>
+      <td>${mkInput("ed")}</td>
+      <td>${mkInput("sg")}</td>
+      <td>${mkInput("sd")}</td>
+      <td class="prog-cell prog-g-${tk}-${i}">${progHtml(pg)}</td>
+      <td class="prog-cell prog-d-${tk}-${i}">${progHtml(pd)}</td>
+      <td><button class="btn btn-sm" onclick="delLrRow('${tk}','${id}',${i})">🗑</button></td>
+    </tr>`;
+  });
+  html += "</tbody></table>";
+  el.innerHTML = html;
+}
+
+function valdLrInput(tk, targetId, i, field, val) {
+  VALD_LR[tk].rows[i][field] = val;
+  const r  = VALD_LR[tk].rows[i];
+  const pg = calcProg(r.eg, r.sg);
+  const pd = calcProg(r.ed, r.sd);
+  const el = document.getElementById(targetId);
+  if (!el) return;
+  const rows = el.querySelectorAll("tbody tr");
+  if (rows[i]) {
+    rows[i].querySelectorAll(".prog-cell")[0].innerHTML = progHtml(pg);
+    rows[i].querySelectorAll(".prog-cell")[1].innerHTML = progHtml(pd);
+  }
+}
+
+function delLrRow(tk, targetId, i) {
+  VALD_LR[tk].inds.splice(i, 1);
+  VALD_LR[tk].rows.splice(i, 1);
+  renderLr(tk, targetId);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RESET VALD
+   ───────────────────────────────────────────────────────────── */
+function resetVald() {
+  const DEFAULT_SIMPLE = {
+    cmj: ["Jump Height (cm)","Peak Power / BM (W/kg)","RSI Modified Imp-Mom (m/s)","Eccentric Braking Impulse % Asym","Concentric Impulse % Asym","Peak Landing Force % Asym"],
+    dj:  ["Jump Height (cm)","Peak Power / BM (W/kg)","RSI JH — Flight Time / Contact Time (m/s)","Eccentric Impulse % Asym","Concentric Impulse % Asym","Peak Landing Force % Asym"],
+  };
+  const DEFAULT_LR = {
+    slj:           ["Max Jump Height (cm)","RSI Modified (m/s)","Eccentric Braking RFD / BM (N/s)"],
+    shoulder:      ["Iso-T — Max Peak Vertical Force (N)","Iso-T — Max RFD 200ms (N/s)","Iso-Y — Max Peak Vertical Force (N)","Iso-Y — Max RFD 200ms (N/s)","Iso-I — Max Peak Vertical Force (N)","Iso-I — Max RFD 200ms (N/s)"],
+    mollet_run:    ["Max Peak Specific Force (N)","Max RFD 200ms (N/s)"],
+    mollet_seated: ["Max Peak Vertical Force (N)","Max RFD 200ms (N/s)"],
+    nordic:        ["Max Force (N)"],
+    imtp:          ["Max Peak Vertical Force (N)","Max RFD 200ms (N/s)"],
+  };
+  for (const tk in DEFAULT_SIMPLE) {
+    VALD_SIMPLE[tk].inds = [...DEFAULT_SIMPLE[tk]];
+    VALD_SIMPLE[tk].rows = VALD_SIMPLE[tk].inds.map(() => ({e:"",s:""}));
+    renderSimple(tk);
+  }
+  for (const tk in DEFAULT_LR) {
+    VALD_LR[tk].inds = [...DEFAULT_LR[tk]];
+    VALD_LR[tk].rows = VALD_LR[tk].inds.map(() => ({eg:"",ed:"",sg:"",sd:""}));
+    renderLr(tk);
+  }
+  renderLr("mollet_run",  "table-mollet_run");
+  renderLr("mollet_seated","table-mollet_seated");
+}
+
+/* Collecte VALD manual pour l'envoi */
+function collectValdManual() {
+  const out = {};
+
+  for (const tk of ["cmj","dj"]) {
+    const s = VALD_SIMPLE[tk];
+    const rows = [];
+    s.rows.forEach((r, i) => {
+      const ev = safeFloat(r.e), sv = safeFloat(r.s);
+      if (ev !== null || sv !== null) {
+        rows.push({ indicateur: s.inds[i], entree: ev, sortie: sv, progression: calcProg(r.e, r.s) });
+      }
+    });
+    out[tk] = rows;
+  }
+
+  for (const tk of ["slj","shoulder","mollet_run","mollet_seated","nordic","imtp"]) {
+    const s = VALD_LR[tk];
+    const rows = [];
+    s.rows.forEach((r, i) => {
+      const eg = safeFloat(r.eg), ed = safeFloat(r.ed);
+      const sg = safeFloat(r.sg), sd = safeFloat(r.sd);
+      if (eg!==null||ed!==null||sg!==null||sd!==null) {
+        rows.push({ indicateur: s.inds[i], entree_g: eg, entree_d: ed, sortie_g: sg, sortie_d: sd, prog_g: calcProg(r.eg,r.sg), prog_d: calcProg(r.ed,r.sd) });
+      }
+    });
+    out[tk] = rows;
+  }
+
+  const hasData = Object.values(out).some(a => a.length > 0);
+  return hasData ? out : null;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DRAG & DROP — dropzones génériques
+   ───────────────────────────────────────────────────────────── */
+function setupDropzone(dzId, inputId, fnId) {
+  const dz  = document.getElementById(dzId);
+  const inp = document.getElementById(inputId);
+  const fn  = document.getElementById(fnId);
+  if (!dz || !inp) return;
+
+  inp.addEventListener("change", () => {
+    const f = inp.files[0];
+    if (f) { dz.classList.add("has-file"); fn.textContent = f.name; updateBadges(); }
+  });
+
+  dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("drag"); });
+  dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
+  dz.addEventListener("drop", e => {
+    e.preventDefault(); dz.classList.remove("drag");
+    if (e.dataTransfer.files.length) {
+      const dt = new DataTransfer();
+      dt.items.add(e.dataTransfer.files[0]);
+      inp.files = dt.files;
+      dz.classList.add("has-file");
+      fn.textContent = e.dataTransfer.files[0].name;
+      updateBadges();
+    }
+  });
+}
+
+function setupImageDropzone(dzId, inputId, fnId, previewId) {
+  setupDropzone(dzId, inputId, fnId);
+  const inp  = document.getElementById(inputId);
+  const prev = previewId ? document.getElementById(previewId) : null;
+  if (inp && prev) {
+    inp.addEventListener("change", () => {
+      const f = inp.files[0];
+      if (f) {
+        const reader = new FileReader();
+        reader.onload = e => { prev.src = e.target.result; prev.style.display = "block"; };
+        reader.readAsDataURL(f);
+      }
+    });
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   BADGES STATUT FICHIERS
+   ───────────────────────────────────────────────────────────── */
+function updateBadges() {
+  const wrap = document.getElementById("badges-wrap");
+  const hint = document.getElementById("biodex-hint");
+  const genHint = document.getElementById("gen-hint");
+
+  const items = [
+    { id: "f-entree",    label: "Entrée",       required: false },
+    { id: "f-sortie",    label: "Sortie",        required: false },
+    { id: "f-exc",       label: "Excentrique",   required: false },
+    { id: "f-comp",      label: "Comp.Lésé",     required: false },
+    { id: "f-comp-sain", label: "Comp.Sain",     required: false },
+    { id: "f-cr",        label: "Compte-rendu",  required: false },
+  ];
+
+  let html = "";
+  let hasBiodex = false;
+  items.forEach(it => {
+    const inp = document.getElementById(it.id);
+    const has = inp && inp.files && inp.files.length > 0;
+    if ((it.id === "f-entree" || it.id === "f-sortie") && has) hasBiodex = true;
+    const cls = has ? "badge-ok" : (it.required ? "badge-wait" : "badge-opt");
+    const ico = has ? "✅" : (it.required ? "⏳" : "○");
+    html += `<span class="badge ${cls}">${ico} ${it.label}</span>`;
+  });
+  wrap.innerHTML = html;
+
+  if (!hasBiodex) {
+    hint.style.display = "block";
+    genHint.style.display = "block";
+  } else {
+    hint.style.display = "none";
+    genHint.style.display = "none";
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RECHERCHE DE CLUBS — autocomplete
+   ───────────────────────────────────────────────────────────── */
+let _clubTimer = null;
+function searchClubs(q) {
+  clearTimeout(_clubTimer);
+  const box = document.getElementById("club-results");
+  if (!q || q.length < 2) { box.style.display = "none"; return; }
+  _clubTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`${API}/clubs/search?q=${encodeURIComponent(q)}`);
+      const clubs = await res.json();
+      if (!clubs.length) { box.style.display = "none"; return; }
+      box.innerHTML = clubs.map(c => {
+        const logo = c.logo_b64
+          ? `<img src="${c.logo_b64}" alt="">`
+          : `<svg width="26" height="20"><rect width="26" height="20" rx="4" fill="${c.couleur||'#1c3f6e'}"/><text x="13" y="14" text-anchor="middle" font-family="Arial" font-size="9" font-weight="bold" fill="white">${(c.nom||"").slice(0,3).toUpperCase()}</text></svg>`;
+        return `<div class="club-result-item" onclick='pickClub(${JSON.stringify(JSON.stringify(c))})'>${logo}<span><strong>${esc(c.nom)}</strong> <small>${esc(c.sport||"")} — ${esc(c.division||"")}</small></span></div>`;
+      }).join("");
+      box.style.display = "block";
+    } catch(e) { box.style.display = "none"; }
+  }, 300);
+}
+
+function pickClub(jsonStr) {
+  const club = JSON.parse(jsonStr);
+  selectClub(club);
+  document.getElementById("club-results").style.display = "none";
+  document.getElementById("club-search").value = "";
+}
+
+function useClub() {
+  const nom   = (document.getElementById("club-nom").value || "").trim();
+  const sport = document.getElementById("club-sport").value;
+  if (!nom) { alert("Entrez le nom du club."); return; }
+  selectClub({ nom, sport, division: "Autre", couleur: "#1c3f6e", logo_b64: null });
+}
+
+async function saveClub() {
+  const nom   = (document.getElementById("club-nom").value || "").trim();
+  const sport = document.getElementById("club-sport").value;
+  if (!nom) { alert("Entrez le nom du club."); return; }
+
+  const fd = new FormData();
+  fd.append("nom",   nom);
+  fd.append("sport", sport);
+  fd.append("division", "Autre");
+  const logoInp = document.getElementById("f-logo");
+  if (logoInp.files.length) fd.append("logo", logoInp.files[0]);
+
+  try {
+    const res = await fetch(`${API}/clubs/save`, { method: "POST", body: fd });
+    const club = await res.json();
+    selectClub(club);
+    alert(`"${nom}" enregistré avec succès !`);
+  } catch(e) {
+    alert("Erreur lors de l'enregistrement : " + e.message);
+  }
+}
+
+function selectClub(club) {
+  STATE.club = club;
+  const wrap = document.getElementById("club-selected-wrap");
+  const logo = document.getElementById("selected-logo");
+  const name = document.getElementById("selected-name");
+  const info = document.getElementById("selected-info");
+
+  if (club.logo_b64) {
+    logo.src = club.logo_b64;
+    logo.style.display = "block";
+  } else {
+    logo.style.display = "none";
+  }
+  name.textContent = club.nom || "—";
+  info.textContent = (club.sport || "") + (club.division ? " — " + club.division : "");
+  wrap.style.display = "block";
+}
+
+function clearClub() {
+  STATE.club = null;
+  document.getElementById("club-selected-wrap").style.display = "none";
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CHARGEMENT BLESSURES depuis l'API
+   ───────────────────────────────────────────────────────────── */
+async function loadBlessures() {
+  try {
+    const res = await fetch(`${API}/blessures`);
+    const list = await res.json();
+    const sel = document.getElementById("type-blessure");
+    sel.innerHTML = '<option value="">— Sélectionner —</option>';
+    list.forEach(b => {
+      const opt = document.createElement("option");
+      opt.value = opt.textContent = b;
+      sel.appendChild(opt);
+    });
+  } catch(e) {
+    console.warn("Impossible de charger les blessures :", e);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   BARRE DE PROGRESSION — simulation
+   ───────────────────────────────────────────────────────────── */
+function setProgress(pct, text) {
+  document.getElementById("progress-wrap").style.display = "block";
+  document.getElementById("progress-bar").style.width = pct + "%";
+  document.getElementById("progress-text").textContent = text;
+}
+
+function hideProgress() {
+  document.getElementById("progress-wrap").style.display = "none";
+  document.getElementById("progress-bar").style.width = "0%";
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GÉNÉRATION DU RAPPORT
+   ───────────────────────────────────────────────────────────── */
+async function generateReport() {
+  const errBox  = document.getElementById("error-box");
+  const dlZone  = document.getElementById("download-zone");
+  errBox.style.display  = "none";
+  dlZone.style.display  = "none";
+  STATE.pdfB64  = null;
+  STATE.htmlB64 = null;
+
+  // Simulation progression étapes
+  setProgress(10, "📄 Préparation des fichiers...");
+
+  const fd = new FormData();
+
+  // PDFs Biodex
+  const addFile = (inputId, key) => {
+    const inp = document.getElementById(inputId);
+    if (inp && inp.files.length) fd.append(key, inp.files[0]);
+  };
+  addFile("f-entree",    "pdf_entree");
+  addFile("f-sortie",    "pdf_sortie");
+  addFile("f-exc",       "pdf_excentrique");
+  addFile("f-comp",      "pdf_comparatif");
+  addFile("f-comp-sain", "pdf_comparatif_sain");
+  addFile("f-cr",        "pdf_cr");
+  addFile("f-gps",       "pdf_gps");
+  addFile("f-photo",     "photo");
+  addFile("f-logo",      "logo_club");
+
+  // Paramètres texte
+  const fv = (id, fallback="") => (document.getElementById(id)||{}).value || fallback;
+  fd.append("sport",            fv("sport"));
+  fd.append("date_operation",   fv("date-operation"));
+  fd.append("type_blessure",    fv("type-blessure"));
+  fd.append("acl_rsi_score",    fv("acl-rsi", "0"));
+  fd.append("remarques_medecin",fv("remarques-medecin"));
+  fd.append("programme_kine",   fv("programme-kine"));
+  fd.append("programme_prepa",  fv("programme-prepa"));
+  fd.append("conclusion_sortie",fv("conclusion-sortie"));
+
+  // Club sélectionné
+  if (STATE.club) {
+    fd.append("nom_club", STATE.club.nom || "");
+  }
+
+  // VALD manual
+  const vm = collectValdManual();
+  if (vm) fd.append("vald_manual", JSON.stringify(vm));
+
+  setProgress(35, "🔍 Parsing des PDFs en cours...");
+
+  try {
+    // Simuler l'avancement pendant le fetch
+    let pct = 35;
+    const timer = setInterval(() => {
+      pct = Math.min(pct + 3, 88);
+      setProgress(pct, pct < 60 ? "📊 Calcul des métriques..." : "🏗️ Génération du rapport...");
+    }, 800);
+
+    const res = await fetch(`${API}/generate`, { method: "POST", body: fd });
+    clearInterval(timer);
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`HTTP ${res.status} — ${txt}`);
+    }
+
+    setProgress(95, "📄 Finalisation...");
+
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Erreur inconnue");
+
+    STATE.pdfB64  = data.pdf_b64  || null;
+    STATE.htmlB64 = data.html_b64 || null;
+
+    setProgress(100, "✅ Rapport prêt !");
+    setTimeout(hideProgress, 1500);
+
+    dlZone.style.display = "block";
+    document.getElementById("btn-pdf").disabled  = !STATE.pdfB64;
+    document.getElementById("btn-html").disabled = !STATE.htmlB64;
+
+  } catch(e) {
+    hideProgress();
+    errBox.textContent = "❌ Erreur : " + e.message;
+    errBox.style.display = "block";
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TÉLÉCHARGEMENTS
+   ───────────────────────────────────────────────────────────── */
+function downloadB64(b64, filename, mime) {
+  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const blob  = new Blob([bytes], { type: mime });
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function dlPdf() {
+  if (!STATE.pdfB64) return;
+  downloadB64(STATE.pdfB64, "Rapport_CERS.pdf", "application/pdf");
+}
+
+function dlHtml() {
+  if (!STATE.htmlB64) return;
+  downloadB64(STATE.htmlB64, "Rapport_CERS_personnalisable.html", "text/html");
+}
+
+/* ─────────────────────────────────────────────────────────────
+   VÉRIFICATION API
+   ───────────────────────────────────────────────────────────── */
+async function checkAPI() {
+  const dot = document.getElementById("api-dot");
+  const msg = document.getElementById("api-msg");
+  try {
+    const res = await fetch(`${API}/ping`, { signal: AbortSignal.timeout(4000) });
+    const d   = await res.json();
+    dot.className = "ok";
+    msg.textContent = "✓ " + (d.message || "API opérationnelle") + " — " + API;
+  } catch(e) {
+    dot.className = "err";
+    msg.textContent = "✗ API non joignable — lancez : python api.py   (" + API + ")";
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   INITIALISATION AU CHARGEMENT
+   ───────────────────────────────────────────────────────────── */
+document.addEventListener("DOMContentLoaded", () => {
+  // Vérification API
+  checkAPI();
+
+  // Dropzones
+  setupDropzone("dz-entree",    "f-entree",    "fn-entree");
+  setupDropzone("dz-sortie",    "f-sortie",    "fn-sortie");
+  setupDropzone("dz-exc",       "f-exc",       "fn-exc");
+  setupDropzone("dz-comp",      "f-comp",      "fn-comp");
+  setupDropzone("dz-comp-sain", "f-comp-sain", "fn-comp-sain");
+  setupDropzone("dz-cr",        "f-cr",        "fn-cr");
+  setupDropzone("dz-gps",       "f-gps",       "fn-gps");
+  setupImageDropzone("dz-photo","f-photo",     "fn-photo", null);
+  setupImageDropzone("dz-logo", "f-logo",      "fn-logo",  "logo-preview");
+
+  // Badges initiaux
+  updateBadges();
+
+  // Chargement blessures
+  loadBlessures();
+
+  // Tables VALD
+  initValdSimple("cmj");
+  initValdSimple("dj");
+  initValdLr("slj");
+  initValdLr("shoulder");
+  initValdLr("mollet_run",   "table-mollet_run");
+  initValdLr("mollet_seated","table-mollet_seated");
+  initValdLr("nordic");
+  initValdLr("imtp");
+
+  // Fermeture autocomplete club au clic extérieur
+  document.addEventListener("click", e => {
+    const wrap = document.getElementById("club-results");
+    if (!e.target.closest(".search-wrap")) wrap.style.display = "none";
+  });
+});
+</script>
+</body>
+</html>

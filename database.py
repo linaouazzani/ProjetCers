@@ -8,11 +8,38 @@ Le fichier cers_data.db est créé automatiquement au premier lancement.
 import sqlite3
 import os
 import json
+import tempfile
 from datetime import datetime
 
-# Chemin du fichier SQLite — même dossier que l'application
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(_APP_DIR, "cers_data.db")
+
+
+def _get_db_path() -> str:
+    """
+    Retourne le premier chemin accessible en écriture pour cers_data.db.
+    Ordre : dossier projet → C:/ProgramData/CERS/ → home utilisateur → temp système.
+    Crée le dossier cible si nécessaire.
+    """
+    candidates = [
+        _APP_DIR,
+        r"C:/ProgramData/CERS",
+        os.path.expanduser("~"),
+        tempfile.gettempdir(),
+    ]
+    for folder in candidates:
+        try:
+            os.makedirs(folder, exist_ok=True)
+            probe = os.path.join(folder, ".cers_write_probe")
+            with open(probe, "w") as fh:
+                fh.write("ok")
+            os.unlink(probe)
+            return os.path.join(folder, "cers_data.db")
+        except Exception:
+            continue
+    return os.path.join(tempfile.gettempdir(), "cers_data.db")
+
+
+DB_PATH = _get_db_path()
 
 
 # ── Connexion ──────────────────────────────────────────────────────────────────

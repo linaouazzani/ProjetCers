@@ -147,10 +147,10 @@ if "nom_club_cache" not in st.session_state:
     st.session_state.nom_club_cache = ""
 if "rapport_html_bytes" not in st.session_state:
     st.session_state.rapport_html_bytes = None
-if "rapport_pdf_bytes" not in st.session_state:
-    st.session_state.rapport_pdf_bytes = None
 if "rapport_nom_base" not in st.session_state:
     st.session_state.rapport_nom_base = None
+# Purge any legacy PDF bytes still in session state from a previous run
+st.session_state.pop("rapport_pdf_bytes", None)
 # Upload locks — once set, uploaders are frozen until Rafraîchir / page reload
 for _uk in ["pdf_entree", "pdf_sortie", "pdf_exc", "pdf_comp", "pdf_comp_sain", "pdf_cr"]:
     if f"locked_{_uk}" not in st.session_state:
@@ -1114,21 +1114,16 @@ with col_right:
 
             progress.progress(90, text="📄 Traitement du résultat...")
 
-            # Gérer dict (nouvelle version) ou str (ancienne version)
+            # Récupérer uniquement les bytes HTML (PDF non utilisé)
             if isinstance(result, dict):
                 html_bytes = result.get("html_bytes")
-                pdf_bytes  = result.get("pdf_bytes")
                 chemin     = result.get("pdf_path", "")
             else:
                 chemin = result
-                pdf_bytes  = None
                 html_bytes = None
-                if chemin and os.path.exists(chemin):
+                if chemin and os.path.exists(chemin) and not chemin.endswith(".pdf"):
                     with open(chemin, "rb") as f:
-                        if chemin.endswith(".pdf"):
-                            pdf_bytes = f.read()
-                        else:
-                            html_bytes = f.read()
+                        html_bytes = f.read()
                 if html_bytes is None and os.path.exists(out_html):
                     with open(out_html, "rb") as f:
                         html_bytes = f.read()
@@ -1141,7 +1136,6 @@ with col_right:
             nom_base     = f"Rapport_{nom_patient}_{nom_club_safe}"
 
             st.session_state.rapport_html_bytes = html_bytes
-            st.session_state.rapport_pdf_bytes  = pdf_bytes
             st.session_state.rapport_nom_base   = nom_base
 
             # Nettoyer fichiers temporaires

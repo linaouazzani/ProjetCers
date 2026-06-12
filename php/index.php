@@ -639,14 +639,11 @@ footer {
       <div id="download-zone" style="display:none">
         <div class="success-box">
           <h3>✓ Rapport généré !</h3>
-          <p>Téléchargez en PDF ou en HTML personnalisable</p>
+          <p>Ouvrez le rapport HTML dans votre navigateur pour personnaliser et imprimer en PDF</p>
         </div>
-        <div class="two-col-dl">
-          <button class="btn btn-download" id="btn-pdf" onclick="dlPdf()">⬇️ Télécharger PDF</button>
-          <button class="btn btn-download" id="btn-html" onclick="dlHtml()" style="background:linear-gradient(135deg,#1c3f6e,#1a5fa8)">
-            🎛️ Personnaliser (HTML)
-          </button>
-        </div>
+        <button class="btn btn-download" id="btn-html" onclick="dlHtml()" style="background:linear-gradient(135deg,#1c3f6e,#1a5fa8);width:100%">
+          🎛️ Télécharger le rapport HTML interactif
+        </button>
       </div>
     </div>
 
@@ -1224,14 +1221,12 @@ async function generateReport() {
     const data = await res.json();
     if (!data.success) throw new Error(data.error || "Erreur inconnue");
 
-    STATE.pdfB64  = data.pdf_b64  || null;
     STATE.htmlB64 = data.html_b64 || null;
 
     setProgress(100, "✅ Rapport prêt !");
     setTimeout(hideProgress, 1500);
 
     dlZone.style.display = "block";
-    document.getElementById("btn-pdf").disabled  = !STATE.pdfB64;
     document.getElementById("btn-html").disabled = !STATE.htmlB64;
 
   } catch(e) {
@@ -1251,11 +1246,6 @@ function downloadB64(b64, filename, mime) {
   const a     = document.createElement("a");
   a.href = url; a.download = filename; a.click();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
-}
-
-function dlPdf() {
-  if (!STATE.pdfB64) return;
-  downloadB64(STATE.pdfB64, "Rapport_CERS.pdf", "application/pdf");
 }
 
 function dlHtml() {

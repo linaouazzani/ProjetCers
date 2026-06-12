@@ -20,6 +20,7 @@ INSTALLATION WINDOWS (une seule fois) :
 """
 
 import os
+import sys
 import platform
 import base64
 import re
@@ -27,6 +28,10 @@ from dataclasses import dataclass, field
 from typing import Optional
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
+
+# Force UTF-8 on Windows terminals (prevents cp1252 charmap crash on emojis/box chars)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from biodex_parser import parse_biodex_pdf, comparer_tests, couleur_deficit, couleur_progression, parse_excentrique_pdf, PatientBiodex
 from graphiques import graphique_en_base64, generer_graphiques_progression, generer_graphiques_excentrique
@@ -1305,10 +1310,10 @@ def generer_rapport_biodex(
     vald_manual:             dict = None,
 ) -> dict:
 
-    print("\n" + "█" * 60)
+    print("\n" + "=" * 60)
     print("  RAPPORT BIODEX v6 — PDF avec couleurs")
     print("  Plateforme : " + platform.system())
-    print("█" * 60)
+    print("=" * 60)
 
     # ── Parsing PDFs Biodex (tous optionnels) ──────────────────────────────
     has_biodex = bool(pdf_entree or pdf_sortie)

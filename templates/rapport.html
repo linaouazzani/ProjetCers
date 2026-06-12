@@ -14,7 +14,7 @@
    Bordure          : #cccccc
 ====================================================== */
 
-@page { size: A4; margin: 0mm; }
+@page { size: A4; margin: 0 !important; }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -36,16 +36,21 @@ body {
     min-height: 100vh;
   }
   body {
-    padding-top: 56px;    /* espace sous la barre de contrôle fixée */
-    padding-bottom: 32px;
+    font-size: 11px;        /* lisibilité écran — WeasyPrint garde les 9px de base */
+    padding-top: 60px;
+    padding-bottom: 40px;
   }
+  /* En prévisualisation, les pages s'étendent librement (pas de coupure forcée) */
   .page {
+    height: auto !important;
+    min-height: 297mm;
+    overflow: visible !important;
     box-shadow: 0 3px 14px rgba(28,63,110,0.20);
-    margin-bottom: 18px !important;
+    margin-bottom: 24px !important;
   }
 }
 
-/* ── Impression / WeasyPrint : supprime tout chrome d'interface ── */
+/* ── Impression (navigateur + WeasyPrint) : mise en page A4 propre ── */
 @media print {
   /* Masquer barre de contrôle, boutons et cases à cocher */
   #ctrl-bar,
@@ -58,20 +63,19 @@ body {
     background: #ffffff !important;
     padding: 0 !important;
     margin: 0 !important;
-    width: auto;
+    width: 210mm;
+    font-size: 9px;   /* taille d'origine — chaque .page est calé pour ces dimensions */
   }
-  /* Pages A4 pleine largeur, centrées, sans ombre */
+  /* Chaque .page = exactement 1 page A4 imprimée */
   .page, .report-page {
-    width: 100%;
-    max-width: 210mm;
-    margin: 0 auto !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
     page-break-after: always;
+    break-after: page;
     box-shadow: none !important;
-  }
-  /* Format A4 avec marges standard — utilisé par le navigateur (pas WeasyPrint) */
-  @page {
-    size: A4;
-    margin: 15mm;
   }
   /* Couleurs exactes préservées */
   * {

@@ -1193,45 +1193,27 @@ with col_right:
             with st.expander("Détails de l'erreur"):
                 st.code(traceback.format_exc())
 
-    # Téléchargement
-    if st.session_state.get("rapport_html_bytes") or st.session_state.get("rapport_pdf_bytes"):
+    # Téléchargement — rapport HTML interactif uniquement
+    html_b = st.session_state.get("rapport_html_bytes")
+    if html_b:
         st.markdown("""
 <div class="success-box">
   <h3>&#10003; Rapport g&#233;n&#233;r&#233; !</h3>
-  <p>T&#233;l&#233;charger en PDF, ou en HTML pour personnaliser avant impression</p>
+  <p>T&#233;l&#233;chargez le rapport HTML interactif, puis ouvrez-le dans votre navigateur pour personnaliser et imprimer en PDF</p>
 </div>""", unsafe_allow_html=True)
 
         nom_base = st.session_state.get("rapport_nom_base", "rapport")
-        col1, col2 = st.columns(2)
-
-        with col1:
-            pdf_b = st.session_state.get("rapport_pdf_bytes")
-            if pdf_b:
-                st.download_button(
-                    label="⬇️ Télécharger PDF",
-                    data=pdf_b,
-                    file_name=f"{nom_base}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                    key="dl_pdf",
-                )
-            else:
-                st.info("PDF non disponible sur ce serveur.")
-
-        with col2:
-            html_b = st.session_state.get("rapport_html_bytes")
-            if html_b:
-                html_interactif = _injecter_panneau_personnalisation(
-                    html_b.decode("utf-8")
-                )
-                st.download_button(
-                    label="🎛️ Personnaliser puis imprimer (HTML)",
-                    data=html_interactif.encode("utf-8"),
-                    file_name=f"{nom_base}_personnalisable.html",
-                    mime="text/html",
-                    use_container_width=True,
-                    key="dl_html",
-                )
+        html_interactif = _injecter_panneau_personnalisation(
+            html_b.decode("utf-8")
+        )
+        st.download_button(
+            label="🎛️ Télécharger le rapport HTML interactif",
+            data=html_interactif.encode("utf-8"),
+            file_name=f"{nom_base}_personnalisable.html",
+            mime="text/html",
+            use_container_width=True,
+            key="dl_html",
+        )
 
     st.markdown('</div>', unsafe_allow_html=True)
 

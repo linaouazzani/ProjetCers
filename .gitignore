@@ -25,6 +25,10 @@ Thumbs.db
 # Docker
 *.log
 
+# Base de données SQLite (runtime — ne pas commiter)
+*.db
+cers_data.db
+
 # Données patients (confidentielles — jamais commitées)
 data/*.pdf
 data/*.csv

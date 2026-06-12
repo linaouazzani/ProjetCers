@@ -151,6 +151,10 @@ if "rapport_pdf_bytes" not in st.session_state:
     st.session_state.rapport_pdf_bytes = None
 if "rapport_nom_base" not in st.session_state:
     st.session_state.rapport_nom_base = None
+# Upload locks — once set, uploaders are frozen until Rafraîchir / page reload
+for _uk in ["pdf_entree", "pdf_sortie", "pdf_exc", "pdf_comp", "pdf_comp_sain", "pdf_cr"]:
+    if f"locked_{_uk}" not in st.session_state:
+        st.session_state[f"locked_{_uk}"] = None  # None = not uploaded; bytes = locked
 
 
 # ── En-tête ───────────────────────────────────────────────────────────────────
@@ -405,15 +409,45 @@ with col_left:
     st.markdown('<div class="card"><div class="card-title">📄 Fichiers Biodex</div>',
                 unsafe_allow_html=True)
 
+    def _locked_uploader(label, key, lock_key, file_type=None, help=None):
+        """Show a file uploader or a locked badge. Returns bytes or None."""
+        locked = st.session_state.get(f"locked_{lock_key}")
+        if locked is not None:
+            st.markdown(
+                f'<span class="badge badge-ok">✅ {label} — chargé</span>',
+                unsafe_allow_html=True,
+            )
+            return locked
+        kwargs = {"type": file_type or ["pdf"], "key": key}
+        if help:
+            kwargs["help"] = help
+        uploaded = st.file_uploader(label, **kwargs)
+        if uploaded is not None:
+            data = uploaded.getvalue()
+            st.session_state[f"locked_{lock_key}"] = data
+            return data
+        return None
+
     col_e, col_s = st.columns(2)
     with col_e:
-        pdf_entree = st.file_uploader(
-            "📥 Test d'ENTRÉE (optionnel si Sortie fournie)", type=["pdf"], key="up_entree"
+        _raw_entree = _locked_uploader(
+            "📥 Test d'ENTRÉE (optionnel si Sortie fournie)", "up_entree", "pdf_entree"
         )
     with col_s:
-        pdf_sortie = st.file_uploader(
-            "📤 Test de SORTIE (optionnel si Entrée fournie)", type=["pdf"], key="up_sortie"
+        _raw_sortie = _locked_uploader(
+            "📤 Test de SORTIE (optionnel si Entrée fournie)", "up_sortie", "pdf_sortie"
         )
+
+    # Reconstruct file-like wrappers so downstream code can call .getvalue()
+    class _BytesFile:
+        def __init__(self, data, name="upload.pdf"):
+            self._data = data
+            self.name = name
+        def getvalue(self):
+            return self._data
+
+    pdf_entree = _BytesFile(_raw_entree) if _raw_entree else None
+    pdf_sortie = _BytesFile(_raw_sortie) if _raw_sortie else None
 
     if not pdf_entree and not pdf_sortie:
         st.info("💡 Fournissez au moins un PDF Biodex (Entrée **ou** Sortie) pour générer le rapport.")
@@ -422,26 +456,29 @@ with col_left:
     elif not pdf_sortie:
         st.warning("⚠️ PDF Sortie absent — le PDF Entrée sera utilisé comme référence unique (progression = 0%).")
 
+    if st.button("🔄 Rafraîchir les fichiers", key="btn_refresh_uploads", help="Efface tous les fichiers chargés"):
+        for _uk in ["pdf_entree", "pdf_sortie", "pdf_exc", "pdf_comp", "pdf_comp_sain", "pdf_cr"]:
+            st.session_state[f"locked_{_uk}"] = None
+        st.rerun()
+
     with st.expander("📎 PDFs optionnels"):
         co1, co2, co3, co4 = st.columns(4)
         with co1:
-            pdf_exc = st.file_uploader(
-                "Excentrique 30°/s", type=["pdf"], key="up_exc"
-            )
+            _raw_exc = _locked_uploader("Excentrique 30°/s", "up_exc", "pdf_exc")
         with co2:
-            pdf_comp = st.file_uploader(
-                "Comparatif Lésé", type=["pdf"], key="up_comp"
-            )
+            _raw_comp = _locked_uploader("Comparatif Lésé", "up_comp", "pdf_comp")
         with co3:
-            pdf_comp_sain = st.file_uploader(
-                "Comparatif Sain", type=["pdf"], key="up_comp_sain"
-            )
+            _raw_comp_sain = _locked_uploader("Comparatif Sain", "up_comp_sain", "pdf_comp_sain")
         with co4:
-            pdf_cr = st.file_uploader(
-                "Compte-rendu médical",
-                type=["pdf"], key="up_cr",
+            _raw_cr = _locked_uploader(
+                "Compte-rendu médical", "up_cr", "pdf_cr",
                 help="PDF compte-rendu CERS — extrait diagnostic, intervention, bilan clinique"
             )
+
+    pdf_exc       = _BytesFile(_raw_exc)       if _raw_exc       else None
+    pdf_comp      = _BytesFile(_raw_comp)      if _raw_comp      else None
+    pdf_comp_sain = _BytesFile(_raw_comp_sain) if _raw_comp_sain else None
+    pdf_cr        = _BytesFile(_raw_cr)        if _raw_cr        else None
 
     cols_b = st.columns(6)
     statuts = [
@@ -544,14 +581,14 @@ with col_left:
         for i, ind in enumerate(inds):
             rc = st.columns([3.0, 1.3, 1.3, 1.7, 0.45])
             rc[0].write(ind)
-            e = rc[1].text_input("", key=f"v_{tk}_e_{i}", label_visibility="collapsed", placeholder="0.00")
-            s = rc[2].text_input("", key=f"v_{tk}_s_{i}", label_visibility="collapsed", placeholder="0.00")
+            e = rc[1].text_input(f"e {tk} {i}", key=f"v_{tk}_e_{i}", label_visibility="collapsed", placeholder="0.00")
+            s = rc[2].text_input(f"s {tk} {i}", key=f"v_{tk}_s_{i}", label_visibility="collapsed", placeholder="0.00")
             rc[3].markdown(_prog_html(_prog(e, s)), unsafe_allow_html=True)
             if rc[4].button("🗑", key=f"v_{tk}_del_{i}", help="Supprimer"):
                 _del_row(tk, i)
         st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
         ac = st.columns([3.5, 1.8])
-        new_ind = ac[0].text_input("", key=f"v_{tk}_new", label_visibility="collapsed", placeholder="Ajouter un indicateur...")
+        new_ind = ac[0].text_input(f"new {tk}", key=f"v_{tk}_new", label_visibility="collapsed", placeholder="Ajouter un indicateur...")
         if ac[1].button("+ Ajouter", key=f"v_{tk}_add"):
             if new_ind.strip():
                 st.session_state[f"vald_{tk}_inds"].append(new_ind.strip())
@@ -570,10 +607,10 @@ with col_left:
         for i, ind in enumerate(inds):
             rc = st.columns([2.6, 0.95, 0.95, 0.95, 0.95, 1.3, 1.3, 0.4])
             rc[0].write(ind)
-            eg = rc[1].text_input("", key=f"v_{tk}_eg_{i}", label_visibility="collapsed", placeholder="G")
-            ed = rc[2].text_input("", key=f"v_{tk}_ed_{i}", label_visibility="collapsed", placeholder="D")
-            sg = rc[3].text_input("", key=f"v_{tk}_sg_{i}", label_visibility="collapsed", placeholder="G")
-            sd = rc[4].text_input("", key=f"v_{tk}_sd_{i}", label_visibility="collapsed", placeholder="D")
+            eg = rc[1].text_input(f"eg {tk} {i}", key=f"v_{tk}_eg_{i}", label_visibility="collapsed", placeholder="G")
+            ed = rc[2].text_input(f"ed {tk} {i}", key=f"v_{tk}_ed_{i}", label_visibility="collapsed", placeholder="D")
+            sg = rc[3].text_input(f"sg {tk} {i}", key=f"v_{tk}_sg_{i}", label_visibility="collapsed", placeholder="G")
+            sd = rc[4].text_input(f"sd {tk} {i}", key=f"v_{tk}_sd_{i}", label_visibility="collapsed", placeholder="D")
             rc[5].markdown(_prog_html(_prog(eg, sg)), unsafe_allow_html=True)
             rc[6].markdown(_prog_html(_prog(ed, sd)), unsafe_allow_html=True)
             if rc[7].button("🗑", key=f"v_{tk}_del_{i}", help="Supprimer"):
@@ -837,6 +874,15 @@ with col_left:
                 key="club_sport_new"
             )
 
+        # Auto-load logo from DB when club name matches an existing record
+        _club_db_match = get_club(club_nouveau_nom) if club_nouveau_nom and len(club_nouveau_nom) >= 3 else None
+        if _club_db_match and _club_db_match.get("logo_b64"):
+            st.markdown(
+                f'<img src="{_club_db_match["logo_b64"]}" style="height:40px;border-radius:4px;margin-bottom:4px;" title="Logo enregistré">',
+                unsafe_allow_html=True,
+            )
+            st.caption("✅ Logo existant trouvé dans la base")
+
         logo_club_upload = st.file_uploader(
             "Logo du club (PNG recommandé)", type=["png", "jpg", "jpeg"],
             key="up_logo_club"
@@ -848,11 +894,21 @@ with col_left:
         with cb1:
             if st.button("✅ Utiliser ce club", use_container_width=True, key="btn_use"):
                 if club_nouveau_nom:
+                    _logo_b64_use = None
+                    if logo_club_upload:
+                        import base64 as _b64
+                        _ext = logo_club_upload.name.rsplit(".", 1)[-1].lower()
+                        _mime = "image/png" if _ext == "png" else "image/jpeg"
+                        _logo_b64_use = (f"data:{_mime};base64,"
+                                         + _b64.b64encode(logo_club_upload.getvalue()).decode())
+                    elif _club_db_match and _club_db_match.get("logo_b64"):
+                        _logo_b64_use = _club_db_match["logo_b64"]
                     new_club = {
                         "nom": club_nouveau_nom,
                         "sport": club_nouveau_sport,
                         "division": "Autre",
                         "couleur": "#1c3f6e",
+                        "logo_b64": _logo_b64_use,
                     }
                     st.session_state.club_selectionne = new_club
                     st.session_state.nom_club_cache = club_nouveau_nom
@@ -867,6 +923,8 @@ with col_left:
                         mime = "image/png" if ext == "png" else "image/jpeg"
                         logo_b64_save = (f"data:{mime};base64,"
                                          + _b64.b64encode(logo_club_upload.getvalue()).decode())
+                    elif _club_db_match and _club_db_match.get("logo_b64"):
+                        logo_b64_save = _club_db_match["logo_b64"]
                     new_club = {
                         "nom": club_nouveau_nom,
                         "sport": club_nouveau_sport,

@@ -18,41 +18,47 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* ── Base rules — utilisées par WeasyPrint ET les navigateurs ── */
 body {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 9px;
   color: #1c3f6e;
   background: #ffffff;
-  margin: 0;
+  margin: 0 auto;   /* centre le body de 210mm dans le viewport */
   padding: 0;
   width: 210mm;
 }
 
-/* ====== SCREEN : centrage A4 dans le navigateur ====== */
+/* ── Navigateur : fond gris neutre, espace pour la barre fixe ── */
 @media screen {
-  html { background: #c8d0da; }
+  html {
+    background: #dde2ea;
+    min-height: 100vh;
+  }
   body {
-    background: #c8d0da;
-    width: 100%;
-    padding: 60px 0 32px 0; /* top : espace pour la barre de contrôle */
-    margin: 0;
+    padding-top: 56px;    /* espace sous la barre de contrôle fixée */
+    padding-bottom: 32px;
   }
   .page {
-    margin: 0 auto 20px auto !important;
-    box-shadow: 0 4px 18px rgba(28,63,110,0.22);
+    box-shadow: 0 3px 14px rgba(28,63,110,0.20);
+    margin-bottom: 18px !important;
   }
 }
 
-/* ====== PRINT : reset propre pour WeasyPrint / navigateur ====== */
+/* ── Impression / WeasyPrint : supprime tout chrome d'interface ── */
 @media print {
-  #ctrl-bar, #ctrl-bar ~ script { display: none !important; }
+  #ctrl-bar { display: none !important; }
+  html { background: #ffffff !important; }
   body {
     background: #ffffff !important;
     padding: 0 !important;
-    margin: 0 !important;
-    width: 210mm !important;
+    margin: 0 auto !important;
+    width: 210mm;
   }
-  .page { margin: 0 !important; box-shadow: none !important; }
+  .page {
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -475,40 +481,51 @@ body {
 </style>
 </head>
 <body>
-{# ══════════════════════════════════════════════════════════════
-   BARRE DE CONTRÔLE INTERACTIVE — masquée à l'impression
-   ══════════════════════════════════════════════════════════════ #}
-<div id="ctrl-bar" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#1c3f6e;padding:7px 16px;font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#fff;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,0.35);">
-  <span style="font-weight:700;font-size:12px;letter-spacing:0.4px;white-space:nowrap;padding-right:6px;border-right:1px solid rgba(255,255,255,0.3);">&#128065; PAGES</span>
-  <label style="cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('page-garde',this.checked)"> Page de garde</label>
+{# ══════════════════════════════════════════════════════════════════
+   BARRE DE CONTRÔLE INTERACTIVE
+   Visible UNIQUEMENT dans le navigateur — masquée à l'impression
+   via @media print { #ctrl-bar { display: none !important; } }
+   ══════════════════════════════════════════════════════════════════ #}
+<div id="ctrl-bar" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#1c3f6e;padding:6px 14px;font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#fff;display:flex;flex-wrap:wrap;gap:8px;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,0.38);">
+
+  <span style="font-weight:700;font-size:12px;letter-spacing:0.3px;white-space:nowrap;padding-right:8px;border-right:1px solid rgba(255,255,255,0.3);">&#128065;&nbsp;PAGES</span>
+
+  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('page-garde',this.checked)"> Page de garde</label>
   {% if has_biodex %}
-  <label style="cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('bilan-60',this.checked)"> Bilan 60°/s</label>
-  <label style="cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('bilan-240',this.checked)"> Bilan 240°/s</label>
-  <label style="cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('analyse-clinique',this.checked)"> Analyse clinique</label>
+  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('bilan-60',this.checked)"> Bilan 60°/s</label>
+  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('bilan-240',this.checked)"> Bilan 240°/s</label>
+  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('analyse-clinique',this.checked)"> Analyse clinique</label>
   {% endif %}
   {% if vald and vald.has_data %}
-  <label style="cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('bilan-vald',this.checked)"> VALD ForceDecks</label>
+  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('bilan-vald',this.checked)"> VALD ForceDecks</label>
   {% endif %}
   {% if vald_tableau %}
-  <label style="cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('vald-tableau',this.checked)"> Tableau VALD</label>
+  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('vald-tableau',this.checked)"> Tableau VALD</label>
   {% endif %}
-  <span style="padding:0 6px;border-left:1px solid rgba(255,255,255,0.3);border-right:1px solid rgba(255,255,255,0.3);font-weight:700;white-space:nowrap;">PAGE DE GARDE</span>
-  <label style="cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSub('guard-hero',this.checked)"> Photo</label>
-  <label style="cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSub('guard-info-bande',this.checked)"> Séjour</label>
-  <label style="cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSub('guard-diagnostic',this.checked)"> Diagnostic</label>
-  <label style="cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSub('guard-fonctionnel',this.checked)"> Fonctionnel</label>
-  <label style="cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSub('guard-resume',this.checked)"> Résumé</label>
-  <label style="cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('remarques-medicales',this.checked)"> Remarques méd.</label>
+
+  <span style="padding:0 8px;border-left:1px solid rgba(255,255,255,0.3);border-right:1px solid rgba(255,255,255,0.3);font-weight:700;white-space:nowrap;">PAGE&nbsp;DE&nbsp;GARDE</span>
+  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSub('guard-hero',this.checked)"> Photo</label>
+  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSub('guard-info-bande',this.checked)"> Séjour</label>
+  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSub('guard-diagnostic',this.checked)"> Diagnostic</label>
+  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSub('guard-fonctionnel',this.checked)"> Fonctionnel</label>
+  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSub('guard-resume',this.checked)"> Résumé</label>
+  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('remarques-medicales',this.checked)"> Remarques&nbsp;méd.</label>
+
+  <button onclick="window.print()" style="margin-left:auto;background:#2176c7;color:#fff;border:none;border-radius:4px;padding:5px 16px;cursor:pointer;font-weight:700;font-size:11px;white-space:nowrap;letter-spacing:0.2px;">&#128438;&nbsp;Imprimer&nbsp;/&nbsp;Enregistrer</button>
 </div>
 <script>
-function toggleSect(s, v) {
-  var el = document.querySelector('[data-section="' + s + '"]');
-  if (el) el.style.display = v ? '' : 'none';
-}
-function toggleSub(s, v) {
-  var el = document.querySelector('[data-subsection="' + s + '"]');
-  if (el) el.style.display = v ? '' : 'none';
-}
+(function () {
+  function toggleSect(s, v) {
+    var el = document.querySelector('[data-section="' + s + '"]');
+    if (el) el.style.display = v ? '' : 'none';
+  }
+  function toggleSub(s, v) {
+    var el = document.querySelector('[data-subsection="' + s + '"]');
+    if (el) el.style.display = v ? '' : 'none';
+  }
+  window.toggleSect = toggleSect;
+  window.toggleSub  = toggleSub;
+}());
 </script>
 
 {% macro anon(nom) -%}

@@ -555,6 +555,9 @@ footer {
           <div>
             <label class="field-label">Nom du club *</label>
             <input type="text" id="club-nom" placeholder="Ex: Oyonnax Rugby">
+            <input type="hidden" id="selected_club_id"   name="selected_club_id"   value="">
+            <input type="hidden" id="selected_club_name" name="selected_club_name" value="">
+            <input type="hidden" id="selected_club_logo" name="selected_club_logo" value="">
           </div>
           <div>
             <label class="field-label">Sport</label>
@@ -1058,9 +1061,13 @@ function pickClub(jsonStr) {
 }
 
 function useClub() {
-  const nom   = (document.getElementById("club-nom").value || "").trim();
-  const sport = document.getElementById("club-sport").value;
+  const nom = (document.getElementById("club-nom").value || "").trim();
+  if (!nom && STATE.club) {
+    selectClub(STATE.club);
+    return;
+  }
   if (!nom) { alert("Entrez le nom du club."); return; }
+  const sport = document.getElementById("club-sport").value;
   selectClub({ nom, sport, division: "Autre", couleur: "#1c3f6e", logo_b64: null });
 }
 
@@ -1102,11 +1109,23 @@ function selectClub(club) {
   name.textContent = club.nom || "—";
   info.textContent = (club.sport || "") + (club.division ? " — " + club.division : "");
   wrap.style.display = "block";
+
+  const nomInput = document.getElementById("club-nom");
+  if (nomInput && !nomInput.value.trim()) nomInput.value = club.nom || "";
+
+  document.getElementById("selected_club_id").value   = club.id   || "";
+  document.getElementById("selected_club_name").value = club.nom  || "";
+  document.getElementById("selected_club_logo").value = club.logo_b64 || "";
 }
 
 function clearClub() {
   STATE.club = null;
   document.getElementById("club-selected-wrap").style.display = "none";
+  const nomInput = document.getElementById("club-nom");
+  if (nomInput) nomInput.value = "";
+  document.getElementById("selected_club_id").value   = "";
+  document.getElementById("selected_club_name").value = "";
+  document.getElementById("selected_club_logo").value = "";
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1187,6 +1206,9 @@ async function generateReport() {
   // Club sélectionné
   if (STATE.club) {
     fd.append("nom_club", STATE.club.nom || "");
+    if (STATE.club.logo_b64) {
+      fd.append("logo_club_b64", STATE.club.logo_b64);
+    }
   }
 
   // VALD manual

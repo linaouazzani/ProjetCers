@@ -1,7 +1,30 @@
 <?php
-// api.php — configuration de l'URL de l'API Flask
-// En local : http://localhost:5000 | En production IIS : http://localhost:5000 (même serveur)
+session_start();
+
+// ─── Gestionnaire AJAX persistance club ─────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
+    header('Content-Type: application/json');
+    if ($_GET['action'] === 'save_club') {
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        $_SESSION['club_actuel'] = [
+            'nom'      => $data['nom']      ?? '',
+            'sport'    => $data['sport']    ?? '',
+            'division' => $data['division'] ?? '',
+            'couleur'  => $data['couleur']  ?? '#1c3f6e',
+            'logo_b64' => $data['logo_b64'] ?? null,
+        ];
+        echo json_encode(['ok' => true]);
+    } elseif ($_GET['action'] === 'clear_club') {
+        unset($_SESSION['club_actuel']);
+        echo json_encode(['ok' => true]);
+    }
+    exit;
+}
+
 $API_URL = "http://localhost:5000";
+$club_session_json = isset($_SESSION['club_actuel'])
+    ? json_encode($_SESSION['club_actuel'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)
+    : 'null';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -560,6 +583,10 @@ footer {
           <div>
             <label class="field-label">Nom du club *</label>
             <input type="text" id="club-nom" placeholder="Ex: Oyonnax Rugby">
+            <!-- Champs cachés — mis à jour par JS quand un club est sélectionné -->
+            <input type="hidden" id="selected_club_id"   name="selected_club_id"   value="">
+            <input type="hidden" id="selected_club_name" name="selected_club_name" value="">
+            <input type="hidden" id="selected_club_logo" name="selected_club_logo" value="">
           </div>
           <div>
             <label class="field-label">Sport</label>
@@ -1063,9 +1090,15 @@ function pickClub(jsonStr) {
 }
 
 function useClub() {
-  const nom   = (document.getElementById("club-nom").value || "").trim();
-  const sport = document.getElementById("club-sport").value;
+  const nom = (document.getElementById("club-nom").value || "").trim();
+  // Si un club est déjà actif (sélectionné via la recherche) et le champ texte est vide,
+  // on confirme simplement la sélection existante sans créer un nouveau club sans logo.
+  if (!nom && STATE.club) {
+    selectClub(STATE.club);
+    return;
+  }
   if (!nom) { alert("Entrez le nom du club."); return; }
+  const sport = document.getElementById("club-sport").value;
   selectClub({ nom, sport, division: "Autre", couleur: "#1c3f6e", logo_b64: null });
 }
 
@@ -1107,11 +1140,33 @@ function selectClub(club) {
   name.textContent = club.nom || "—";
   info.textContent = (club.sport || "") + (club.division ? " — " + club.division : "");
   wrap.style.display = "block";
+
+  // Synchroniser le champ texte nom (utile pour les sélections via recherche)
+  const nomInput = document.getElementById("club-nom");
+  if (nomInput && !nomInput.value.trim()) nomInput.value = club.nom || "";
+
+  // Mettre à jour les champs cachés
+  document.getElementById("selected_club_id").value   = club.id   || "";
+  document.getElementById("selected_club_name").value = club.nom  || "";
+  document.getElementById("selected_club_logo").value = club.logo_b64 || "";
+
+  // Persister en session PHP (fire-and-forget)
+  fetch('?action=save_club', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(club)
+  }).catch(function() {});
 }
 
 function clearClub() {
   STATE.club = null;
   document.getElementById("club-selected-wrap").style.display = "none";
+  const nomInput = document.getElementById("club-nom");
+  if (nomInput) nomInput.value = "";
+  document.getElementById("selected_club_id").value   = "";
+  document.getElementById("selected_club_name").value = "";
+  document.getElementById("selected_club_logo").value = "";
+  fetch('?action=clear_club', { method: 'POST' }).catch(function() {});
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1192,6 +1247,9 @@ async function generateReport() {
   // Club sélectionné
   if (STATE.club) {
     fd.append("nom_club", STATE.club.nom || "");
+    if (STATE.club.logo_b64) {
+      fd.append("logo_club_b64", STATE.club.logo_b64);
+    }
   }
 
   // VALD manual
@@ -1310,6 +1368,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!e.target.closest(".search-wrap")) wrap.style.display = "none";
   });
 });
+</script>
+
+<script>
+// Restauration du club depuis la session PHP (après rechargement de page)
+(function () {
+  const saved = <?= $club_session_json ?>;
+  if (saved && saved.nom) {
+    document.addEventListener("DOMContentLoaded", function () {
+      selectClub(saved);
+    });
+  }
+}());
 </script>
 </body>
 </html>

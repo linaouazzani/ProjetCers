@@ -136,10 +136,24 @@ def enregistrer_club(nom: str, sport: str, division: str = "Autre",
 
 
 def get_club(nom: str) -> dict | None:
-    """Retourne un club par son nom exact."""
+    """Retourne un club : exact match d'abord, puis LIKE partiel en fallback.
+    Priorité aux clubs ayant un logo enregistré (logo_b64 IS NOT NULL).
+    """
     with _connexion() as conn:
-        row = conn.execute("SELECT * FROM clubs WHERE lower(nom) = ?",
-                           (nom.lower(),)).fetchone()
+        # 1. Exact match insensible à la casse
+        row = conn.execute(
+            "SELECT * FROM clubs WHERE lower(nom) = ?",
+            (nom.lower(),)
+        ).fetchone()
+        if row:
+            return dict(row)
+        # 2. Fuzzy : le terme saisi est contenu dans le nom du club
+        #    → on préfère les clubs avec logo, puis le nom le plus court
+        row = conn.execute(
+            "SELECT * FROM clubs WHERE lower(nom) LIKE ?"
+            " ORDER BY (logo_b64 IS NOT NULL) DESC, length(nom) ASC LIMIT 1",
+            (f"%{nom.lower()}%",)
+        ).fetchone()
     return dict(row) if row else None
 
 

@@ -1057,6 +1057,14 @@ with col_right:
             path_logo_club = None
             club_selec = st.session_state.get("club_selectionne")
 
+            # Fallback fuzzy : si la session n'a pas de logo mais que nom_club
+            # correspond à un club enregistré en DB, récupérer son logo
+            if (not club_selec or not club_selec.get("logo_b64")) \
+                    and nom_club and len(nom_club) >= 2:
+                _db_logo_match = get_club(nom_club)
+                if _db_logo_match and _db_logo_match.get("logo_b64"):
+                    club_selec = _db_logo_match
+
             if logo_club_upload:
                 ext_logo = logo_club_upload.name.rsplit(".", 1)[-1]
                 with tempfile.NamedTemporaryFile(suffix=f".{ext_logo}", delete=False) as f:

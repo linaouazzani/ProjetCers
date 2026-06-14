@@ -202,20 +202,15 @@ def generate():
         path_photo      = get_pdf("photo")
         path_logo       = get_pdf("logo_club")
 
-        # Logo envoyé en base64 depuis le front JS (club sélectionné depuis la DB)
+        # Logo envoyé en base64 depuis le front JS (club sélectionné depuis la DB).
+        # On injecte la data URI directement dans le contexte Jinja2 sans passer
+        # par un fichier temporaire (évite les blocages de permissions IIS/Windows).
+        _logo_b64_direct = None
         if not path_logo:
-            _b64_logo = (request.form.get("logo_club_b64") or "").strip()
-            if _b64_logo and ";base64," in _b64_logo:
-                try:
-                    _header, _b64_data = _b64_logo.split(";base64,", 1)
-                    _ext = "png" if "png" in _header else "jpg"
-                    import tempfile as _tmpf
-                    with _tmpf.NamedTemporaryFile(suffix=f".{_ext}", delete=False) as _f:
-                        _f.write(base64.b64decode(_b64_data))
-                        path_logo = _f.name
-                        tmp_files.append(path_logo)
-                except Exception as _e:
-                    print(f"[API] logo_club_b64 decode error: {_e}")
+            _raw = (request.form.get("logo_club_b64") or "").strip()
+            if _raw:
+                _logo_b64_direct = _raw if _raw.startswith("data:") \
+                    else "data:image/png;base64," + _raw
 
         # ── Paramètres texte ───────────────────────────────────────────
         form = request.form
@@ -289,6 +284,7 @@ def generate():
             template_dir        = os.path.join(_APP_DIR, "templates"),
             nom_club            = nom_club,
             logo_club_path      = path_logo,
+            logo_club_b64_direct= _logo_b64_direct,
             photo_patient_path  = path_photo,
             sport               = sport,
             date_operation      = date_operation,

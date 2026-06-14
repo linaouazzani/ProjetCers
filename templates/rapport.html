@@ -831,14 +831,14 @@ body {
       </div>
     </div>
 
-    <!-- Logo club -->
+    <!-- Logo club — injecté directement en base64 data URI (sans chemin disque) -->
     <div style="display:table-cell; width:22%; vertical-align:middle; text-align:center;">
       <div style="display:table; width:100%; table-layout:fixed;">
         <div style="display:table-row;">
           <div style="display:table-cell; text-align:center; padding-bottom:5px; vertical-align:middle;">
             {% if logo_club_b64 %}
             <img src="{{ logo_club_b64 }}"
-                 style="height:58px; max-width:92px; display:block; margin:0 auto; object-fit:contain;"
+                 style="max-height:58px; max-width:92px; display:block; margin:0 auto; object-fit:contain;"
                  alt="{{ nom_club }}">
             {% else %}
             <div style="

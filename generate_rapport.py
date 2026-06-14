@@ -331,6 +331,7 @@ def construire_contexte(
     comparatif_sain_data: dict = None,
     nom_club: str = "—",
     logo_club_path: Optional[str] = None,
+    logo_club_b64_direct: Optional[str] = None,
     photo_patient_path: Optional[str] = None,
     sport: str = "",
     date_naissance: str = "",
@@ -637,7 +638,8 @@ def construire_contexte(
     # Logos
     _base_dir = os.path.dirname(os.path.abspath(__file__))
     logo_cers = encoder_image(os.path.join(_base_dir, "assets", "logo_cers.png"))
-    logo_club = encoder_image(logo_club_path) if logo_club_path else None
+    # Priorité : data URI directe (depuis DB/JS, sans fichier temporaire) > fichier uploadé
+    logo_club = logo_club_b64_direct or (encoder_image(logo_club_path) if logo_club_path else None)
     photo     = encoder_image(photo_patient_path) if photo_patient_path else None
 
     # Calcul délai post-opératoire
@@ -1287,6 +1289,7 @@ def generer_rapport_biodex(
     template_dir:            str = "templates",
     nom_club:                str = "—",
     logo_club_path:          Optional[str] = None,
+    logo_club_b64_direct:    Optional[str] = None,
     photo_patient_path:      Optional[str] = None,
     sport:                   str = "",
     date_naissance:          str = "",
@@ -1371,6 +1374,7 @@ def generer_rapport_biodex(
         comparatif_sain_data=comparatif_sain_data,
         nom_club=nom_club,
         logo_club_path=logo_club_path,
+        logo_club_b64_direct=logo_club_b64_direct,
         photo_patient_path=photo_patient_path,
         sport=sport,
         date_naissance=date_naissance,

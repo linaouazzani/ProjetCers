@@ -438,30 +438,54 @@ footer {
           <!-- SLJ -->
           <div class="tab-panel" id="tab-slj">
             <div id="table-slj"></div>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <input type="text" id="new-ind-slj" placeholder="Ajouter un indicateur..." style="flex:1">
+              <button class="btn btn-add" onclick="addLrRow('slj')">+ Ajouter</button>
+            </div>
           </div>
 
           <!-- Épaule -->
           <div class="tab-panel" id="tab-shoulder">
             <div id="table-shoulder"></div>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <input type="text" id="new-ind-shoulder" placeholder="Ajouter un indicateur..." style="flex:1">
+              <button class="btn btn-add" onclick="addLrRow('shoulder')">+ Ajouter</button>
+            </div>
           </div>
 
           <!-- Mollet -->
           <div class="tab-panel" id="tab-mollet">
             <p style="font-size:11px;color:#888;margin-bottom:4px;">Run-Specific Ankle Iso-Push</p>
             <div id="table-mollet_run"></div>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <input type="text" id="new-ind-mollet_run" placeholder="Ajouter un indicateur..." style="flex:1">
+              <button class="btn btn-add" onclick="addLrRow('mollet_run','table-mollet_run')">+ Ajouter</button>
+            </div>
             <hr style="margin:10px 0;">
             <p style="font-size:11px;color:#888;margin-bottom:4px;">Seated Isometric Calf Raise</p>
             <div id="table-mollet_seated"></div>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <input type="text" id="new-ind-mollet_seated" placeholder="Ajouter un indicateur..." style="flex:1">
+              <button class="btn btn-add" onclick="addLrRow('mollet_seated','table-mollet_seated')">+ Ajouter</button>
+            </div>
           </div>
 
           <!-- Nordic -->
           <div class="tab-panel" id="tab-nordic">
             <div id="table-nordic"></div>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <input type="text" id="new-ind-nordic" placeholder="Ajouter un indicateur..." style="flex:1">
+              <button class="btn btn-add" onclick="addLrRow('nordic')">+ Ajouter</button>
+            </div>
           </div>
 
           <!-- IMTP -->
           <div class="tab-panel" id="tab-imtp">
             <div id="table-imtp"></div>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <input type="text" id="new-ind-imtp" placeholder="Ajouter un indicateur..." style="flex:1">
+              <button class="btn btn-add" onclick="addLrRow('imtp')">+ Ajouter</button>
+            </div>
           </div>
 
           <div style="margin-top:10px;text-align:right;">
@@ -838,6 +862,20 @@ function progHtml(p) {
   return `<span style="color:${col};font-weight:700">${arrow} ${Math.abs(p).toFixed(1)} %</span>`;
 }
 
+function calcAsym(a, b) {
+  const av = safeFloat(a), bv = safeFloat(b);
+  if (av === null || bv === null) return null;
+  const mx = Math.max(Math.abs(av), Math.abs(bv));
+  if (mx === 0) return 0;
+  return Math.round(Math.abs(av - bv) / mx * 1000) / 10;
+}
+
+function asymHtml(a) {
+  if (a === null) return '<span style="color:#aaa">&mdash;</span>';
+  const col = a <= 10 ? "#1a7a30" : (a <= 15 ? "#e07b00" : "#c0392b");
+  return `<span style="color:${col};font-weight:700">${a.toFixed(1)}%</span>`;
+}
+
 function esc(s) {
   return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
@@ -945,19 +983,23 @@ function renderLr(tk, targetId) {
   const el = document.getElementById(id);
   if (!el) return;
   let html = '<table class="vald-table"><thead><tr>'
-           + '<th style="width:28%">Indicateur</th>'
-           + '<th style="width:10%">Ent.G</th>'
-           + '<th style="width:10%">Ent.D</th>'
-           + '<th style="width:10%">Sort.G</th>'
-           + '<th style="width:10%">Sort.D</th>'
-           + '<th style="width:14%">Prog.G</th>'
-           + '<th style="width:14%">Prog.D</th>'
-           + '<th style="width:4%"></th>'
+           + '<th style="width:23%">Indicateur</th>'
+           + '<th style="width:8%">Ent.G</th>'
+           + '<th style="width:8%">Ent.D</th>'
+           + '<th style="width:8%">Sort.G</th>'
+           + '<th style="width:8%">Sort.D</th>'
+           + '<th style="width:11%">Prog.G</th>'
+           + '<th style="width:11%">Prog.D</th>'
+           + '<th style="width:9%">Asym.E</th>'
+           + '<th style="width:9%">Asym.S</th>'
+           + '<th style="width:5%"></th>'
            + '</tr></thead><tbody>';
   s.rows.forEach((row, i) => {
     const ind = s.inds[i] || "";
     const pg  = calcProg(row.eg, row.sg);
     const pd  = calcProg(row.ed, row.sd);
+    const ae  = calcAsym(row.eg, row.ed);
+    const as_ = calcAsym(row.sg, row.sd);
     const mkInput = (f) => `<input type="text" value="${esc(row[f])}" placeholder="${f[1].toUpperCase()}"
       oninput="valdLrInput('${tk}','${id}',${i},'${f}',this.value)">`;
     html += `<tr>
@@ -966,8 +1008,10 @@ function renderLr(tk, targetId) {
       <td>${mkInput("ed")}</td>
       <td>${mkInput("sg")}</td>
       <td>${mkInput("sd")}</td>
-      <td class="prog-cell prog-g-${tk}-${i}">${progHtml(pg)}</td>
-      <td class="prog-cell prog-d-${tk}-${i}">${progHtml(pd)}</td>
+      <td class="prog-cell">${progHtml(pg)}</td>
+      <td class="prog-cell">${progHtml(pd)}</td>
+      <td class="prog-cell">${asymHtml(ae)}</td>
+      <td class="prog-cell">${asymHtml(as_)}</td>
       <td><button class="btn btn-sm" onclick="delLrRow('${tk}','${id}',${i})">🗑</button></td>
     </tr>`;
   });
@@ -977,15 +1021,20 @@ function renderLr(tk, targetId) {
 
 function valdLrInput(tk, targetId, i, field, val) {
   VALD_LR[tk].rows[i][field] = val;
-  const r  = VALD_LR[tk].rows[i];
-  const pg = calcProg(r.eg, r.sg);
-  const pd = calcProg(r.ed, r.sd);
-  const el = document.getElementById(targetId);
+  const r   = VALD_LR[tk].rows[i];
+  const pg  = calcProg(r.eg, r.sg);
+  const pd  = calcProg(r.ed, r.sd);
+  const ae  = calcAsym(r.eg, r.ed);
+  const as_ = calcAsym(r.sg, r.sd);
+  const el  = document.getElementById(targetId);
   if (!el) return;
   const rows = el.querySelectorAll("tbody tr");
   if (rows[i]) {
-    rows[i].querySelectorAll(".prog-cell")[0].innerHTML = progHtml(pg);
-    rows[i].querySelectorAll(".prog-cell")[1].innerHTML = progHtml(pd);
+    const cells = rows[i].querySelectorAll(".prog-cell");
+    cells[0].innerHTML = progHtml(pg);
+    cells[1].innerHTML = progHtml(pd);
+    cells[2].innerHTML = asymHtml(ae);
+    cells[3].innerHTML = asymHtml(as_);
   }
 }
 
@@ -993,6 +1042,16 @@ function delLrRow(tk, targetId, i) {
   VALD_LR[tk].inds.splice(i, 1);
   VALD_LR[tk].rows.splice(i, 1);
   renderLr(tk, targetId);
+}
+
+function addLrRow(tk, targetId) {
+  const inp = document.getElementById("new-ind-" + tk);
+  const val = (inp.value || "").trim();
+  if (!val) return;
+  VALD_LR[tk].inds.push(val);
+  VALD_LR[tk].rows.push({eg: "", ed: "", sg: "", sd: ""});
+  inp.value = "";
+  renderLr(tk, targetId || ("table-" + tk));
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1048,7 +1107,7 @@ function collectValdManual() {
       const eg = safeFloat(r.eg), ed = safeFloat(r.ed);
       const sg = safeFloat(r.sg), sd = safeFloat(r.sd);
       if (eg!==null||ed!==null||sg!==null||sd!==null) {
-        rows.push({ indicateur: s.inds[i], entree_g: eg, entree_d: ed, sortie_g: sg, sortie_d: sd, prog_g: calcProg(r.eg,r.sg), prog_d: calcProg(r.ed,r.sd) });
+        rows.push({ indicateur: s.inds[i], entree_g: eg, entree_d: ed, sortie_g: sg, sortie_d: sd, prog_g: calcProg(r.eg,r.sg), prog_d: calcProg(r.ed,r.sd), asym_entree: calcAsym(r.eg,r.ed), asym_sortie: calcAsym(r.sg,r.sd) });
       }
     });
     out[tk] = rows;

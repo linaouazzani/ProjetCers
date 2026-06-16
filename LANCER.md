@@ -1,189 +1,186 @@
-# CERS Capbreton — Guide de lancement
+# Procédure de Lancement et Déploiement de l'Application CERS
 
-## Architecture
+## Introduction
 
-```
-ProjetCers/
-├── app.py              ← Interface Streamlit (inchangée)
-├── api.py              ← API Flask (nouveau — port 5000)
-├── php/
-│   └── index.php       ← Front PHP (nouveau — port 8080 local / port 80 IIS)
-├── uploads/            ← Fichiers temporaires (créé automatiquement)
-├── outputs/            ← Rapports générés (créé automatiquement)
-└── requirements.txt    ← Dépendances Python
-```
+Ce document décrit la procédure stricte pour démarrer, mettre à jour et déployer l'application de génération de rapports du **Centre Européen de Rééducation du Sportif (CERS)** sur l'infrastructure interne.
 
-## Prérequis
-
-```bash
-pip install -r requirements.txt
-```
+L'application comporte deux couches :
+- **Frontend PHP** (formulaire de saisie, gestion des fichiers) — servi par IIS
+- **API Flask Python** (génération du rapport HTML/PDF) — processus Python en arrière-plan
 
 ---
 
-## TEST LOCAL
+## Environnements Disponibles
 
-### Terminal 1 — Lancer l'API Flask
-```bash
-python api.py
+| Environnement | URL | Usage |
+|---|---|---|
+| **Cloud — Production Streamlit** | https://projetcers.streamlit.app/ | Accès externe, sans IIS |
+| **Intranet Local — Serveur IIS** | http://10.12.16.17/rapportcers/php | Réseau interne CERS uniquement |
+
+---
+
+## IMPORTANT : Changement d'Adresse IP (Etape Critique)
+
+**A lire absolument en cas de migration reseau ou de modification d'infrastructure.**
+
+Lorsque **Sylvain** (service informatique) modifie l'infrastructure reseau ou attribue une nouvelle IP fixe au serveur :
+
+1. Ouvrir **IIS Manager** (`inetmgr` dans Executer / Win+R)
+2. Aller dans **Sites > rapportcers > Liaisons (Bindings)**
+3. Modifier l'adresse IP : remplacer l'ancienne valeur par la **nouvelle IP fixe**
+4. Mettre a jour `php/index.php` : chercher `10.12.16.17` et remplacer par la nouvelle IP
+5. Mettre a jour ce fichier `lancer.md` avec la nouvelle IP
+6. **Sylvain associera ensuite un alias reseau simplifie** (ex : `http://cers-rapports/`) pour que les praticiens n'aient pas a retenir l'adresse IP
+
+**IP fixe actuelle : `10.12.16.17`**
+
+---
+
+## Prerequis Systeme
+
+- **Python 3.11** : `C:\Users\HP\AppData\Local\Programs\Python\Python311\python.exe`
+- **PHP 8.2** : `C:\php\php.exe`
+- **IIS** avec le module FastCGI et le handler PHP actives
+- **wkhtmltopdf** installe et dans le PATH systeme (pour la generation PDF)
+- Dossier projet : `C:\Users\HP\Documents\CERS\ProjetCers\`
+
+---
+
+## Lancement Manuel (Developpement / Test Local)
+
+### 1. Demarrer l'API Flask (port 5000)
+
+```batch
+cd C:\Users\HP\Documents\CERS\ProjetCers
+C:\Users\HP\AppData\Local\Programs\Python\Python311\python.exe api.py
 ```
-→ L'API écoute sur **http://localhost:5000**
 
-### Terminal 2 — Lancer le front PHP
-```bash
-cd php
-php -S localhost:8080
+Verification : http://localhost:5000/ping doit retourner `{"status":"ok"}`
+
+### 2. Demarrer le Frontend PHP (port 8080, developpement uniquement)
+
+```batch
+cd C:\Users\HP\Documents\CERS\ProjetCers\php
+C:\php\php.exe -S localhost:8080
 ```
-→ Ouvrir **http://localhost:8080** dans le navigateur
 
-### (Optionnel) Terminal 3 — Lancer Streamlit séparément
-```bash
+Acces : http://localhost:8080
+
+### 3. Application Streamlit (optionnel)
+
+```batch
+cd C:\Users\HP\Documents\CERS\ProjetCers
 streamlit run app.py
 ```
-→ Ouvre sur **http://localhost:8501**  
-L'application Streamlit est indépendante du front PHP et de l'API Flask.
 
 ---
 
-## TEST DE L'API
+## Deploiement sur IIS (Production Intranet)
 
-### Ping (vérification santé)
-```bash
+### Etape 1 — Mettre a jour le code source
+
+```batch
+cd C:\Users\HP\Documents\CERS\ProjetCers
+git pull origin main
+```
+
+### Etape 2 — Installer les dependances Python
+
+```batch
+C:\Users\HP\AppData\Local\Programs\Python\Python311\python.exe -m pip install -r requirements.txt --quiet
+```
+
+### Etape 3 — Configurer IIS
+
+- **Repertoire physique** : `C:\Users\HP\Documents\CERS\ProjetCers\php`
+- **Pool d'applications** : PHP 8.2 via FastCGI
+- **Liaison** : IP `10.12.16.17`, Port `80`, Chemin `/rapportcers`
+- Verifier que `web.config` est present dans le dossier `php\`
+
+### Etape 4 — Lancer l'API Flask en service Windows (NSSM recommande)
+
+```batch
+nssm install CersFlaskAPI "C:\Users\HP\AppData\Local\Programs\Python\Python311\python.exe"
+nssm set CersFlaskAPI AppParameters "C:\Users\HP\Documents\CERS\ProjetCers\api.py"
+nssm set CersFlaskAPI AppDirectory "C:\Users\HP\Documents\CERS\ProjetCers"
+nssm start CersFlaskAPI
+```
+
+> Sans NSSM : creer une tache planifiee Windows qui lance `python api.py` au demarrage du systeme.
+
+### Etape 5 — Redemarrer IIS
+
+```batch
+iisreset /restart
+```
+
+### Etape 6 — Test de connectivite
+
+```batch
+ping 10.12.16.17
 curl http://localhost:5000/ping
-```
-Réponse attendue :
-```json
-{"message":"CERS API opérationnelle","status":"ok"}
-```
-
-### Recherche de clubs
-```bash
-curl "http://localhost:5000/clubs/search?q=Toulouse"
-```
-
-### Liste des blessures
-```bash
-curl http://localhost:5000/blessures
-```
-
-### Test génération rapport (sans fichiers)
-```bash
-curl -X POST http://localhost:5000/generate \
-  -F "sport=Rugby" \
-  -F "nom_club=Test"
-```
-Réponse attendue :
-```json
-{"html_b64":"...","pdf_b64":"...","success":true}
+curl http://10.12.16.17/rapportcers/php
 ```
 
 ---
 
-## DÉPLOIEMENT IIS (Windows Server)
+## Fichier web.config (IIS — PHP FastCGI)
 
-### 1. Installer les dépendances Python
-```powershell
-pip install -r requirements.txt
-```
+Placer ce fichier dans `C:\Users\HP\Documents\CERS\ProjetCers\php\web.config` :
 
-### 2. Lancer l'API Flask en arrière-plan (service Windows)
-Option A — tâche planifiée Windows :
-```powershell
-schtasks /create /tn "CERS-API" /tr "python C:\inetpub\wwwroot\ProjetCers\api.py" /sc onstart /ru SYSTEM
-schtasks /run /tn "CERS-API"
-```
-
-Option B — NSSM (service Windows recommandé) :
-```powershell
-nssm install CERS-API "python" "C:\inetpub\wwwroot\ProjetCers\api.py"
-nssm start CERS-API
-```
-
-### 3. Configurer IIS pour le front PHP
-1. Installer PHP via Web Platform Installer ou manuellement
-2. Configurer PHP FastCGI dans IIS
-3. Créer un site IIS pointant sur `C:\inetpub\wwwroot\ProjetCers\php\`
-4. S'assurer que `index.php` est dans les documents par défaut
-5. Vérifier que `php.ini` a `extension=fileinfo` activée
-
-### 4. Vérifications IIS
-```powershell
-# Vérifier que PHP répond
-curl http://localhost/index.php
-
-# Vérifier que l'API répond (depuis le serveur)
-curl http://localhost:5000/ping
-```
-
-### 5. Ajuster l'URL de l'API dans php/index.php
-Si l'API tourne sur un autre hôte ou port :
-```php
-// Ligne 3 de php/index.php
-$API_URL = "http://localhost:5000";  // ← modifier si besoin
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <system.webServer>
+    <handlers>
+      <add name="PHP_via_FastCGI"
+           path="*.php"
+           verb="*"
+           modules="FastCgiModule"
+           scriptProcessor="C:\php\php-cgi.exe"
+           resourceType="Either" />
+    </handlers>
+    <defaultDocument>
+      <files>
+        <add value="index.php" />
+      </files>
+    </defaultDocument>
+  </system.webServer>
+</configuration>
 ```
 
 ---
 
-## RÉSOLUTION DES PROBLÈMES COURANTS
+## Deploiement, Tests et Commit Automatises
 
-### ❌ "API non joignable" (barre rouge en haut de l'interface)
-**Cause :** L'API Flask n'est pas démarrée.  
-**Solution :**
-```bash
-python api.py
-```
-Vérifier qu'aucun autre processus n'occupe le port 5000 :
-```bash
-# Windows
-netstat -ano | findstr :5000
+Executer le script `deploy_iis.bat` a la racine du projet :
+
+```batch
+deploy_iis.bat
 ```
 
-### ❌ Erreur SQLite "unable to open database file"
-**Cause :** IIS n'a pas les droits d'écriture dans le dossier du projet.  
-**Solution automatique :** `_get_db_path()` dans `database.py` essaie automatiquement :
-1. Dossier du projet
-2. `C:/ProgramData/CERS/`
-3. Dossier home de l'utilisateur
-4. Dossier temp système
-
-Si aucun chemin ne fonctionne, vérifier les permissions NTFS :
-```powershell
-icacls "C:\inetpub\wwwroot\ProjetCers" /grant "IIS_IUSRS:(OI)(CI)F"
-```
-
-### ❌ "wkhtmltopdf non trouvé" (PDF non généré, HTML généré à la place)
-**Cause :** wkhtmltopdf n'est pas installé sur Windows.  
-**Solution :**
-1. Télécharger depuis : https://wkhtmltopdf.org/downloads.html  
-   → Choisir **"Windows (MSVC 2015) 64-bit"**
-2. Installer dans `C:\Program Files\wkhtmltopdf\`
-3. Vérifier : `wkhtmltopdf --version`
-
-### ❌ CORS bloqué (front PHP ne peut pas contacter l'API)
-**Cause :** Flask-CORS non installé ou CORS désactivé.  
-**Solution :**
-```bash
-pip install flask-cors
-```
-L'API configure `CORS(app)` (toutes origines) dans `api.py`.
-
-### ❌ Timeout sur la génération (rapports longs)
-**Cause :** La génération du PDF avec graphiques peut durer 30–60 secondes.  
-**Solution :** Augmenter les timeouts dans IIS et PHP :
-```ini
-; php.ini
-max_execution_time = 120
-max_input_time = 120
-upload_max_filesize = 20M
-post_max_size = 25M
-```
+Ce script effectue automatiquement :
+1. `git add .` + `git commit` avec message horodate
+2. Redemarrage IIS (`iisreset /restart`)
+3. Test de connectivite ping sur `10.12.16.17`
+4. Verification que l'API Flask repond sur `localhost:5000/ping`
 
 ---
 
-## RÉSUMÉ DES PORTS
+## Depannage Rapide
 
-| Service           | Port local | Port IIS |
-|-------------------|-----------|----------|
-| API Flask         | 5000      | 5000     |
-| Front PHP         | 8080      | 80       |
-| Streamlit (optionnel) | 8501 | —    |
+| Symptome | Cause probable | Solution |
+|---|---|---|
+| Page blanche sur IIS | PHP non configure en FastCGI | Verifier le handler PHP dans IIS Manager |
+| Erreur 500 sur `/generate` | API Flask non demarree | Lancer `python api.py` ou verifier le service NSSM |
+| PDF non genere | wkhtmltopdf absent ou mauvais PATH | Verifier `wkhtmltopdf --version` dans cmd |
+| 403 Forbidden sur IIS | Permissions NTFS insuffisantes | `icacls php\ /grant "IIS_IUSRS:(OI)(CI)RX"` |
+| IP inaccessible depuis le reseau | IP changee sans mise a jour | Voir section "Changement d'Adresse IP" ci-dessus |
+| Rapport GPS vide | Format PDF Catapult non reconnu | Verifier le dump console Flask apres upload |
+
+---
+
+## Contacts
+
+- **Developpement / Application** : Lina Ouazzani
+- **Infrastructure reseau / IIS** : Sylvain (service informatique CERS)

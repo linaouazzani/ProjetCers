@@ -515,6 +515,21 @@ with col_left:
         col = "#1a7a30" if p >= 0 else "#c0392b"
         return f'<span style="color:{col};font-weight:700;font-size:13px;">{arrow} {abs(p):.1f} %</span>'
 
+    def _asym(a, b):
+        av, bv = _safe_float(a), _safe_float(b)
+        if av is None or bv is None:
+            return None
+        mx = max(abs(av), abs(bv))
+        if mx == 0:
+            return 0.0
+        return round(abs(av - bv) / mx * 100, 1)
+
+    def _asym_html(a):
+        if a is None:
+            return '<span style="color:#aaa;">—</span>'
+        col = "#1a7a30" if a <= 10 else ("#e07b00" if a <= 15 else "#c0392b")
+        return f'<span style="color:{col};font-weight:700;font-size:13px;">{a:.1f}%</span>'
+
     # Init session state listes
     for _k, _d in [("cmj", _CMJ_IND), ("dj", _DJ_IND)]:
         if f"vald_{_k}_inds" not in st.session_state:
@@ -559,17 +574,18 @@ with col_left:
                 st.session_state.pop(f"v_{tk}_new", None)
                 st.rerun()
 
-    # ── Rendu LR — 4 colonnes : Ent.G / Ent.D / Sort.G / Sort.D ─────
+    # ── Rendu LR — 4 colonnes + Prog + Asym + bouton del/add ─────────
     def _render_lr(tk):
         inds = st.session_state[f"vald_{tk}_inds"]
-        hc = st.columns([2.6, 0.95, 0.95, 0.95, 0.95, 1.3, 1.3, 0.4])
+        hc = st.columns([2.1, 0.8, 0.8, 0.8, 0.8, 1.1, 1.1, 0.85, 0.85, 0.4])
         hc[0].markdown("**Indicateur**")
         hc[1].markdown("**Ent. G**"); hc[2].markdown("**Ent. D**")
         hc[3].markdown("**Sort. G**"); hc[4].markdown("**Sort. D**")
         hc[5].markdown("**Prog. G**"); hc[6].markdown("**Prog. D**")
+        hc[7].markdown("**Asym.E**"); hc[8].markdown("**Asym.S**")
         st.markdown('<hr style="margin:2px 0 4px 0;border-color:#d0dae8;">', unsafe_allow_html=True)
         for i, ind in enumerate(inds):
-            rc = st.columns([2.6, 0.95, 0.95, 0.95, 0.95, 1.3, 1.3, 0.4])
+            rc = st.columns([2.1, 0.8, 0.8, 0.8, 0.8, 1.1, 1.1, 0.85, 0.85, 0.4])
             rc[0].write(ind)
             eg = rc[1].text_input(f"eg {tk} {i}", key=f"v_{tk}_eg_{i}", label_visibility="collapsed", placeholder="G")
             ed = rc[2].text_input(f"ed {tk} {i}", key=f"v_{tk}_ed_{i}", label_visibility="collapsed", placeholder="D")
@@ -577,8 +593,18 @@ with col_left:
             sd = rc[4].text_input(f"sd {tk} {i}", key=f"v_{tk}_sd_{i}", label_visibility="collapsed", placeholder="D")
             rc[5].markdown(_prog_html(_prog(eg, sg)), unsafe_allow_html=True)
             rc[6].markdown(_prog_html(_prog(ed, sd)), unsafe_allow_html=True)
-            if rc[7].button("🗑", key=f"v_{tk}_del_{i}", help="Supprimer"):
+            rc[7].markdown(_asym_html(_asym(eg, ed)), unsafe_allow_html=True)
+            rc[8].markdown(_asym_html(_asym(sg, sd)), unsafe_allow_html=True)
+            if rc[9].button("🗑", key=f"v_{tk}_del_{i}", help="Supprimer"):
                 _del_lr_row(tk, i)
+        st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
+        ac = st.columns([3.5, 1.8])
+        new_ind = ac[0].text_input(f"new_lr {tk}", key=f"v_{tk}_new", label_visibility="collapsed", placeholder="Ajouter un indicateur...")
+        if ac[1].button("+ Ajouter", key=f"v_{tk}_add"):
+            if new_ind.strip():
+                st.session_state[f"vald_{tk}_inds"].append(new_ind.strip())
+                st.session_state.pop(f"v_{tk}_new", None)
+                st.rerun()
 
     def _del_lr_row(tk, idx):
         inds = st.session_state[f"vald_{tk}_inds"]
@@ -614,6 +640,8 @@ with col_left:
                     "entree_g": eg, "entree_d": ed,
                     "sortie_g": sg, "sortie_d": sd,
                     "prog_g": _prog(eg, sg), "prog_d": _prog(ed, sd),
+                    "asym_entree": _asym(eg, ed),
+                    "asym_sortie": _asym(sg, sd),
                 })
         return rows
 
@@ -760,6 +788,35 @@ with col_left:
         )
 
         st.markdown("---")
+        st.caption("Identité patient — saisie manuelle (prioritaire sur les valeurs auto-extraites du PDF)")
+        _pi1, _pi2 = st.columns(2)
+        with _pi1:
+            nom_prenom_raw = st.text_input("Nom et Prénom", placeholder="Ex: Martin Jean", key="nom_prenom_raw")
+        with _pi2:
+            date_naissance_raw = st.text_input("Date de naissance (JJ/MM/AAAA)", placeholder="Ex: 15/06/1995", key="date_naissance_raw")
+        _pi3, _pi4, _pi5 = st.columns(3)
+        with _pi3:
+            poids_kg_raw = st.text_input("Poids (kg)", placeholder="Ex: 85.5", key="poids_kg_raw")
+        with _pi4:
+            taille_cm_raw = st.text_input("Taille (cm)", placeholder="Ex: 180", key="taille_cm_raw")
+        with _pi5:
+            medecin_raw = st.text_input("Médecin responsable", placeholder="Ex: Dr Dupont", key="medecin_raw")
+        _pi6, _pi7 = st.columns(2)
+        with _pi6:
+            date_entree_raw = st.text_input("Date entrée CERS (JJ/MM/AAAA)", placeholder="Ex: 10/01/2025", key="date_entree_raw")
+        with _pi7:
+            date_sortie_raw = st.text_input("Date sortie CERS (JJ/MM/AAAA)", placeholder="Ex: 28/02/2025", key="date_sortie_raw")
+        _pi8, _pi9, _pi10 = st.columns(3)
+        with _pi8:
+            cote_lese_raw = st.selectbox("Côté lésé", ["", "Gauche", "Droit"], key="cote_lese_raw")
+        with _pi9:
+            cote_sain_raw = st.selectbox("Côté sain", ["", "Gauche", "Droit"], key="cote_sain_raw")
+        with _pi10:
+            delai_postop_raw = st.text_input("Délai post-opératoire", placeholder="Ex: 8 mois", key="delai_postop_raw")
+        diagnostic_raw = st.text_input("Diagnostic principal", placeholder="Ex: Rupture LCA genou droit", key="diagnostic_raw")
+        intervention_raw = st.text_area("Intervention chirurgicale", placeholder="Ex: Ligamentoplastie LCA par greffe...", height=65, key="intervention_raw")
+
+        st.markdown("---")
         st.caption("📋 Programme de rééducation (optionnel — apparaît dans la dernière page du rapport)")
         ck, cp = st.columns(2)
         with ck:
@@ -780,9 +837,21 @@ with col_left:
             height=65, key="conclusion_sortie"
         )
 
-    # Variables avec valeurs par défaut
-    date_naissance = None
-    cote_opere = ""
+    # Identité patient : priorité saisie manuelle > auto-parsé CR
+    _cr = cr_data or {}
+    cote_opere      = cote_lese_raw or _cr.get('cote', '')
+    _poids_override, _taille_cm_val = None, None
+    try:
+        _poids_override = float(poids_kg_raw.replace(",", ".")) if poids_kg_raw.strip() else None
+    except (ValueError, AttributeError):
+        pass
+    try:
+        _taille_cm_val = float(taille_cm_raw.replace(",", ".")) if taille_cm_raw.strip() else None
+    except (ValueError, AttributeError):
+        pass
+    _medecin_final      = medecin_raw.strip() or _cr.get('medecin_responsable', '') or _cr.get('medecin', '')
+    _diagnostic_final   = diagnostic_raw.strip() or _cr.get('diagnostic', '') or type_blessure
+    _intervention_final = intervention_raw.strip() or _cr.get('intervention', '')
 
     # 3. Club du joueur — A1
     clubs_db_locale = charger_clubs_db()
@@ -1106,7 +1175,6 @@ with col_right:
                 logo_club_path          = path_logo_club,
                 photo_patient_path      = path_photo,
                 sport                   = sport if sport != "— Sélectionner —" else "",
-                date_naissance          = str(date_naissance) if date_naissance else "",
                 date_operation          = date_operation.strftime("%d/%m/%Y") if date_operation else "",
                 type_blessure           = type_blessure,
                 cote_opere              = cote_opere,
@@ -1118,6 +1186,17 @@ with col_right:
                 conclusion_sortie       = conclusion_sortie,
                 gps_data               = gps_data,
                 vald_manual            = vald_manual if _has_vald_manual else None,
+                nom_prenom             = nom_prenom_raw.strip(),
+                date_naissance         = date_naissance_raw.strip(),
+                poids_override         = _poids_override,
+                taille_cm              = _taille_cm_val,
+                date_entree_cers       = date_entree_raw.strip(),
+                date_sortie_cers       = date_sortie_raw.strip(),
+                medecin_responsable    = _medecin_final,
+                cote_sain              = cote_sain_raw,
+                delai_postop_override  = delai_postop_raw.strip(),
+                diagnostic_override    = _diagnostic_final,
+                intervention_override  = _intervention_final,
             )
 
             progress.progress(90, text="📄 Traitement du résultat...")

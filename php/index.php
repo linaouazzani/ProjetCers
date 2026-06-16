@@ -497,6 +497,89 @@ footer {
         <span class="acc-arrow" id="arr-acc-patient">▶</span>
       </div>
       <div class="acc-body" id="acc-patient">
+
+        <!-- ── Identité & séjour — priorité sur les données PDF ── -->
+        <div style="background:#f0f5ff;border:1px solid #c8d8f0;border-radius:9px;padding:14px 16px;margin-bottom:14px">
+          <p style="font-size:11px;font-weight:700;color:#1c3f6e;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">
+            👤 Identité &amp; séjour CERS <span style="font-weight:400;color:#666;font-size:10px;text-transform:none">(priorité sur les données extraites du PDF)</span>
+          </p>
+
+          <div class="grid-2 mb-8">
+            <div>
+              <label class="field-label">Nom &amp; Prénom de l'athlète</label>
+              <input type="text" id="nom-prenom" placeholder="Ex: DUPONT Jean">
+            </div>
+            <div>
+              <label class="field-label">Date de naissance</label>
+              <input type="date" id="date-naissance">
+            </div>
+          </div>
+
+          <div class="grid-3 mb-8">
+            <div>
+              <label class="field-label">Poids (kg)</label>
+              <input type="number" id="poids-kg" min="30" max="200" step="0.1" placeholder="85">
+            </div>
+            <div>
+              <label class="field-label">Taille (cm)</label>
+              <input type="number" id="taille-cm" min="100" max="220" step="1" placeholder="178">
+            </div>
+            <div>
+              <label class="field-label">Médecin responsable</label>
+              <input type="text" id="medecin-responsable" placeholder="Dr. Nom Prénom">
+            </div>
+          </div>
+
+          <div class="grid-2 mb-8">
+            <div>
+              <label class="field-label">Date d'entrée au CERS</label>
+              <input type="date" id="date-entree-cers">
+            </div>
+            <div>
+              <label class="field-label">Date de sortie du CERS</label>
+              <input type="date" id="date-sortie-cers">
+            </div>
+          </div>
+
+          <div class="grid-3 mb-8">
+            <div>
+              <label class="field-label">Côté lésé</label>
+              <select id="cote-lese">
+                <option value="">— Sélectionner —</option>
+                <option>Gauche</option>
+                <option>Droit</option>
+                <option>Bilatéral</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Côté sain</label>
+              <select id="cote-sain">
+                <option value="">— Sélectionner —</option>
+                <option>Gauche</option>
+                <option>Droit</option>
+                <option>Aucun</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Délai post-opératoire</label>
+              <input type="text" id="delai-postop-override" placeholder="Ex: 6 semaines, 3 mois...">
+            </div>
+          </div>
+
+          <div class="mb-8">
+            <label class="field-label">Diagnostic principal</label>
+            <input type="text" id="diagnostic-principal" placeholder="Ex: Rupture LCA droit opérée">
+          </div>
+
+          <div>
+            <label class="field-label">Intervention chirurgicale</label>
+            <textarea id="intervention-chirurgicale" rows="2" placeholder="Ex: Ligamentoplastie LCA par greffe os-tendon-os..."></textarea>
+          </div>
+        </div>
+
+        <hr style="margin:10px 0; border-color:#e2e8f0;">
+        <p style="font-size:11px;color:#888;margin-bottom:10px">⚙️ Paramètres complémentaires</p>
+
         <div class="grid-3 mb-8">
           <div>
             <label class="field-label">Sport</label>
@@ -1235,6 +1318,21 @@ async function generateReport() {
 
   // Paramètres texte
   const fv = (id, fallback="") => (document.getElementById(id)||{}).value || fallback;
+  // Identité patient (overrides manuels — priorité sur le PDF)
+  fd.append("nom_prenom",                fv("nom-prenom"));
+  fd.append("date_naissance",            fv("date-naissance"));
+  fd.append("poids_kg",                  fv("poids-kg"));
+  fd.append("taille_cm",                 fv("taille-cm"));
+  fd.append("date_entree_cers",          fv("date-entree-cers"));
+  fd.append("date_sortie_cers",          fv("date-sortie-cers"));
+  fd.append("medecin_responsable",       fv("medecin-responsable"));
+  fd.append("cote_lese",                 fv("cote-lese"));
+  fd.append("cote_sain",                 fv("cote-sain"));
+  fd.append("delai_postop_override",     fv("delai-postop-override"));
+  fd.append("diagnostic_principal",      fv("diagnostic-principal"));
+  fd.append("intervention_chirurgicale", fv("intervention-chirurgicale"));
+
+  // Paramètres complémentaires existants
   fd.append("sport",            fv("sport"));
   fd.append("date_operation",   fv("date-operation"));
   fd.append("type_blessure",    fv("type-blessure"));

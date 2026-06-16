@@ -364,9 +364,22 @@ def construire_contexte(
     gps_data: dict = None,
     vald_manual: dict = None,
     has_biodex: bool = True,
+    nom_prenom: str = "",
+    poids_override: Optional[float] = None,
+    taille_cm: Optional[float] = None,
+    date_entree_cers: str = "",
+    date_sortie_cers: str = "",
+    medecin_responsable: str = "",
+    cote_sain: str = "",
+    delai_postop_override: str = "",
 ) -> dict:
 
-    poids        = entree.poids_kg or sortie.poids_kg or 101.0
+    poids          = entree.poids_kg or sortie.poids_kg or 101.0
+    _poids_display = poids_override if poids_override is not None else poids
+    _nom_patient   = (nom_prenom
+                      or getattr(sortie, 'nom', None)
+                      or getattr(entree, 'nom', None)
+                      or "—")
 
     def _calc_def(sain, lese):
         """Calcule le déficit (lese-sain)/sain*100 si les deux valeurs sont disponibles."""
@@ -642,7 +655,7 @@ def construire_contexte(
     logo_club = logo_club_b64_direct or (encoder_image(logo_club_path) if logo_club_path else None)
     photo     = encoder_image(photo_patient_path) if photo_patient_path else None
 
-    # Calcul délai post-opératoire
+    # Calcul délai post-opératoire (auto si date_operation fournie)
     delai_post_op = ""
     if date_operation:
         try:
@@ -654,6 +667,9 @@ def construire_contexte(
                 delai_post_op = f"{delta} jours"
         except Exception:
             pass
+    # Override manuel si renseigné
+    if delai_postop_override:
+        delai_post_op = delai_postop_override
 
     print("DEBUG ctx excentrique:", exc_ctx)
 
@@ -1128,7 +1144,16 @@ def construire_contexte(
         "photo_b64":        photo,
         "nom_club":         nom_club,
         "sport":            sport,
-        "date_naissance":   date_naissance,
+        # ── Identité patient (manual overrides > auto-parsed) ──────────
+        "nom_patient":           _nom_patient,
+        "poids_kg":              _poids_display,
+        "taille_cm":             taille_cm,
+        "date_naissance":        date_naissance,
+        "date_entree_cers":      date_entree_cers,
+        "date_sortie_cers":      date_sortie_cers,
+        "medecin_responsable":   medecin_responsable,
+        "cote_sain":             cote_sain,
+        # ── Champs existants ───────────────────────────────────────────
         "date_operation":   date_operation,
         "type_blessure":    type_blessure,
         "cote_opere":       cote_opere,
@@ -1311,6 +1336,14 @@ def generer_rapport_biodex(
     conclusion_sortie:       str = "",
     gps_data:                dict = None,
     vald_manual:             dict = None,
+    nom_prenom:              str = "",
+    poids_override:          Optional[float] = None,
+    taille_cm:               Optional[float] = None,
+    date_entree_cers:        str = "",
+    date_sortie_cers:        str = "",
+    medecin_responsable:     str = "",
+    cote_sain:               str = "",
+    delai_postop_override:   str = "",
 ) -> dict:
 
     print("\n" + "=" * 60)
@@ -1406,6 +1439,14 @@ def generer_rapport_biodex(
         conclusion_sortie=conclusion_sortie,
         gps_data=gps_data,
         vald_manual=vald_manual,
+        nom_prenom=nom_prenom,
+        poids_override=poids_override,
+        taille_cm=taille_cm,
+        date_entree_cers=date_entree_cers,
+        date_sortie_cers=date_sortie_cers,
+        medecin_responsable=medecin_responsable,
+        cote_sain=cote_sain,
+        delai_postop_override=delai_postop_override,
     )
     print("  ✅ Contexte prêt")
 

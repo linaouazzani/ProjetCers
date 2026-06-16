@@ -16,6 +16,7 @@ Routes :
     POST /generate
 """
 
+import io
 import os
 import sys
 import json
@@ -198,7 +199,13 @@ def generate():
         path_comp_sain  = get_pdf("pdf_comparatif_sain")
         path_exc        = get_pdf("pdf_excentrique")
         path_cr         = get_pdf("pdf_cr")
-        path_gps        = get_pdf("pdf_gps")
+        # GPS: lecture en mémoire (BytesIO) pour éviter les blocages de
+        # fichiers Windows (lock exclusif pdfplumber/Defender sur le disque).
+        _gps_bytes      = None
+        _gps_f          = request.files.get("pdf_gps")
+        if _gps_f and _gps_f.filename:
+            _gps_bytes = _gps_f.read()
+            print(f"[API] GPS reçu : {_gps_f.filename!r} ({len(_gps_bytes)} octets)")
         path_photo      = get_pdf("photo")
         path_logo       = get_pdf("logo_club")
 
@@ -238,6 +245,39 @@ def generate():
         titre_rapport   = fstr("titre_rapport")
         acl_rsi         = fint("acl_rsi_score")
 
+        # ── Champs identité patient (overrides manuels) ────────────────
+        _nom_prenom_m        = fstr("nom_prenom")
+        _date_naissance_raw  = fstr("date_naissance")
+        _poids_raw           = form.get("poids_kg", "").strip()
+        _taille_raw          = form.get("taille_cm", "").strip()
+        _date_entree_raw     = fstr("date_entree_cers")
+        _date_sortie_raw     = fstr("date_sortie_cers")
+        _medecin_m           = fstr("medecin_responsable")
+        _cote_lese_m         = fstr("cote_lese")
+        _cote_sain_m         = fstr("cote_sain")
+        _delai_postop_m      = fstr("delai_postop_override")
+        _diagnostic_m        = fstr("diagnostic_principal")
+        _intervention_m      = fstr("intervention_chirurgicale")
+
+        def _fmt_date_fr(d):
+            """Convertit YYYY-MM-DD -> DD/MM/YYYY pour affichage."""
+            if not d or len(d) != 10:
+                return d
+            try:
+                y, m, day = d.split("-")
+                return f"{day}/{m}/{y}"
+            except Exception:
+                return d
+
+        def _fnum(v):
+            try:
+                return float(v) if v else None
+            except (ValueError, TypeError):
+                return None
+
+        poids_override  = _fnum(_poids_raw)
+        taille_cm_f     = _fnum(_taille_raw)
+
         # ── Parsers optionnels ─────────────────────────────────────────
         cr_data = None
         if path_cr:
@@ -247,13 +287,32 @@ def generate():
             except Exception as e:
                 print(f"[API] Erreur CR : {e}")
 
+        # Priorité : saisie manuelle (si remplie) > auto-parsé depuis PDF
+        _cr = cr_data or {}
+        def _pick(manual, auto=""):
+            return manual if manual else (auto or "")
+
+        nom_prenom_final     = _pick(_nom_prenom_m,       _cr.get('nom', '') or _cr.get('nom_patient', ''))
+        date_naissance_final = _pick(_fmt_date_fr(_date_naissance_raw), _cr.get('date_naissance', ''))
+        medecin_final        = _pick(_medecin_m,          _cr.get('medecin', '') or _cr.get('medecin_responsable', ''))
+        cote_lese_final      = _pick(_cote_lese_m,        cote_opere or _cr.get('cote', ''))
+        diagnostic_final     = _pick(_diagnostic_m,       _cr.get('diagnostic', '') or type_blessure)
+        intervention_final   = _pick(_intervention_m,     _cr.get('intervention', ''))
+        date_entree_final    = _fmt_date_fr(_date_entree_raw)
+        date_sortie_final    = _fmt_date_fr(_date_sortie_raw)
+
         gps_data = None
-        if path_gps:
+        if _gps_bytes:
             try:
                 from gps_parser import parse_gps_pdf
-                gps_data = parse_gps_pdf(path_gps)
+                import traceback as _tb
+                gps_data = parse_gps_pdf(io.BytesIO(_gps_bytes))
+                print(f"[API] GPS parsé : {gps_data['meta']['n_sessions']} sessions, "
+                      f"{gps_data['meta']['n_semaines']} semaines, "
+                      f"période {gps_data['meta']['periode']}")
             except Exception as e:
                 print(f"[API] Erreur GPS : {e}")
+                _tb.print_exc()
 
         # ── VALD manuel ────────────────────────────────────────────────
         vald_manual = None
@@ -273,31 +332,43 @@ def generate():
 
         # ── Appel pipeline ─────────────────────────────────────────────
         result = generer_rapport_biodex(
-            pdf_entree          = path_e,
-            pdf_sortie          = path_s,
-            pdf_comparatif      = path_comp,
-            pdf_comparatif_sain = path_comp_sain,
-            pdf_excentrique     = path_exc,
-            cr_data             = cr_data,
-            output_html         = out_html,
-            output_pdf          = out_pdf,
-            template_dir        = os.path.join(_APP_DIR, "templates"),
-            nom_club            = nom_club,
-            logo_club_path      = path_logo,
-            logo_club_b64_direct= _logo_b64_direct,
-            photo_patient_path  = path_photo,
-            sport               = sport,
-            date_operation      = date_operation,
-            type_blessure       = type_blessure,
-            cote_opere          = cote_opere,
-            acl_rsi_score       = acl_rsi,
-            remarques_medecin   = remarques,
-            programme_kine      = programme_kine,
-            programme_prepa     = programme_prepa,
-            conclusion_sortie   = conclusion,
-            titre_rapport       = titre_rapport,
-            gps_data            = gps_data,
-            vald_manual         = vald_manual,
+            pdf_entree              = path_e,
+            pdf_sortie              = path_s,
+            pdf_comparatif          = path_comp,
+            pdf_comparatif_sain     = path_comp_sain,
+            pdf_excentrique         = path_exc,
+            cr_data                 = cr_data,
+            output_html             = out_html,
+            output_pdf              = out_pdf,
+            template_dir            = os.path.join(_APP_DIR, "templates"),
+            nom_club                = nom_club,
+            logo_club_path          = path_logo,
+            logo_club_b64_direct    = _logo_b64_direct,
+            photo_patient_path      = path_photo,
+            sport                   = sport,
+            date_operation          = date_operation,
+            type_blessure           = type_blessure,
+            cote_opere              = cote_lese_final,
+            acl_rsi_score           = acl_rsi,
+            remarques_medecin       = remarques,
+            programme_kine          = programme_kine,
+            programme_prepa         = programme_prepa,
+            conclusion_sortie       = conclusion,
+            titre_rapport           = titre_rapport,
+            diagnostic_override     = diagnostic_final,
+            intervention_override   = intervention_final,
+            gps_data                = gps_data,
+            vald_manual             = vald_manual,
+            # ── Nouveaux champs identité patient ──────────────────────
+            nom_prenom              = nom_prenom_final,
+            date_naissance          = date_naissance_final,
+            poids_override          = poids_override,
+            taille_cm               = taille_cm_f,
+            date_entree_cers        = date_entree_final,
+            date_sortie_cers        = date_sortie_final,
+            medecin_responsable     = medecin_final,
+            cote_sain               = _cote_sain_m,
+            delai_postop_override   = _delai_postop_m,
         )
 
         # ── Encodage base64 ────────────────────────────────────────────

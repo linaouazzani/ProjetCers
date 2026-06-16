@@ -879,13 +879,13 @@ body {
     <!-- Colonne nom + infos physiques -->
     <div style="display:table-cell; vertical-align:middle; padding:18px 22px;">
       <div style="font-size:22pt; font-weight:bold; color:#1c3f6e; line-height:1.1; margin-bottom:12px; border-bottom:2.5px solid #1c3f6e; padding-bottom:9px;">
-        {% if cr and cr.nom_complet %}{{ cr.nom_complet }}{% else %}{{ patient.nom }}{% endif %}
+        {% if nom_patient and nom_patient != '—' %}{{ nom_patient }}{% elif cr and cr.nom_complet %}{{ cr.nom_complet }}{% else %}{{ patient.nom }}{% endif %}
       </div>
       <div style="display:table; width:100%;">
         <div style="display:table-row;">
           <div style="display:table-cell; width:50%; padding:6px 10px 6px 0; vertical-align:top; border-right:1px solid #e8eef5;">
             <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">Date de naissance</div>
-            <div style="font-size:11pt; color:#1a1a1a; margin-top:2px;">{% if cr and cr.date_naissance %}{{ cr.date_naissance }}{% endif %}{% if patient.age %} &nbsp;&#183;&nbsp; {{ patient.age }} ans{% endif %}</div>
+            <div style="font-size:11pt; color:#1a1a1a; margin-top:2px;">{% if date_naissance %}{{ date_naissance }}{% elif cr and cr.date_naissance %}{{ cr.date_naissance }}{% endif %}{% if patient.age %} &nbsp;&#183;&nbsp; {{ patient.age }} ans{% endif %}</div>
           </div>
           <div style="display:table-cell; width:50%; padding:6px 0 6px 10px; vertical-align:top;">
             <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">Sport &nbsp;&#183;&nbsp; Niveau</div>
@@ -895,7 +895,7 @@ body {
         <div style="display:table-row;">
           <div style="display:table-cell; padding:6px 10px 0 0; vertical-align:top; border-right:1px solid #e8eef5;">
             <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">Poids &nbsp;&#183;&nbsp; Taille</div>
-            <div style="font-size:11pt; color:#1a1a1a; margin-top:2px;">{{ patient.poids_kg }} kg &nbsp;&#183;&nbsp; {{ patient.taille_cm }} cm</div>
+            <div style="font-size:11pt; color:#1a1a1a; margin-top:2px;">{% if poids_kg %}{{ poids_kg | round(1) }}{% elif patient.poids_kg %}{{ patient.poids_kg }}{% else %}&mdash;{% endif %} kg &nbsp;&#183;&nbsp; {% if taille_cm %}{{ taille_cm | int }}{% elif patient.taille_cm %}{{ patient.taille_cm }}{% else %}&mdash;{% endif %} cm</div>
           </div>
           <div style="display:table-cell; padding:6px 0 0 10px; vertical-align:top;">
             <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">Club</div>
@@ -907,21 +907,22 @@ body {
   </div>
 
   <!-- ── BANDE INFO : Séjour · Médecin · Côté · Délai ─────────── -->
-  {% if has_biodex %}
+  {% if has_biodex or date_entree_cers or date_sortie_cers or medecin_responsable or cote_opere or delai_post_op %}
   <div data-subsection="guard-info-bande" style="display:table; width:100%; table-layout:fixed; background:#eef3fa; border-bottom:3px solid #1c3f6e; padding:12px 18px; box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
     <div style="display:table-cell; width:28%; vertical-align:middle; padding-right:12px; border-right:1px solid #c8d8ea;">
       <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px;">S&#233;jour CERS</div>
-      <div style="font-size:11pt; color:#1c3f6e; font-weight:bold; margin-top:3px;">{{ entree.date_test }} &rarr; {{ sortie.date_test }}</div>
+      <div style="font-size:11pt; color:#1c3f6e; font-weight:bold; margin-top:3px;">{% if date_entree_cers %}{{ date_entree_cers }}{% else %}{{ entree.date_test }}{% endif %} &rarr; {% if date_sortie_cers %}{{ date_sortie_cers }}{% else %}{{ sortie.date_test }}{% endif %}</div>
     </div>
     <div style="display:table-cell; width:30%; vertical-align:middle; padding:0 12px; border-right:1px solid #c8d8ea;">
       <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px;">M&#233;decin responsable</div>
-      <div style="font-size:11pt; color:#1c3f6e; font-weight:bold; margin-top:3px;">{% if cr and cr.medecin_responsable %}Dr {{ cr.medecin_responsable }}{% else %}&mdash;{% endif %}</div>
+      <div style="font-size:11pt; color:#1c3f6e; font-weight:bold; margin-top:3px;">{% if medecin_responsable %}{{ medecin_responsable }}{% elif cr and cr.medecin_responsable %}Dr {{ cr.medecin_responsable }}{% else %}&mdash;{% endif %}</div>
     </div>
     <div style="display:table-cell; width:22%; vertical-align:middle; padding:0 12px; border-right:1px solid #c8d8ea;">
       <div style="font-size:7.5pt; color:#1c3f6e; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px;">C&#244;t&#233; l&#233;s&#233; &nbsp;&#183;&nbsp; Sain</div>
       <div style="font-size:11pt; color:#1c3f6e; font-weight:bold; margin-top:3px;">
-        {% set cote = cr.cote_lese if cr and cr.cote_lese else patient.lese %}
-        {{ cote }} &nbsp;&#183;&nbsp; {{ "Droit" if cote == "Gauche" else "Gauche" }}
+        {% set cote = cote_opere if cote_opere else (cr.cote_lese if cr and cr.cote_lese else patient.lese) %}
+        {% set cote_s = cote_sain if cote_sain else ("Droit" if cote == "Gauche" else ("Gauche" if cote == "Droit" else "&mdash;")) %}
+        {{ cote }} &nbsp;&#183;&nbsp; {{ cote_s }}
       </div>
     </div>
     <div style="display:table-cell; width:20%; vertical-align:middle; padding-left:12px;">
@@ -931,7 +932,7 @@ body {
       {% endif %}
     </div>
   </div>
-  {% endif %}{# has_biodex — séjour bande #}
+  {% endif %}{# has_biodex or manual fields — séjour bande #}
 
   <!-- ── DIAGNOSTIC + INTERVENTION ──────────────────────────────── -->
   {% set show_intervention = intervention_override or (cr and cr.intervention) %}

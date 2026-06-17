@@ -33,8 +33,11 @@ def _get_db_path() -> str:
             with open(probe, "w") as fh:
                 fh.write("ok")
             os.unlink(probe)
-            return os.path.join(folder, "cers_data.db")
-        except Exception:
+            chosen = os.path.join(folder, "cers_data.db")
+            print(f"[DB] Base de donnees : {chosen}")
+            return chosen
+        except Exception as exc:
+            print(f"[DB] Dossier inaccessible {folder!r} : {exc}")
             continue
     return os.path.join(tempfile.gettempdir(), "cers_data.db")
 
@@ -45,7 +48,9 @@ DB_PATH = _get_db_path()
 # ── Connexion ──────────────────────────────────────────────────────────────────
 
 def _connexion() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10, check_same_thread=False)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
     conn.row_factory = sqlite3.Row   # accès par nom de colonne
     return conn
 
@@ -103,7 +108,7 @@ def _seeder_clubs_predefinis(conn: sqlite3.Connection):
 
 # ── CRUD clubs ─────────────────────────────────────────────────────────────────
 
-def rechercher_clubs(query: str, limite: int = 8) -> list[dict]:
+def rechercher_clubs(query: str, limite: int = 8) -> list:
     """Recherche insensible à la casse — retourne les clubs correspondants."""
     if not query or len(query) < 2:
         return []
@@ -135,7 +140,7 @@ def enregistrer_club(nom: str, sport: str, division: str = "Autre",
     return dict(row) if row else {}
 
 
-def get_club(nom: str) -> dict | None:
+def get_club(nom: str):
     """Retourne un club : exact match d'abord, puis LIKE partiel en fallback.
     Priorité aux clubs ayant un logo enregistré (logo_b64 IS NOT NULL).
     """
@@ -157,7 +162,7 @@ def get_club(nom: str) -> dict | None:
     return dict(row) if row else None
 
 
-def lister_clubs_custom() -> list[dict]:
+def lister_clubs_custom() -> list:
     """Retourne les clubs ajoutés manuellement (hors clubs prédéfinis)."""
     with _connexion() as conn:
         rows = conn.execute(
@@ -201,9 +206,15 @@ def migrer_depuis_json(json_path: str):
 # ── Point d'entrée ─────────────────────────────────────────────────────────────
 
 # Initialisation automatique à l'import
-init_db()
+try:
+    init_db()
+except Exception as _e:
+    print(f"[DB] AVERTISSEMENT init_db() : {_e}")
 
 # Migration automatique depuis l'ancien JSON si présent
 _OLD_JSON = os.path.join(_APP_DIR, "clubs_db.json")
 if os.path.exists(_OLD_JSON):
-    migrer_depuis_json(_OLD_JSON)
+    try:
+        migrer_depuis_json(_OLD_JSON)
+    except Exception as _e:
+        print(f"[DB] AVERTISSEMENT migration JSON : {_e}")

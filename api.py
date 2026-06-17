@@ -114,47 +114,66 @@ def ping():
 
 @app.route("/clubs/search", methods=["GET"])
 def clubs_search():
-    from database import rechercher_clubs
-    q = request.args.get("q", "").strip()
-    if len(q) < 2:
-        return jsonify([])
-    clubs = rechercher_clubs(q, limite=8)
-    return jsonify(clubs)
+    try:
+        from database import rechercher_clubs
+        q = request.args.get("q", "").strip()
+        if len(q) < 2:
+            return jsonify([])
+        clubs = rechercher_clubs(q, limite=8)
+        return jsonify(clubs)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/clubs/save", methods=["POST"])
 def clubs_save():
-    from database import enregistrer_club
+    try:
+        from database import enregistrer_club
 
-    # Supporte JSON et multipart/form-data
-    if request.is_json:
-        data = request.get_json(silent=True) or {}
-    else:
-        data = request.form.to_dict()
+        # Supporte JSON et multipart/form-data
+        if request.is_json:
+            data = request.get_json(silent=True) or {}
+        else:
+            data = request.form.to_dict()
 
-    nom = data.get("nom", "").strip()
-    if not nom:
-        return jsonify({"error": "Nom du club requis"}), 400
+        nom = data.get("nom", "").strip()
+        if not nom:
+            return jsonify({"error": "Nom du club requis"}), 400
 
-    logo_b64 = data.get("logo_b64") or None
+        logo_b64 = data.get("logo_b64") or None
 
-    # Logo uploadé en multipart
-    if "logo" in request.files and request.files["logo"].filename:
-        lf = request.files["logo"]
-        raw = lf.read()
-        ext = (lf.filename.rsplit(".", 1)[-1].lower() if lf.filename else "png")
-        mime = "image/png" if ext == "png" else "image/jpeg"
-        logo_b64 = f"data:{mime};base64," + base64.b64encode(raw).decode()
+        # Logo uploadé en multipart
+        if "logo" in request.files and request.files["logo"].filename:
+            lf = request.files["logo"]
+            raw = lf.read()
+            ext = (lf.filename.rsplit(".", 1)[-1].lower() if lf.filename else "png")
+            mime = "image/png" if ext == "png" else "image/jpeg"
+            logo_b64 = f"data:{mime};base64," + base64.b64encode(raw).decode()
 
-    club = enregistrer_club(
-        nom=nom,
-        sport=data.get("sport", "Autre"),
-        division=data.get("division", "Autre"),
-        couleur=data.get("couleur", "#1c3f6e"),
-        logo_b64=logo_b64,
-        sport_key=data.get("sport_key", "autre"),
-    )
-    return jsonify(club)
+        club = enregistrer_club(
+            nom=nom,
+            sport=data.get("sport", "Autre"),
+            division=data.get("division", "Autre"),
+            couleur=data.get("couleur", "#1c3f6e"),
+            logo_b64=logo_b64,
+            sport_key=data.get("sport_key", "autre"),
+        )
+        if not club:
+            club = {
+                "nom": nom,
+                "sport": data.get("sport", "Autre"),
+                "division": data.get("division", "Autre"),
+                "couleur": data.get("couleur", "#1c3f6e"),
+                "logo_b64": logo_b64,
+                "sport_key": data.get("sport_key", "autre"),
+            }
+        return jsonify(club)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Erreur enregistrement club : {str(e)}"}), 500
 
 
 # ── Blessures ─────────────────────────────────────────────────────────────────

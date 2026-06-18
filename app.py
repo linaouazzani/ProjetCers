@@ -1014,39 +1014,41 @@ with col_right:
             try:
                 from biodex_parser import parse_biodex_pdf
 
-                pdf_a = pdf_entree or pdf_sortie
-                pdf_b = pdf_sortie or pdf_entree
+                entree_data = None
+                sortie_data = None
 
-                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                    f.write(pdf_a.getvalue()); path_e_prev = f.name
-                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                    f.write(pdf_b.getvalue()); path_s_prev = f.name
+                if pdf_entree:
+                    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                        f.write(pdf_entree.getvalue()); _path_e = f.name
+                    entree_data = parse_biodex_pdf(_path_e)
+                    os.unlink(_path_e)
 
-                entree_data = parse_biodex_pdf(path_e_prev)
-                sortie_data = parse_biodex_pdf(path_s_prev)
-                os.unlink(path_e_prev); os.unlink(path_s_prev)
+                if pdf_sortie:
+                    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                        f.write(pdf_sortie.getvalue()); _path_s = f.name
+                    sortie_data = parse_biodex_pdf(_path_s)
+                    os.unlink(_path_s)
 
-                lbl_e = "Entrée" if pdf_entree else "Sortie (utilisée comme référence)"
-                lbl_s = "Sortie" if pdf_sortie else "Entrée (utilisée comme référence)"
-                st.success(f"✅ {entree_data.nom} — PDFs lus avec succès")
+                _primary = entree_data or sortie_data
+                st.success(f"✅ {_primary.nom} — PDFs lus avec succès")
 
                 c_nom, c_infos = st.columns([1.2, 1])
                 with c_nom:
                     st.markdown(f"""
-**👤 {entree_data.nom}**
-- Âge : {entree_data.age} ans
-- {entree_data.poids_kg} kg  |  {entree_data.taille_cm} cm
-- Lésion : **{entree_data.articulation} {entree_data.lese}**
+**👤 {_primary.nom}**
+- Âge : {_primary.age} ans
+- {_primary.poids_kg} kg  |  {_primary.taille_cm} cm
+- Lésion : **{_primary.articulation} {_primary.lese}**
                     """)
                 with c_infos:
                     st.markdown(f"""
-📅 **Entrée :** {entree_data.date_test}
-📅 **Sortie :** {sortie_data.date_test}
+📅 **Entrée :** {entree_data.date_test if entree_data else '—'}
+📅 **Sortie :** {sortie_data.date_test if sortie_data else '—'}
 🏋️ **Sport :** {sport if sport != "— Sélectionner —" else "—"}
 🏆 **Club :** {st.session_state.club_selectionne['nom'] if st.session_state.club_selectionne else '—'}
                     """)
 
-                if entree_data.serie_60 and sortie_data.serie_60:
+                if entree_data and sortie_data and entree_data.serie_60 and sortie_data.serie_60:
                     e60 = entree_data.serie_60; s60 = sortie_data.serie_60
 
                     def prog_str(e, s):

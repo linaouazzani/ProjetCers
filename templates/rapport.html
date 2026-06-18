@@ -2183,7 +2183,7 @@ body {
     {% endif %}
     {% endmacro %}
 
-    {# Macro tableau LR : Indicateur / Ent.G / Ent.D / Sort.G / Sort.D / Prog.G / Prog.D #}
+    {# Macro tableau LR : Indicateur / Ent.G / Ent.D / Sort.G / Sort.D / Prog.G / Prog.D / Asym.E / Asym.S #}
     {% macro vald_table_lr(rows, titre, header_cls) %}
     {% if rows %}
     <div style="margin-bottom:10px;">
@@ -2191,21 +2191,27 @@ body {
       <table style="width:100%;border-collapse:collapse;font-size:8.5pt;table-layout:fixed;">
         <thead>
           <tr style="-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:left;width:30%;">Indicateur</th>
-            <th style="background:#1c3f6e;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:11%;">Ent. G</th>
-            <th style="background:#1c3f6e;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:11%;">Ent. D</th>
-            <th style="background:#2176c7;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:11%;">Sort. G</th>
-            <th style="background:#2176c7;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:11%;">Sort. D</th>
-            <th style="background:#2a6099;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:13%;">Prog. G</th>
-            <th style="background:#2a6099;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:13%;">Prog. D</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 8px;border:1px solid #99aac4;text-align:left;width:26%;">Indicateur</th>
+            <th style="background:#1c3f6e;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:9%;">Ent. G</th>
+            <th style="background:#1c3f6e;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:9%;">Ent. D</th>
+            <th style="background:#2176c7;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:9%;">Sort. G</th>
+            <th style="background:#2176c7;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:9%;">Sort. D</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:10%;">Prog. G</th>
+            <th style="background:#2a6099;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:10%;">Prog. D</th>
+            <th style="background:#374151;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:9%;">Asym.E</th>
+            <th style="background:#374151;color:#fff;padding:5px 4px;border:1px solid #99aac4;text-align:center;width:9%;">Asym.S</th>
           </tr>
         </thead>
         <tbody>
           {% for row in rows %}
           {% set pg = row.prog_g %}
           {% set pd = row.prog_d %}
+          {% set ae = row.asym_entree %}
+          {% set as_ = row.asym_sortie %}
           {% set pg_cls = 'vm-pos' if pg is not none and pg > 0 else ('vm-neg' if pg is not none and pg < 0 else ('vm-neu' if pg is not none else 'vm-null')) %}
           {% set pd_cls = 'vm-pos' if pd is not none and pd > 0 else ('vm-neg' if pd is not none and pd < 0 else ('vm-neu' if pd is not none else 'vm-null')) %}
+          {% set ae_col = '#27ae60' if ae is not none and ae <= 10 else ('#e07b00' if ae is not none and ae <= 15 else ('#c0392b' if ae is not none else '#888888')) %}
+          {% set as_col = '#27ae60' if as_ is not none and as_ <= 10 else ('#e07b00' if as_ is not none and as_ <= 15 else ('#c0392b' if as_ is not none else '#888888')) %}
           <tr class="{% if loop.index is odd %}gps-alt{% endif %}">
             <td style="border:1px solid #cccccc;padding:5px 8px;font-weight:600;color:#1c3f6e;">{{ row.indicateur }}</td>
             <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;">{{ row.entree_g if row.entree_g is not none else '—' }}</td>
@@ -2214,6 +2220,8 @@ body {
             <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;">{{ row.sortie_d if row.sortie_d is not none else '—' }}</td>
             <td class="vm-td {{ pg_cls }}">{% if pg is not none %}{% if pg > 0 %}&#8593;{% elif pg < 0 %}&#8595;{% else %}&#8594;{% endif %} {{ "%.1f"|format(pg|abs) }}&nbsp;%{% else %}—{% endif %}</td>
             <td class="vm-td {{ pd_cls }}">{% if pd is not none %}{% if pd > 0 %}&#8593;{% elif pd < 0 %}&#8595;{% else %}&#8594;{% endif %} {{ "%.1f"|format(pd|abs) }}&nbsp;%{% else %}—{% endif %}</td>
+            <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;font-weight:700;color:{{ ae_col }};-webkit-print-color-adjust:exact;print-color-adjust:exact;">{% if ae is not none %}{{ "%.1f"|format(ae) }}&nbsp;%{% else %}—{% endif %}</td>
+            <td style="border:1px solid #cccccc;padding:5px 4px;text-align:center;font-weight:700;color:{{ as_col }};-webkit-print-color-adjust:exact;print-color-adjust:exact;">{% if as_ is not none %}{{ "%.1f"|format(as_) }}&nbsp;%{% else %}—{% endif %}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -2505,6 +2513,7 @@ body {
 
 
 
+    {% if eff_kine_lines or eff_prepa_lines %}
     <!-- ══ ENGAGEMENT DE L'ÉQUIPE PLURIDISCIPLINAIRE ══ -->
     <div style="flex-shrink:0; margin-bottom:8px; border:2px solid #1c3f6e; border-radius:8px; overflow:hidden;">
 
@@ -2542,14 +2551,6 @@ body {
             {% endif %}
             {% endif %}{% endfor %}
           </div>
-          {% else %}
-          <div style="font-size:8.5pt; color:#374151; line-height:1.7;">
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">Renforcement musculaire progressif et analytique</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">Travail proprioceptif et stabilisation articulaire</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">R&#233;cup&#233;ration des amplitudes articulaires</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">R&#233;&#233;ducation fonctionnelle et r&#233;int&#233;gration gestuelle</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #1c3f6e;">Suivi et &#233;valuation continue du membre l&#233;s&#233;</div>
-          </div>
           {% endif %}
         </div>
 
@@ -2571,14 +2572,6 @@ body {
             {% endif %}
             {% endif %}{% endfor %}
           </div>
-          {% else %}
-          <div style="font-size:8.5pt; color:#374151; line-height:1.7;">
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">Travail cardio-vasculaire adapt&#233; et progressif</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">Renforcement global, gainage et stabilit&#233; du tronc</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">Pli&#233;om&#233;trie progressive et travail explosif</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">R&#233;int&#233;gration des exercices sportifs sp&#233;cifiques</div>
-            <div style="margin-bottom:4px; padding-left:8px; border-left:3px solid #2176c7;">Pr&#233;paration au retour au sport comp&#233;titif</div>
-          </div>
           {% endif %}
         </div>
 
@@ -2592,6 +2585,7 @@ body {
       </div>
 
     </div>
+    {% endif %}
 
     <!-- FOOTER PAGE FINALE -->
     <div class="footer" style="margin-top:auto;">

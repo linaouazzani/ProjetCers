@@ -364,6 +364,8 @@ def construire_contexte(
     gps_data: dict = None,
     vald_manual: dict = None,
     has_biodex: bool = True,
+    has_entree_pdf: bool = True,
+    has_sortie_pdf: bool = True,
     nom_prenom: str = "",
     poids_override: Optional[float] = None,
     taille_cm: Optional[float] = None,
@@ -542,6 +544,56 @@ def construire_contexte(
 
     serie60_meta  = serie_meta(e60,  s60p)
     serie240_meta = serie_meta(e240, s240p)
+
+    # ── Effacement des colonnes Entrée/Sortie quand le PDF correspondant est absent ──
+    _biodex_attrs = [
+        'ext_moment_max', 'ext_moment_poids', 'ext_travail_total',
+        'ext_puissance_max', 'ext_ratio_poids',
+        'flex_moment_max', 'flex_moment_poids', 'flex_travail_total',
+        'flex_puissance_max',
+    ]
+    for _st in [s60, s240]:
+        for _a in _biodex_attrs:
+            _lm = getattr(_st, _a)
+            if not has_entree_pdf:
+                _lm.entree_sain_d = None
+                _lm.entree_lese_g = None
+                _lm.entree_deficit_pct = None
+                _lm.couleur_deficit_entree = "gray"
+            if not has_sortie_pdf:
+                _lm.sortie_sain_d = None
+                _lm.sortie_lese_g = None
+                _lm.sortie_deficit_pct = None
+                _lm.couleur_deficit = "gray"
+            if not has_entree_pdf or not has_sortie_pdf:
+                _lm.progression_sain = None
+                _lm.progression_pct = None
+                _lm.couleur_prog_sain = "gray"
+                _lm.couleur_prog = "gray"
+
+    if not has_entree_pdf:
+        serie60_meta.ratio_sain_entree = None
+        serie60_meta.ratio_lese_entree = None
+        serie60_meta.ratio_coul_entree = "gray"
+        serie60_meta.ratio_prog = None
+        serie60_meta.ratio_prog_couleur = "gray"
+        serie240_meta.ratio_sain_entree = None
+        serie240_meta.ratio_lese_entree = None
+        serie240_meta.ratio_coul_entree = "gray"
+        serie240_meta.ratio_prog = None
+        serie240_meta.ratio_prog_couleur = "gray"
+
+    if not has_sortie_pdf:
+        serie60_meta.ratio_sain_sortie = None
+        serie60_meta.ratio_lese_sortie = None
+        serie60_meta.ratio_coul_sortie = "gray"
+        serie60_meta.ratio_prog = None
+        serie60_meta.ratio_prog_couleur = "gray"
+        serie240_meta.ratio_sain_sortie = None
+        serie240_meta.ratio_lese_sortie = None
+        serie240_meta.ratio_coul_sortie = "gray"
+        serie240_meta.ratio_prog = None
+        serie240_meta.ratio_prog_couleur = "gray"
 
     # Remarques — attention + progression
     att, prog_list = [], []
@@ -1114,6 +1166,10 @@ def construire_contexte(
                 if len(all_progressions) >= 3:
                     break
 
+    # Quand un seul PDF est fourni, les progressions calculées seraient 0% (fallback) — on les masque
+    if not has_entree_pdf or not has_sortie_pdf:
+        all_progressions = []
+
     all_progressions = [_sanitiser_emojis(p) for p in all_progressions[:8]]
 
     return {
@@ -1182,6 +1238,8 @@ def construire_contexte(
         "gps":                    gps_data,
         "vald_manual":            vald_manual,
         "has_biodex":             has_biodex,
+        "has_entree_pdf":         has_entree_pdf,
+        "has_sortie_pdf":         has_sortie_pdf,
     }
 
 
@@ -1352,7 +1410,10 @@ def generer_rapport_biodex(
     print("=" * 60)
 
     # ── Parsing PDFs Biodex (tous optionnels) ──────────────────────────────
-    has_biodex = bool(pdf_entree or pdf_sortie)
+    # Capturer AVANT le fallback pour savoir quels PDFs ont été réellement fournis
+    has_entree_pdf = bool(pdf_entree)
+    has_sortie_pdf = bool(pdf_sortie)
+    has_biodex = has_entree_pdf or has_sortie_pdf
 
     _EMPTY_COLS = [
         "vitesse", "mouvement", "metrique", "unite",
@@ -1403,6 +1464,8 @@ def generer_rapport_biodex(
     ctx = construire_contexte(
         entree, sortie, df_comp,
         has_biodex=has_biodex,
+        has_entree_pdf=has_entree_pdf,
+        has_sortie_pdf=has_sortie_pdf,
         comparatif_data=comparatif_data,
         comparatif_sain_data=comparatif_sain_data,
         nom_club=nom_club,

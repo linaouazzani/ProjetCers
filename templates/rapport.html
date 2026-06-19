@@ -514,7 +514,9 @@ body {
   {% if has_biodex %}
   <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('bilan-60',this.checked)"> Bilan&nbsp;60°/s</label>
   <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('bilan-240',this.checked)"> Bilan&nbsp;240°/s</label>
+  {% if (has_entree_pdf and has_sortie_pdf) or acl_rsi_score or (excentrique and excentrique.ext_lese) %}
   <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('analyse-clinique',this.checked)"> Analyse&nbsp;clinique</label>
+  {% endif %}
   {% endif %}
   {% if (vald and vald.has_data) or vald_tableau or (vald_manual and (vald_manual.cmj or vald_manual.dj or vald_manual.slj or vald_manual.shoulder or vald_manual.mollet_run or vald_manual.mollet_seated or vald_manual.nordic or vald_manual.imtp)) %}
   <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect(['bilan-vald','vald-tableau','vald-manuel'],this.checked)"> Donn&#233;es&nbsp;VALD</label>
@@ -1148,18 +1150,18 @@ body {
     <div style="display:table; width:100%; border-collapse:collapse; flex:1; flex-shrink:0;">
       <div style="display:table-row;">
         <div style="display:table-cell; width:50%; padding:0 1px 1px 0; vertical-align:top;">
-          <img src="{{ graphiques.entree_ext_60 }}" style="width:100%; height:auto; display:block;">
+          {% if has_entree_pdf %}<img src="{{ graphiques.entree_ext_60 }}" style="width:100%; height:auto; display:block;">{% endif %}
         </div>
         <div style="display:table-cell; width:50%; padding:0 0 1px 1px; vertical-align:top;">
-          <img src="{{ graphiques.sortie_ext_60 }}" style="width:100%; height:auto; display:block;">
+          {% if has_sortie_pdf %}<img src="{{ graphiques.sortie_ext_60 }}" style="width:100%; height:auto; display:block;">{% endif %}
         </div>
       </div>
       <div style="display:table-row;">
         <div style="display:table-cell; width:50%; padding:1px 1px 0 0; vertical-align:top;">
-          <img src="{{ graphiques.entree_flex_60 }}" style="width:100%; height:auto; display:block;">
+          {% if has_entree_pdf %}<img src="{{ graphiques.entree_flex_60 }}" style="width:100%; height:auto; display:block;">{% endif %}
         </div>
         <div style="display:table-cell; width:50%; padding:1px 0 0 1px; vertical-align:top;">
-          <img src="{{ graphiques.sortie_flex_60 }}" style="width:100%; height:auto; display:block;">
+          {% if has_sortie_pdf %}<img src="{{ graphiques.sortie_flex_60 }}" style="width:100%; height:auto; display:block;">{% endif %}
         </div>
       </div>
     </div>
@@ -1265,18 +1267,18 @@ body {
     <div style="display:table; width:100%; border-collapse:collapse; flex:1; flex-shrink:0;">
       <div style="display:table-row;">
         <div style="display:table-cell; width:50%; padding:0 1px 1px 0; vertical-align:top;">
-          <img src="{{ graphiques.entree_ext_240 }}" style="width:100%; height:auto; display:block;">
+          {% if has_entree_pdf %}<img src="{{ graphiques.entree_ext_240 }}" style="width:100%; height:auto; display:block;">{% endif %}
         </div>
         <div style="display:table-cell; width:50%; padding:0 0 1px 1px; vertical-align:top;">
-          <img src="{{ graphiques.sortie_ext_240 }}" style="width:100%; height:auto; display:block;">
+          {% if has_sortie_pdf %}<img src="{{ graphiques.sortie_ext_240 }}" style="width:100%; height:auto; display:block;">{% endif %}
         </div>
       </div>
       <div style="display:table-row;">
         <div style="display:table-cell; width:50%; padding:1px 1px 0 0; vertical-align:top;">
-          <img src="{{ graphiques.entree_flex_240 }}" style="width:100%; height:auto; display:block;">
+          {% if has_entree_pdf %}<img src="{{ graphiques.entree_flex_240 }}" style="width:100%; height:auto; display:block;">{% endif %}
         </div>
         <div style="display:table-cell; width:50%; padding:1px 0 0 1px; vertical-align:top;">
-          <img src="{{ graphiques.sortie_flex_240 }}" style="width:100%; height:auto; display:block;">
+          {% if has_sortie_pdf %}<img src="{{ graphiques.sortie_flex_240 }}" style="width:100%; height:auto; display:block;">{% endif %}
         </div>
       </div>
     </div>
@@ -1322,6 +1324,7 @@ body {
 <!-- ══════════════════════════════════════════════════
      PAGE 4 — ANALYSE CLINIQUE + PROGRESSION
      ══════════════════════════════════════════════════ -->
+{% if (has_entree_pdf and has_sortie_pdf) or acl_rsi_score or (excentrique and excentrique.ext_lese) %}
 <div class="page" data-section="analyse-clinique" style="height:auto; overflow:visible; page-break-after:always;">
 
   <!-- EN-TETE BLANC -->
@@ -1412,7 +1415,7 @@ body {
     {% endif %}
 
     <!-- GRAPHIQUES PROGRESSION -->
-    {% if graphiques.prog_sain_60 or graphiques.prog_lese_60 %}
+    {% if has_entree_pdf and has_sortie_pdf and (graphiques.prog_sain_60 or graphiques.prog_lese_60) %}
     <div style="background:#1c3f6e; color:#ffffff; font-size:7px; font-weight:700; padding:2px 8px; text-align:center; margin-bottom:2px; border-radius:2px; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
       PROGRESSION 60&#176;/s &#8212; Entr&#233;e &#8594; Sortie
     </div>
@@ -1428,7 +1431,7 @@ body {
     </div>
     {% endif %}
 
-    {% if graphiques.prog_sain_240 or graphiques.prog_lese_240 %}
+    {% if has_entree_pdf and has_sortie_pdf and (graphiques.prog_sain_240 or graphiques.prog_lese_240) %}
     <div style="background:#1c3f6e; color:#ffffff; font-size:7px; font-weight:700; padding:2px 8px; text-align:center; margin-bottom:2px; border-radius:2px; flex-shrink:0; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
       PROGRESSION 240&#176;/s &#8212; Entr&#233;e &#8594; Sortie
     </div>
@@ -1512,6 +1515,7 @@ body {
 
   </div><!-- fin page-content -->
 </div><!-- fin page 4 -->
+{% endif %}{# analyse-clinique #}
 {% endif %}{# has_biodex #}
 
 
@@ -2506,14 +2510,11 @@ body {
       {% set eff_prepa_lines = [] %}
     {% endif %}
 
+    {% if eff_kine_lines or eff_prepa_lines %}
     <!-- TITRE SECTION -->
     <div style="background:#1c3f6e;color:#ffffff;font-size:10pt;font-weight:bold;padding:5px 12px;margin:0 0 8px 0;border-radius:3px;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       Synth&#232;se du S&#233;jour &mdash; Programme de R&#233;&#233;ducation &amp; Conclusion
     </div>
-
-
-
-    {% if eff_kine_lines or eff_prepa_lines %}
     <!-- ══ ENGAGEMENT DE L'ÉQUIPE PLURIDISCIPLINAIRE ══ -->
     <div style="flex-shrink:0; margin-bottom:8px; border:2px solid #1c3f6e; border-radius:8px; overflow:hidden;">
 

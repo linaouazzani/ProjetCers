@@ -1233,15 +1233,19 @@ function pickClub(jsonStr) {
 
 function useClub() {
   const nom = (document.getElementById("club-nom").value || "").trim();
-  // Si un club est déjà actif (sélectionné via la recherche) et le champ texte est vide,
-  // on confirme simplement la sélection existante sans créer un nouveau club sans logo.
-  if (!nom && STATE.club) {
-    selectClub(STATE.club);
-    return;
-  }
+  if (!nom && STATE.club) { selectClub(STATE.club); return; }
   if (!nom) { alert("Entrez le nom du club."); return; }
   const sport = document.getElementById("club-sport").value;
-  selectClub({ nom, sport, division: "Autre", couleur: "#1c3f6e", logo_b64: null });
+  const logoInp = document.getElementById("f-logo");
+  if (logoInp && logoInp.files.length) {
+    const reader = new FileReader();
+    reader.onload = ev => selectClub({ nom, sport, division: "Autre", couleur: "#1c3f6e", logo_b64: ev.target.result });
+    reader.readAsDataURL(logoInp.files[0]);
+    return;
+  }
+  const logo_b64 = (STATE.club && STATE.club.logo_b64 && STATE.club.nom.toLowerCase() === nom.toLowerCase())
+    ? STATE.club.logo_b64 : null;
+  selectClub({ nom, sport, division: "Autre", couleur: "#1c3f6e", logo_b64 });
 }
 
 async function saveClub() {

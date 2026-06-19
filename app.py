@@ -927,6 +927,7 @@ with col_left:
         with cb1:
             if st.button("✅ Utiliser ce club", use_container_width=True, key="btn_use"):
                 if club_nouveau_nom:
+                    _prev_club = st.session_state.get("club_selectionne") or {}
                     _logo_b64_use = None
                     if logo_club_upload:
                         import base64 as _b64
@@ -936,6 +937,8 @@ with col_left:
                                          + _b64.b64encode(logo_club_upload.getvalue()).decode())
                     elif _club_db_match and _club_db_match.get("logo_b64"):
                         _logo_b64_use = _club_db_match["logo_b64"]
+                    elif _prev_club.get("logo_b64") and _prev_club.get("nom", "").lower() == club_nouveau_nom.lower():
+                        _logo_b64_use = _prev_club["logo_b64"]
                     new_club = {
                         "nom": club_nouveau_nom,
                         "sport": club_nouveau_sport,

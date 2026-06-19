@@ -395,6 +395,8 @@ def construire_contexte(
     comp240_sain = (comparatif_sain_data or {}).get("240", {})
 
     def get_row(vitesse, mouvement, metrique):
+        if df_comp.empty or "vitesse" not in df_comp.columns:
+            return {}
         mask = ((df_comp["vitesse"] == vitesse) &
                 (df_comp["mouvement"] == mouvement) &
                 (df_comp["metrique"] == metrique))
@@ -1428,22 +1430,24 @@ def generer_rapport_biodex(
         entree = PatientBiodex(nom="—", date_test="—")
         sortie = PatientBiodex(nom="—", date_test="—")
         df_comp = pd.DataFrame(columns=_EMPTY_COLS)
-    else:
-        if not pdf_entree:
-            pdf_entree = pdf_sortie
-            print("  ⚠️  PDF Entrée absent — utilisation du PDF Sortie comme référence")
-        elif not pdf_sortie:
-            pdf_sortie = pdf_entree
-            print("  ⚠️  PDF Sortie absent — utilisation du PDF Entrée comme référence")
-
+    elif has_entree_pdf and has_sortie_pdf:
         print("\n📄 Parsing PDFs...")
         entree = parse_biodex_pdf(pdf_entree)
         sortie = parse_biodex_pdf(pdf_sortie)
         print(f"  ✅ {entree.nom}  |  {entree.date_test} → {sortie.date_test}")
-
         print("\n📊 Calcul progressions...")
         df_comp = comparer_tests(entree, sortie)
         print(f"  ✅ {len(df_comp)} métriques calculées")
+    elif has_entree_pdf:
+        print("  ⚠️  PDF Sortie absent — bilan entrée seul")
+        entree = parse_biodex_pdf(pdf_entree)
+        sortie = PatientBiodex(nom=entree.nom, date_test="—")
+        df_comp = pd.DataFrame(columns=_EMPTY_COLS)
+    else:
+        print("  ⚠️  PDF Entrée absent — bilan sortie seul")
+        sortie = parse_biodex_pdf(pdf_sortie)
+        entree = PatientBiodex(nom=sortie.nom, date_test="—")
+        df_comp = pd.DataFrame(columns=_EMPTY_COLS)
 
     comparatif_data = {}
     if pdf_comparatif and os.path.exists(pdf_comparatif):

@@ -516,7 +516,7 @@ body {
   <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('bilan-240',this.checked)"> Bilan&nbsp;240°/s</label>
   <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect('analyse-clinique',this.checked)"> Analyse&nbsp;clinique</label>
   {% endif %}
-  {% if (vald and vald.has_data) or vald_tableau or (vald_manual and (vald_manual.cmj or vald_manual.dj or vald_manual.slj)) %}
+  {% if (vald and vald.has_data) or vald_tableau or (vald_manual and (vald_manual.cmj or vald_manual.dj or vald_manual.slj or vald_manual.shoulder or vald_manual.mollet_run or vald_manual.mollet_seated or vald_manual.nordic or vald_manual.imtp)) %}
   <label style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" checked onchange="toggleSect(['bilan-vald','vald-tableau','vald-manuel'],this.checked)"> Donn&#233;es&nbsp;VALD</label>
   {% endif %}
   {% if gps and gps.sessions %}
@@ -2117,7 +2117,7 @@ body {
 {% endif %}
 
 
-{% if vald_manual and (vald_manual.cmj or vald_manual.dj or vald_manual.slj) %}
+{% if vald_manual and (vald_manual.cmj or vald_manual.dj or vald_manual.slj or vald_manual.shoulder or vald_manual.mollet_run or vald_manual.mollet_seated or vald_manual.nordic or vald_manual.imtp) %}
 <!-- ══════════════════════════════════════════════════
      PAGE VALD — SAISIE MANUELLE (CMJ / DROP JUMP / SLJ)
      ══════════════════════════════════════════════════ -->
